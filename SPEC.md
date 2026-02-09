@@ -59,12 +59,14 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `NOTIFICATION_WEBHOOK_URL`     | `webhook.notification_url`     |
 | `GOOGLE_CALENDAR_ID`           | `google.calendar_id`           |
 | `GOOGLE_SERVICE_ACCOUNT_KEY`   | `google.service_account_key`   |
+| `BASIC_AUTH_USERNAME`          | `security.basic_auth.username` |
+| `BASIC_AUTH_PASSWORD`          | `security.basic_auth.password` |
 
 ### 設定編集について
 
 | 項目                                     | 直接編集 | WebUI編集 |
 | ---------------------------------------- | -------- | --------- |
-| **API認証情報**（Notion/Webhook/Google） | ○        | ×         |
+| **API認証情報**（Notion/Webhook/Google/Basic認証） | ○        | ×         |
 | **通知テンプレート**                     | ○        | ○         |
 | **スケジュール設定**（間隔など）         | ○        | ○         |
 | **プロパティマッピング**                 | ○        | ○         |
@@ -257,8 +259,7 @@ mute_until: "" # ISO8601日時、空白=無効
 security:
   basic_auth:
     enabled: false
-    username: ""
-    password: ""
+    # 認証情報は env.yaml または環境変数で指定
 ```
 
 ### env.yaml

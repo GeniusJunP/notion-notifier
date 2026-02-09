@@ -89,6 +89,4 @@ mute_until: "" # ISO8601日時、空白=無効
 # セキュリティ（オプション）
 security:
   basic_auth:
-    enabled: false
-    username: ""
-    password: ""
+    enabled: false # 認証情報は env.yaml / 環境変数で設定

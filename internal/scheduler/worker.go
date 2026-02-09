@@ -385,6 +385,22 @@ func (s *Scheduler) PreviewTemplate(ctx context.Context, template string, from, 
 	return s.renderer.RenderList(template, templateEvents)
 }
 
+func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
+	cfg, _ := s.cfg.Get()
+	loc, _ := time.LoadLocation(cfg.Timezone)
+	now := time.Now().In(loc)
+	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
+	if err != nil {
+		return "", err
+	}
+	if len(events) == 0 {
+		return "（プレビュー対象の予定がありません）", nil
+	}
+	custom := extractCustomValues(events[0].RawPropsJSON, cfg.PropertyMap)
+	templateEvent := toTemplateEvent(events[0], custom)
+	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
+}
+
 func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, from, to time.Time) (string, string, error) {
 	cfg, _ := s.cfg.Get()
 	events, err := s.repo.ListEventsBetween(ctx, from, to)

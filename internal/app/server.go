@@ -129,7 +129,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		LastSyncLabel: lastSyncLabel,
 		LastSyncCount: status.LastCount,
 		LastSyncError: status.LastError,
-		Upcoming:      buildUpcomingViews(upcomingEvents, 5, loc),
+		Upcoming:      buildUpcomingViews(upcomingEvents, 10, loc),
 		History:       buildHistoryViews(historyItems, loc),
 	}
 
@@ -285,7 +285,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	// security.basic_auth is config-only (not updated via UI)
+	// security.basic_auth.enabled is config-only (credentials are in env.yaml)
 
 	if err := s.cfg.UpdateConfig(mergedCfg); err != nil {
 		http.Error(w, "Failed to update config: "+err.Error(), http.StatusInternalServerError)
@@ -297,9 +297,11 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 type notificationRequest struct {
-	Template string `json:"template"`
-	FromDate string `json:"from_date"`
-	ToDate   string `json:"to_date"`
+	Template       string `json:"template"`
+	FromDate       string `json:"from_date"`
+	ToDate         string `json:"to_date"`
+	MinutesBefore  int    `json:"minutes_before"`
+	PreviewPayload bool   `json:"preview_payload"`
 }
 
 func (s *Server) handleAPIPreviewNotification(w http.ResponseWriter, r *http.Request) {
@@ -317,12 +319,30 @@ func (s *Server) handleAPIPreviewNotification(w http.ResponseWriter, r *http.Req
 		http.Error(w, "Invalid date: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	message, payload, err := s.scheduler.PreviewManualPayload(r.Context(), req.Template, from, to)
+	if req.MinutesBefore > 0 {
+		message, err := s.scheduler.PreviewAdvanceTemplate(r.Context(), req.Template, req.MinutesBefore)
+		if err != nil {
+			http.Error(w, "Preview failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writePreviewHTML(w, message, "")
+		return
+	}
+	if req.PreviewPayload {
+		message, payload, err := s.scheduler.PreviewManualPayload(r.Context(), req.Template, from, to)
+		if err != nil {
+			http.Error(w, "Preview failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writePreviewHTML(w, message, payload)
+		return
+	}
+	message, err := s.scheduler.PreviewTemplate(r.Context(), req.Template, from, to)
 	if err != nil {
 		http.Error(w, "Preview failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writePreviewHTML(w, message, payload)
+	writePreviewHTML(w, message, "")
 }
 
 func (s *Server) handleAPIManualNotification(w http.ResponseWriter, r *http.Request) {
@@ -414,14 +434,14 @@ func (s *Server) render(w http.ResponseWriter, name string, data map[string]inte
 
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cfg, _ := s.cfg.Get()
+		cfg, env := s.cfg.Get()
 		if !cfg.Security.BasicAuth.Enabled {
 			next(w, r)
 			return
 		}
 
 		user, pass, ok := r.BasicAuth()
-		if !ok || user != cfg.Security.BasicAuth.Username || pass != cfg.Security.BasicAuth.Password {
+		if !ok || user != env.Security.BasicAuth.Username || pass != env.Security.BasicAuth.Password {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

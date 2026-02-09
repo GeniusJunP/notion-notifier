@@ -11,16 +11,16 @@ import (
 )
 
 type Config struct {
-	Timezone       string             `yaml:"timezone" json:"timezone"`
-	Sync           SyncConfig         `yaml:"sync" json:"sync"`
-	Notifications  Notifications      `yaml:"notifications" json:"notifications"`
-	Webhook        WebhookConfig      `yaml:"webhook" json:"webhook"`
-	CalendarSync   CalendarSyncConfig `yaml:"calendar_sync" json:"calendar_sync"`
-	PropertyMap    PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
-	ContentRules   ContentRules       `yaml:"content_rules" json:"content_rules"`
-	SnoozeUntil    string             `yaml:"snooze_until" json:"snooze_until"`
-	MuteUntil      string             `yaml:"mute_until" json:"mute_until"`
-	Security       SecurityConfig     `yaml:"security" json:"security"`
+	Timezone      string             `yaml:"timezone" json:"timezone"`
+	Sync          SyncConfig         `yaml:"sync" json:"sync"`
+	Notifications Notifications      `yaml:"notifications" json:"notifications"`
+	Webhook       WebhookConfig      `yaml:"webhook" json:"webhook"`
+	CalendarSync  CalendarSyncConfig `yaml:"calendar_sync" json:"calendar_sync"`
+	PropertyMap   PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
+	ContentRules  ContentRules       `yaml:"content_rules" json:"content_rules"`
+	SnoozeUntil   string             `yaml:"snooze_until" json:"snooze_until"`
+	MuteUntil     string             `yaml:"mute_until" json:"mute_until"`
+	Security      SecurityConfig     `yaml:"security" json:"security"`
 }
 
 type SyncConfig struct {
@@ -44,12 +44,12 @@ type WebhookTarget struct {
 }
 
 type AdvanceNotification struct {
-	Enabled       bool               `yaml:"enabled" json:"enabled"`
-	MinutesBefore int                `yaml:"minutes_before" json:"minutes_before"`
-	Message       string             `yaml:"message" json:"message"`
-	Location      string             `yaml:"location" json:"location"`
-	URL           string             `yaml:"url" json:"url"`
-	Conditions    AdvanceConditions  `yaml:"conditions" json:"conditions"`
+	Enabled       bool              `yaml:"enabled" json:"enabled"`
+	MinutesBefore int               `yaml:"minutes_before" json:"minutes_before"`
+	Message       string            `yaml:"message" json:"message"`
+	Location      string            `yaml:"location" json:"location"`
+	URL           string            `yaml:"url" json:"url"`
+	Conditions    AdvanceConditions `yaml:"conditions" json:"conditions"`
 }
 
 type AdvanceConditions struct {
@@ -97,10 +97,10 @@ type CustomMapping struct {
 }
 
 type ContentRules struct {
-	StartHeading       string `yaml:"start_heading" json:"start_heading"`
-	IncludeStart       bool   `yaml:"include_start_heading" json:"include_start_heading"`
-	StopAtNextHeading  bool   `yaml:"stop_at_next_heading" json:"stop_at_next_heading"`
-	StopAtDelimiter    bool   `yaml:"stop_at_delimiter" json:"stop_at_delimiter"`
+	StartHeading      string `yaml:"start_heading" json:"start_heading"`
+	IncludeStart      bool   `yaml:"include_start_heading" json:"include_start_heading"`
+	StopAtNextHeading bool   `yaml:"stop_at_next_heading" json:"stop_at_next_heading"`
+	StopAtDelimiter   bool   `yaml:"stop_at_delimiter" json:"stop_at_delimiter"`
 }
 
 type SecurityConfig struct {
@@ -108,15 +108,14 @@ type SecurityConfig struct {
 }
 
 type BasicAuthConfig struct {
-	Enabled  bool   `yaml:"enabled" json:"enabled"`
-	Username string `yaml:"username" json:"username"`
-	Password string `yaml:"password" json:"password"`
+	Enabled bool `yaml:"enabled" json:"enabled"`
 }
 
 type Env struct {
-	Notion  NotionEnv  `yaml:"notion" json:"notion"`
-	Webhook WebhookEnv `yaml:"webhook" json:"webhook"`
-	Google  GoogleEnv  `yaml:"google" json:"google"`
+	Notion   NotionEnv   `yaml:"notion" json:"notion"`
+	Webhook  WebhookEnv  `yaml:"webhook" json:"webhook"`
+	Google   GoogleEnv   `yaml:"google" json:"google"`
+	Security SecurityEnv `yaml:"security" json:"security"`
 }
 
 type NotionEnv struct {
@@ -132,6 +131,15 @@ type WebhookEnv struct {
 type GoogleEnv struct {
 	CalendarID        string `yaml:"calendar_id" json:"calendar_id"`
 	ServiceAccountKey string `yaml:"service_account_key" json:"service_account_key"`
+}
+
+type SecurityEnv struct {
+	BasicAuth BasicAuthEnv `yaml:"basic_auth" json:"basic_auth"`
+}
+
+type BasicAuthEnv struct {
+	Username string `yaml:"username" json:"username"`
+	Password string `yaml:"password" json:"password"`
 }
 
 func LoadConfig(path string) (Config, error) {
@@ -172,6 +180,8 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
 	env.Google.ServiceAccountKey = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY", env.Google.ServiceAccountKey)
+	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
+	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
 	return env
 }
 

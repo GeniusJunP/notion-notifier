@@ -110,36 +110,11 @@
             </div>
         </div>
 
-        <!-- Sidebar Actions/Upcoming -->
+        <!-- Upcoming Mini List -->
         <div class="space-y-8">
             <div
-                class="bg-gradient-to-br from-primary-600 to-indigo-700 p-8 rounded-3xl shadow-xl text-white relative overflow-hidden group">
-                <div class="relative z-10">
-                    <h3 class="text-xl font-bold mb-2">クイック操作</h3>
-                    <p class="text-primary-100 text-sm mb-6 opacity-80">通知の調整や履歴クリアを素早く実行します。</p>
-                    <div class="space-y-3">
-                        <a href="/notifications#snooze-mute"
-                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 hover:bg-white/20">
-                            <i data-lucide="volume-x" class="w-4 h-4"></i>
-                            通知をミュート
-                        </a>
-                        <button hx-post="/api/history/clear" hx-swap="none"
-                            hx-confirm="通知履歴をクリアしますか？"
-                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 hover:bg-white/20">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            ログをクリア
-                        </button>
-                    </div>
-                </div>
-                <div
-                    class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700">
-                </div>
-            </div>
-
-            <!-- Upcoming Mini List -->
-            <div
                 class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="p-8 border-b border-slate-100 dark:border-slate-800">
                     <h3 class="font-bold flex items-center gap-2">
                         <i data-lucide="list-todo" class="w-4 h-4 text-slate-400"></i>
                         予定プレビュー

@@ -75,6 +75,7 @@ func (a *App) Start(ctx context.Context) error {
 	a.scheduler.Start(ctx)
 	go func() {
 		fmt.Printf("Starting dashboard server on %s\n", a.server.Addr)
+		fmt.Printf("Dashboard URL: http://localhost%s\n", a.server.Addr)
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("HTTP server error: %v\n", err)
 		}

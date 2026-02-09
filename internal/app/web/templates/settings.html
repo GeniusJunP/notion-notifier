@@ -46,7 +46,7 @@
                     </div>
                 </div>
 
-                <!-- Custom Mapping with Alpine.js -->
+                <!-- Custom Mapping -->
                 <div x-data="{ custom: {{ .Config.PropertyMap.Custom | json }} }"
                     class="space-y-6 pt-8 border-t border-slate-100 dark:border-slate-800">
                     <div class="flex items-center justify-between">
@@ -82,6 +82,73 @@
                                 </button>
                             </div>
                         </template>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-6">
+            <h2 class="text-xl font-bold flex items-center gap-3">
+                <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                    <i data-lucide="highlighter" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+                </div>
+                コンテンツ抽出ルール
+            </h2>
+
+            <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-8"
+                x-data="{ includeStart: {{.Config.ContentRules.IncludeStart}}, stopNext: {{.Config.ContentRules.StopAtNextHeading}}, stopDelimiter: {{.Config.ContentRules.StopAtDelimiter}} }">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label
+                            class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">開始見出し</label>
+                        <input type="text" name="content_rules.start_heading" value="{{.Config.ContentRules.StartHeading}}"
+                            class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all font-bold"
+                            placeholder="例: 活動内容">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">この見出し以降の本文を抽出します。</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <p class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">見出しを含める</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">開始見出し行も本文に含める</p>
+                        </div>
+                        <button type="button" @click="includeStart = !includeStart"
+                            :class="includeStart ? 'bg-amber-600' : 'bg-slate-200 dark:bg-slate-700'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
+                            <span :class="includeStart ? 'translate-x-5' : 'translate-x-0'"
+                                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
+                        </button>
+                        <input type="hidden" name="content_rules.include_start_heading" :value="includeStart">
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <p class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">次の見出しで停止</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">次の見出しが出たら終了</p>
+                        </div>
+                        <button type="button" @click="stopNext = !stopNext"
+                            :class="stopNext ? 'bg-amber-600' : 'bg-slate-200 dark:bg-slate-700'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
+                            <span :class="stopNext ? 'translate-x-5' : 'translate-x-0'"
+                                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
+                        </button>
+                        <input type="hidden" name="content_rules.stop_at_next_heading" :value="stopNext">
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <p class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">区切りで停止</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">区切り記号が出たら終了</p>
+                        </div>
+                        <button type="button" @click="stopDelimiter = !stopDelimiter"
+                            :class="stopDelimiter ? 'bg-amber-600' : 'bg-slate-200 dark:bg-slate-700'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
+                            <span :class="stopDelimiter ? 'translate-x-5' : 'translate-x-0'"
+                                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
+                        </button>
+                        <input type="hidden" name="content_rules.stop_at_delimiter" :value="stopDelimiter">
                     </div>
                 </div>
             </div>
