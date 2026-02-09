@@ -42,8 +42,16 @@ type Scheduler struct {
 	notionKey      string
 	calendarKey    string
 	calendarID     string
+	statusMu       sync.RWMutex
+	notionStatus   SyncStatus
 	stopCh         chan struct{}
 	wg             sync.WaitGroup
+}
+
+type SyncStatus struct {
+	LastSyncedAt time.Time
+	LastCount    int
+	LastError    string
 }
 
 func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, webhookClient *webhook.Client, calendarClient *calendar.Client, renderer *tpl.Renderer) *Scheduler {
@@ -218,14 +226,18 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 		s.mu.Unlock()
 	}
 	if s.notion == nil {
-		return 0, errors.New("notion client not configured")
+		err := errors.New("notion client not configured")
+		s.setNotionStatus(0, err)
+		return 0, err
 	}
 	pages, err := s.notion.QueryDatabase(ctx, env.Notion.DatabaseID)
 	if err != nil {
+		s.setNotionStatus(0, err)
 		return 0, err
 	}
 	events := notion.MapPagesToEvents(pages, cfg.PropertyMap, loc)
 	if err := s.repo.UpsertEvents(ctx, events); err != nil {
+		s.setNotionStatus(0, err)
 		return 0, err
 	}
 	ids := make([]string, 0, len(events))
@@ -233,11 +245,13 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 		ids = append(ids, ev.NotionPageID)
 	}
 	if err := s.repo.DeleteEventsNotIn(ctx, ids); err != nil {
+		s.setNotionStatus(len(events), err)
 		return len(events), err
 	}
 	if err := s.RebuildAdvanceSchedules(ctx); err != nil {
 		log.Printf("rebuild advance schedules failed: %v", err)
 	}
+	s.setNotionStatus(len(events), nil)
 	return len(events), nil
 }
 
@@ -657,4 +671,23 @@ func (s *Scheduler) currentTimezone() string {
 		return time.Local.String()
 	}
 	return cfg.Timezone
+}
+
+func (s *Scheduler) NotionSyncStatus() SyncStatus {
+	s.statusMu.RLock()
+	defer s.statusMu.RUnlock()
+	return s.notionStatus
+}
+
+func (s *Scheduler) setNotionStatus(count int, err error) {
+	status := SyncStatus{
+		LastSyncedAt: time.Now(),
+		LastCount:    count,
+	}
+	if err != nil {
+		status.LastError = err.Error()
+	}
+	s.statusMu.Lock()
+	s.notionStatus = status
+	s.statusMu.Unlock()
 }
