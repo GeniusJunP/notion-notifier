@@ -3,7 +3,6 @@ module notion-notifier
 go 1.25.7
 
 require (
-	github.com/go-chi/chi/v5 v5.2.5
 	golang.org/x/oauth2 v0.35.0
 	google.golang.org/api v0.265.0
 	gopkg.in/yaml.v3 v3.0.1

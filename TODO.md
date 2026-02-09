@@ -7,6 +7,6 @@
 - [x] Implement Discord webhook sender with retries
 - [x] Implement notification rendering and scheduler (advance/daily/weekly)
 - [x] Implement Google Calendar sync service
-- [x] Implement HTTP API server (JSON) with basic auth
+- [ ] Implement HTTP server + htmx UI (later)
 - [x] Wire app in main.go and add sample configs
-- [ ] Write SPA settings page spec
+- [ ] Implement htmx UI pages (later)

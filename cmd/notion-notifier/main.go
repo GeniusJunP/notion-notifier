@@ -17,13 +17,12 @@ func main() {
 	cfgPath := flag.String("config", "config.yaml", "path to config.yaml")
 	envPath := flag.String("env", "env.yaml", "path to env.yaml")
 	dbPath := flag.String("db", "data.db", "path to sqlite db")
-	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	flag.Parse()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	application, err := app.New(*cfgPath, *envPath, *dbPath, *addr)
+	application, err := app.New(*cfgPath, *envPath, *dbPath)
 	if err != nil {
 		log.Fatalf("init failed: %v", err)
 	}

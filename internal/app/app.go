@@ -14,7 +14,6 @@ import (
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
 	"notion-notifier/internal/scheduler"
-	"notion-notifier/internal/server"
 	tpl "notion-notifier/internal/template"
 )
 
@@ -22,10 +21,9 @@ type App struct {
 	cfg       *config.Manager
 	repo      *db.Repository
 	scheduler *scheduler.Scheduler
-	server    *server.Server
 }
 
-func New(cfgPath, envPath, dbPath, addr string) (*App, error) {
+func New(cfgPath, envPath, dbPath string) (*App, error) {
 	if cfgPath == "" || envPath == "" || dbPath == "" {
 		return nil, errors.New("config, env, and db paths are required")
 	}
@@ -53,18 +51,17 @@ func New(cfgPath, envPath, dbPath, addr string) (*App, error) {
 	}
 	renderer := tpl.New()
 	sched := scheduler.New(manager, repo, notionClient, discordClient, calendarClient, renderer)
-	srv := server.New(addr, manager, repo, sched)
 	return &App{
 		cfg:       manager,
 		repo:      repo,
 		scheduler: sched,
-		server:    srv,
 	}, nil
 }
 
 func (a *App) Start(ctx context.Context) error {
 	a.scheduler.Start(ctx)
-	return a.server.Start(ctx)
+	<-ctx.Done()
+	return nil
 }
 
 func (a *App) Close() error {
