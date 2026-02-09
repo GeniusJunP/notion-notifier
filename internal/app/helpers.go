@@ -54,6 +54,35 @@ func isTruthy(value interface{}) bool {
 	}
 }
 
+func normalizeBoolField(m map[string]interface{}, key string) {
+	raw, ok := m[key]
+	if !ok {
+		return
+	}
+	switch v := raw.(type) {
+	case bool:
+		return
+	case string:
+		m[key] = v == "true" || v == "1"
+	case float64:
+		m[key] = v != 0
+	}
+}
+
+func normalizeBoolSlice(raw interface{}, key string) {
+	items, ok := raw.([]interface{})
+	if !ok {
+		return
+	}
+	for _, item := range items {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		normalizeBoolField(m, key)
+	}
+}
+
 func applyAdvanceConditionClears(cfg *config.Config, notifications map[string]interface{}) {
 	raw, ok := notifications["advance"].([]interface{})
 	if !ok {

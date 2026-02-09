@@ -49,6 +49,25 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	// Since we want to support nested updates, we'll use a more targeted approach
 	// For now, let's just handle the sections we have
 	if notifications, ok := updates["notifications"]; ok {
+		if m, ok := notifications.(map[string]interface{}); ok {
+			if advance, ok := m["advance"]; ok {
+				normalizeBoolSlice(advance, "enabled")
+				if items, ok := advance.([]interface{}); ok {
+					for _, item := range items {
+						rule, ok := item.(map[string]interface{})
+						if !ok {
+							continue
+						}
+						if cond, ok := rule["conditions"].(map[string]interface{}); ok {
+							normalizeBoolField(cond, "enabled")
+						}
+					}
+				}
+			}
+			if periodic, ok := m["periodic"]; ok {
+				normalizeBoolSlice(periodic, "enabled")
+			}
+		}
 		nb, _ := json.Marshal(notifications)
 		json.Unmarshal(nb, &mergedCfg.Notifications)
 		if m, ok := notifications.(map[string]interface{}); ok {
@@ -67,6 +86,9 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(wb, &mergedCfg.Webhook)
 	}
 	if calendarSync, ok := updates["calendar_sync"]; ok {
+		if m, ok := calendarSync.(map[string]interface{}); ok {
+			normalizeBoolField(m, "enabled")
+		}
 		cb, _ := json.Marshal(calendarSync)
 		json.Unmarshal(cb, &mergedCfg.CalendarSync)
 	}
@@ -80,6 +102,11 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if contentRules, ok := updates["content_rules"]; ok {
+		if m, ok := contentRules.(map[string]interface{}); ok {
+			normalizeBoolField(m, "include_start_heading")
+			normalizeBoolField(m, "stop_at_next_heading")
+			normalizeBoolField(m, "stop_at_delimiter")
+		}
 		cr, _ := json.Marshal(contentRules)
 		json.Unmarshal(cr, &mergedCfg.ContentRules)
 	}
