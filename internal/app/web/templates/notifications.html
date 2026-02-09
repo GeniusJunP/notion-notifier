@@ -212,7 +212,8 @@
                                             hx-post="/api/notifications/preview" hx-ext="json-enc"
                                             hx-trigger="keyup changed delay:700ms" :hx-target="'#advance-preview-'+index"
                                             :hx-indicator="'#advance-preview-indicator-'+index" hx-swap="innerHTML"
-                                            :hx-vals="JSON.stringify({template: rule.message, minutes_before: rule.minutes_before})"
+                                            :data-minutes-before="rule.minutes_before"
+                                            hx-vals="js:{template: this.value, minutes_before: parseInt(this.dataset.minutesBefore || '0', 10)}"
                                             class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium"
                                             placeholder="例: {{.Name}} が始まります">
                                         <div class="mt-2 flex gap-2">
@@ -292,6 +293,9 @@
                                                         :name="'notifications.advance['+index+'].conditions.days_of_week['+dayIndex+']'"
                                                         :value="day">
                                                 </template>
+                                                <input type="hidden"
+                                                    :name="'notifications.advance['+index+'].conditions.days_of_week_clear'"
+                                                    :value="(rule.conditions.days_of_week || []).length === 0">
                                             </div>
 
                                             <div class="space-y-3">
@@ -330,6 +334,9 @@
                                                         </button>
                                                     </div>
                                                 </template>
+                                                <input type="hidden"
+                                                    :name="'notifications.advance['+index+'].conditions.property_filters_clear'"
+                                                    :value="(rule.conditions.property_filters || []).length === 0">
                                             </div>
                                         </div>
                                     </div>
@@ -402,6 +409,9 @@
                                                 :name="'notifications.periodic['+index+'].days_of_week['+dayIndex+']'"
                                                 :value="day">
                                         </template>
+                                        <input type="hidden"
+                                            :name="'notifications.periodic['+index+'].days_of_week_clear'"
+                                            :value="(rule.days_of_week || []).length === 0">
                                     </div>
                                 </div>
 

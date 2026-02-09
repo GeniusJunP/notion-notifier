@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -286,6 +289,8 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 			if isTruthy(m["periodic_clear"]) {
 				mergedCfg.Notifications.Periodic = nil
 			}
+			applyAdvanceConditionClears(&mergedCfg, m)
+			applyPeriodicDayClears(&mergedCfg, m)
 		}
 	}
 	if webhook, ok := updates["webhook"]; ok {
@@ -357,8 +362,8 @@ func (s *Server) handleAPIPreviewNotification(w http.ResponseWriter, r *http.Req
 		return
 	}
 	var req notificationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+	if err := decodeNotificationRequest(r, &req); err != nil {
+		http.Error(w, "Invalid request: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	from, to, err := parseDateRange(req.FromDate, req.ToDate, s.cfg)
@@ -398,8 +403,8 @@ func (s *Server) handleAPIManualNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req notificationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+	if err := decodeNotificationRequest(r, &req); err != nil {
+		http.Error(w, "Invalid request: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	from, to, err := parseDateRange(req.FromDate, req.ToDate, s.cfg)
@@ -602,6 +607,81 @@ func isTruthy(value interface{}) bool {
 	default:
 		return false
 	}
+}
+
+func applyAdvanceConditionClears(cfg *config.Config, notifications map[string]interface{}) {
+	raw, ok := notifications["advance"].([]interface{})
+	if !ok {
+		return
+	}
+	for i, item := range raw {
+		if i >= len(cfg.Notifications.Advance) {
+			break
+		}
+		rule, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		cond, ok := rule["conditions"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if isTruthy(cond["days_of_week_clear"]) {
+			cfg.Notifications.Advance[i].Conditions.DaysOfWeek = nil
+		}
+		if isTruthy(cond["property_filters_clear"]) {
+			cfg.Notifications.Advance[i].Conditions.PropertyFilters = nil
+		}
+	}
+}
+
+func applyPeriodicDayClears(cfg *config.Config, notifications map[string]interface{}) {
+	raw, ok := notifications["periodic"].([]interface{})
+	if !ok {
+		return
+	}
+	for i, item := range raw {
+		if i >= len(cfg.Notifications.Periodic) {
+			break
+		}
+		rule, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if isTruthy(rule["days_of_week_clear"]) {
+			cfg.Notifications.Periodic[i].DaysOfWeek = nil
+		}
+	}
+}
+
+func decodeNotificationRequest(r *http.Request, req *notificationRequest) error {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	if len(body) == 0 {
+		return fmt.Errorf("empty body")
+	}
+	if err := json.Unmarshal(body, req); err == nil {
+		return nil
+	}
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		return err
+	}
+	req.Template = values.Get("template")
+	req.FromDate = values.Get("from_date")
+	req.ToDate = values.Get("to_date")
+	if v := values.Get("minutes_before"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil {
+			req.MinutesBefore = parsed
+		}
+	}
+	req.PreviewPayload = values.Get("preview_payload") == "true"
+	if req.Template == "" && req.FromDate == "" && req.ToDate == "" && req.MinutesBefore == 0 {
+		return fmt.Errorf("invalid payload")
+	}
+	return nil
 }
 
 func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
