@@ -14,6 +14,7 @@ type Config struct {
 	Timezone       string             `yaml:"timezone" json:"timezone"`
 	Sync           SyncConfig         `yaml:"sync" json:"sync"`
 	Notifications  Notifications      `yaml:"notifications" json:"notifications"`
+	Webhook        WebhookConfig      `yaml:"webhook" json:"webhook"`
 	CalendarSync   CalendarSyncConfig `yaml:"calendar_sync" json:"calendar_sync"`
 	PropertyMap    PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
 	ContentRules   ContentRules       `yaml:"content_rules" json:"content_rules"`
@@ -30,6 +31,16 @@ type Notifications struct {
 	Advance []AdvanceNotification `yaml:"advance" json:"advance"`
 	Daily   DailyNotification     `yaml:"daily" json:"daily"`
 	Weekly  []WeeklyNotification  `yaml:"weekly" json:"weekly"`
+}
+
+type WebhookConfig struct {
+	Schedule     WebhookTarget `yaml:"schedule" json:"schedule"`
+	Notification WebhookTarget `yaml:"notification" json:"notification"`
+}
+
+type WebhookTarget struct {
+	ContentType     string `yaml:"content_type" json:"content_type"`
+	PayloadTemplate string `yaml:"payload_template" json:"payload_template"`
 }
 
 type AdvanceNotification struct {
@@ -104,7 +115,7 @@ type BasicAuthConfig struct {
 
 type Env struct {
 	Notion  NotionEnv  `yaml:"notion" json:"notion"`
-	Discord DiscordEnv `yaml:"discord" json:"discord"`
+	Webhook WebhookEnv `yaml:"webhook" json:"webhook"`
 	Google  GoogleEnv  `yaml:"google" json:"google"`
 }
 
@@ -113,9 +124,9 @@ type NotionEnv struct {
 	DatabaseID string `yaml:"database_id" json:"database_id"`
 }
 
-type DiscordEnv struct {
-	ScheduleWebhook     string `yaml:"schedule_webhook" json:"schedule_webhook"`
-	NotificationWebhook string `yaml:"notification_webhook" json:"notification_webhook"`
+type WebhookEnv struct {
+	ScheduleURL     string `yaml:"schedule_url" json:"schedule_url"`
+	NotificationURL string `yaml:"notification_url" json:"notification_url"`
 }
 
 type GoogleEnv struct {
@@ -132,6 +143,7 @@ func LoadConfig(path string) (Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return cfg, err
 	}
+	cfg = NormalizeConfig(cfg)
 	if err := ValidateConfig(cfg); err != nil {
 		return cfg, err
 	}
@@ -156,8 +168,8 @@ func LoadEnv(path string) (Env, error) {
 func ApplyEnvOverrides(env Env) Env {
 	env.Notion.APIKey = pickEnv("NOTION_API_KEY", env.Notion.APIKey)
 	env.Notion.DatabaseID = pickEnv("NOTION_DATABASE_ID", env.Notion.DatabaseID)
-	env.Discord.ScheduleWebhook = pickEnv("DISCORD_SCHEDULE_WEBHOOK", env.Discord.ScheduleWebhook)
-	env.Discord.NotificationWebhook = pickEnv("DISCORD_NOTIFICATION_WEBHOOK", env.Discord.NotificationWebhook)
+	env.Webhook.ScheduleURL = pickEnv("SCHEDULE_WEBHOOK_URL", env.Webhook.ScheduleURL)
+	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
 	env.Google.ServiceAccountKey = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY", env.Google.ServiceAccountKey)
 	return env
@@ -257,6 +269,7 @@ func IsSnoozed(cfg Config, now time.Time) bool {
 }
 
 func WriteConfig(path string, cfg Config) error {
+	cfg = NormalizeConfig(cfg)
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
@@ -266,6 +279,24 @@ func WriteConfig(path string, cfg Config) error {
 		return err
 	}
 	return os.Rename(tmp, path)
+}
+
+func NormalizeConfig(cfg Config) Config {
+	if cfg.Webhook.Schedule.ContentType == "" {
+		cfg.Webhook.Schedule.ContentType = "application/json"
+	}
+	if cfg.Webhook.Notification.ContentType == "" {
+		cfg.Webhook.Notification.ContentType = "application/json"
+	}
+	if cfg.Webhook.Schedule.PayloadTemplate == "" {
+		cfg.Webhook.Schedule.PayloadTemplate = `{"content":"{{.Message}}"}`
+	}
+	if cfg.Webhook.Notification.PayloadTemplate == "" {
+		cfg.Webhook.Notification.PayloadTemplate = `{"content":"{{.Message}}"}`
+	}
+	cfg.Webhook.Schedule.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Schedule.PayloadTemplate)
+	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
+	return cfg
 }
 
 func SanitizeTemplate(input string) string {

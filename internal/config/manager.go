@@ -38,6 +38,7 @@ func (m *Manager) Get() (Config, Env) {
 }
 
 func (m *Manager) UpdateConfig(cfg Config) error {
+	cfg = NormalizeConfig(cfg)
 	if err := ValidateConfig(cfg); err != nil {
 		return err
 	}

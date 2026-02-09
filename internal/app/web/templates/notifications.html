@@ -1,0 +1,172 @@
+{{define "title"}}通知設定 - Notion Notifier{{end}}
+
+{{define "content"}}
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500" x-data="{ 
+    advanceNotifications: {{ .Config.Notifications.Advance | json }},
+    addRule() {
+        this.advanceNotifications.push({ enabled: true, minutes_before: 60, message: '', location: '', url: '', conditions: { enabled: false } });
+    },
+    removeRule(index) {
+        if(confirm('このルールを削除しますか？')) {
+            this.advanceNotifications.splice(index, 1);
+        }
+    }
+}">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight dark:text-white">通知設定</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1">いつ、どのような内容で通知するかをカスタマイズします。</p>
+        </div>
+        <button type="submit" form="notifications-form"
+            class="bg-primary-600 dark:bg-primary-500 text-white px-8 py-3 rounded-2xl text-sm font-bold hover:bg-primary-700 dark:hover:bg-primary-600 shadow-xl shadow-primary-500/25 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden">
+            <span class="relative z-10 flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                設定を保存
+            </span>
+            <div
+                class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            </div>
+        </button>
+    </div>
+
+    <form id="notifications-form" hx-post="/api/config" hx-ext="json-enc" hx-swap="none" hx-indicator="#save-indicator">
+        <div class="grid grid-cols-1 gap-10">
+            <!-- Advance Notifications Section -->
+            <section class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold flex items-center gap-3">
+                        <div class="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+                            <i data-lucide="bell-ring" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
+                        </div>
+                        事前通知 (Advance Notifications)
+                    </h2>
+                    <button @click="addRule()" type="button"
+                        class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 group">
+                        <i data-lucide="plus" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"></i>
+                        ルールを追加
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="(rule, index) in advanceNotifications" :key="index">
+                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-primary-200 dark:hover:border-primary-900/50 transition-all duration-300"
+                            x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0 transform -translate-y-4"
+                            x-transition:enter-end="opacity-100 transform translate-y-0">
+
+                            <button @click="removeRule(index)" type="button"
+                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all lg:opacity-0 group-hover:opacity-100">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                <div class="lg:col-span-2">
+                                    <label
+                                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">STATUS</label>
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" @click="rule.enabled = !rule.enabled"
+                                            :class="rule.enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
+                                            <span :class="rule.enabled ? 'translate-x-5' : 'translate-x-0'"
+                                                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
+                                        </button>
+                                        <span class="text-xs font-bold text-slate-600 dark:text-slate-400"
+                                            x-text="rule.enabled ? 'ON' : 'OFF'"></span>
+                                        <input type="hidden" :name="'notifications.advance['+index+'].enabled'"
+                                            :value="rule.enabled">
+                                    </div>
+                                </div>
+
+                                <div class="lg:col-span-3">
+                                    <label
+                                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">TIMING</label>
+                                    <div class="relative group/input">
+                                        <input type="number" :name="'notifications.advance['+index+'].minutes_before'"
+                                            x-model="rule.minutes_before"
+                                            class="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-bold text-lg">
+                                        <span
+                                            class="absolute right-4 top-3.5 text-xs font-bold text-slate-400 uppercase tracking-widest pointer-events-none group-focus-within/input:text-primary-500 transition-colors">分前</span>
+                                    </div>
+                                </div>
+
+                                <div class="lg:col-span-7">
+                                    <label
+                                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">MESSAGE
+                                        TEMPLATE</label>
+                                    <div class="relative">
+                                        <input type="text" :name="'notifications.advance['+index+'].message'"
+                                            x-model="rule.message"
+                                            class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium"
+                                            placeholder="例: {{.Name}} が始まります">
+                                        <div class="mt-2 flex gap-2">
+                                            <span
+                                                class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                                title="予定の名前">`{{`}}{{.Name}}{{`}}`</span>
+                                            <span
+                                                class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                                title="開始時刻">`{{`}}{{.Time}}{{`}}`</span>
+                                            <span
+                                                class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                                title="場所">`{{`}}{{.Location}}{{`}}`</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </section>
+
+            <!-- Daily Notification Section -->
+            <section class="space-y-6">
+                <h2 class="text-xl font-bold flex items-center gap-3">
+                    <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                        <i data-lucide="sun" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+                    </div>
+                    毎日通知 (Daily Digest)
+                </h2>
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                    x-data="{ enabled: {{.Config.Notifications.Daily.Enabled}} }">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div class="lg:col-span-2">
+                            <label
+                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">STATUS</label>
+                            <div class="flex items-center gap-3">
+                                <button type="button" @click="enabled = !enabled"
+                                    :class="enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                    class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
+                                    <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
+                                </button>
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400"
+                                    x-text="enabled ? 'ON' : 'OFF'"></span>
+                                <input type="hidden" name="notifications.daily.enabled" :value="enabled">
+                            </div>
+                        </div>
+                        <div class="lg:col-span-3">
+                            <label
+                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">TIME</label>
+                            <input type="time" name="notifications.daily.time"
+                                value="{{.Config.Notifications.Daily.Time}}"
+                                class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-bold text-lg">
+                        </div>
+                        <div class="lg:col-span-7">
+                            <label
+                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">MESSAGE
+                                BODY</label>
+                            <textarea name="notifications.daily.message" rows="4"
+                                class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium resize-none tracking-tight">{{.Config.Notifications.Daily.Message}}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </form>
+
+    <div id="save-indicator"
+        class="htmx-indicator fixed top-4 right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 z-[100]">
+        <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary-600"></i>
+        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Saving...</span>
+    </div>
+</div>
+{{end}}

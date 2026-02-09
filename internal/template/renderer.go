@@ -44,3 +44,16 @@ func (r *Renderer) RenderList(tmpl string, events []models.TemplateEvent) (strin
 	}
 	return buf.String(), nil
 }
+
+func (r *Renderer) RenderPayload(tmpl string, ctx any) (string, error) {
+	tmpl = config.SanitizeTemplate(tmpl)
+	t, err := template.New("payload").Parse(tmpl)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, ctx); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}

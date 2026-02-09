@@ -13,11 +13,11 @@ import (
 	"notion-notifier/internal/calendar"
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/db"
-	"notion-notifier/internal/discord"
 	"notion-notifier/internal/models"
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
 	tpl "notion-notifier/internal/template"
+	"notion-notifier/internal/webhook"
 )
 
 const (
@@ -31,7 +31,7 @@ type Scheduler struct {
 	cfg       *config.Manager
 	repo      *db.Repository
 	notion    *notion.Client
-	discord   *discord.Client
+	webhook   *webhook.Client
 	calendar  *calendar.Client
 	renderer  *tpl.Renderer
 
@@ -46,12 +46,12 @@ type Scheduler struct {
 	wg             sync.WaitGroup
 }
 
-func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, discordClient *discord.Client, calendarClient *calendar.Client, renderer *tpl.Renderer) *Scheduler {
+func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, webhookClient *webhook.Client, calendarClient *calendar.Client, renderer *tpl.Renderer) *Scheduler {
 	return &Scheduler{
 		cfg:            cfg,
 		repo:           repo,
 		notion:         notionClient,
-		discord:        discordClient,
+		webhook:        webhookClient,
 		calendar:       calendarClient,
 		renderer:       renderer,
 		advanceTimers:  map[string]*time.Timer{},
@@ -299,7 +299,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
-	if err := s.sendDiscord(ctx, notificationTypeAdvance, message, event.NotionPageID, cfg, true); err != nil {
+	if err := s.sendWebhook(ctx, notificationTypeAdvance, message, []models.TemplateEvent{templateEvent}, rule.MinutesBefore, event.NotionPageID, cfg, true); err != nil {
 		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
@@ -324,7 +324,7 @@ func (s *Scheduler) sendDaily(ctx context.Context, now time.Time) error {
 	if err != nil {
 		return err
 	}
-	return s.sendDiscord(ctx, notificationTypeDaily, message, "", cfg, true)
+	return s.sendWebhook(ctx, notificationTypeDaily, message, templateEvents, 0, "", cfg, true)
 }
 
 func (s *Scheduler) sendWeekly(ctx context.Context, now time.Time, idx int, rule config.WeeklyNotification) error {
@@ -341,7 +341,7 @@ func (s *Scheduler) sendWeekly(ctx context.Context, now time.Time, idx int, rule
 	if err != nil {
 		return err
 	}
-	return s.sendDiscord(ctx, notificationTypeWeekly, message, "", cfg, true)
+	return s.sendWebhook(ctx, notificationTypeWeekly, message, templateEvents, 0, "", cfg, true)
 }
 
 func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
@@ -355,7 +355,7 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 	if err != nil {
 		return "", err
 	}
-	if err := s.sendDiscord(ctx, notificationTypeManual, message, "", cfg, false); err != nil {
+	if err := s.sendWebhook(ctx, notificationTypeManual, message, templateEvents, 0, "", cfg, false); err != nil {
 		return message, err
 	}
 	return message, nil
@@ -438,23 +438,36 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 	return count, nil
 }
 
-func (s *Scheduler) sendDiscord(ctx context.Context, typ, message, notionPageID string, cfg config.Config, scheduled bool) error {
+func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string, cfg config.Config, scheduled bool) error {
 	if config.IsMuted(cfg, time.Now()) {
 		return nil
 	}
 	if scheduled && config.IsSnoozed(cfg, time.Now()) {
 		return nil
 	}
-	webhook := ""
-	_, env := s.cfg.Get()
+	envCfg, env := s.cfg.Get()
+	target := envCfg.Webhook.Notification
+	url := env.Webhook.NotificationURL
 	if scheduled {
-		webhook = env.Discord.ScheduleWebhook
-	} else {
-		webhook = env.Discord.NotificationWebhook
+		target = envCfg.Webhook.Schedule
+		url = env.Webhook.ScheduleURL
+	}
+	payloadCtx := models.WebhookPayloadContext{
+		Type:          typ,
+		Message:       message,
+		Events:        events,
+		MinutesBefore: minutesBefore,
+	}
+	if len(events) > 0 {
+		payloadCtx.Event = events[0]
+	}
+	payload, err := s.renderer.RenderPayload(target.PayloadTemplate, payloadCtx)
+	if err != nil {
+		return err
 	}
 	status := "success"
 	errStr := ""
-	if err := s.discord.Send(ctx, webhook, message); err != nil {
+	if err := s.webhook.Send(ctx, url, target.ContentType, []byte(payload)); err != nil {
 		status = "failed"
 		errStr = err.Error()
 	}

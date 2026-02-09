@@ -50,6 +50,15 @@ notifications:
 
         {{end}}
 
+# Webhook設定（任意JSON）
+webhook:
+  schedule:
+    content_type: "application/json"
+    payload_template: "{\"content\":\"{{.Message}}\"}"
+  notification:
+    content_type: "application/json"
+    payload_template: "{\"content\":\"{{.Message}}\"}"
+
 # Google Calendar連携
 calendar_sync:
   enabled: false

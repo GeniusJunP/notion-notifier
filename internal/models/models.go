@@ -61,3 +61,11 @@ type TemplateContext struct {
 	Events        []TemplateEvent
 	MinutesBefore int
 }
+
+type WebhookPayloadContext struct {
+	Type          string
+	Message       string
+	Events        []TemplateEvent
+	Event         TemplateEvent
+	MinutesBefore int
+}
