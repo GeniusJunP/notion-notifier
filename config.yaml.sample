@@ -1,0 +1,85 @@
+# タイムゾーン
+timezone: "Asia/Tokyo"
+
+# 基本設定
+sync:
+  check_interval: 15 # データ同期間隔（分）
+
+# 事前通知（複数設定可）
+notifications:
+  advance:
+    - enabled: true
+      minutes_before: 30
+      message: "⏰ {{.MinutesBefore}}分後に「{{.Name}}」が始まります"
+      location: "{{.Location}}"
+      url: "{{.URL}}"
+      conditions:
+        enabled: false
+        days_of_week: []
+        property_filters: []
+
+  # 毎日通知
+  daily:
+    enabled: true
+    time: "09:00"
+    today_only: true
+    message: |
+      @everyone 今日の予定をお届けします！
+
+      {{range .Events}}
+      📅 **{{.Name}}**
+      🕐 {{.Time}}
+      📍 {{.Location}}
+      🔗 {{.URL}}
+
+      {{end}}
+
+  # 週次通知（複数設定可）
+  weekly:
+    - enabled: true
+      days_of_week: [1, 4] # 月曜、木曜
+      time: "09:00"
+      days_ahead: 7
+      message: |
+        @everyone 今週の予定をお届けします！
+
+        {{range .Events}}
+        📅 **{{.Name}}** ({{.Date}})
+        🕐 {{.Time}}
+        📍 {{.Location}}
+
+        {{end}}
+
+# Google Calendar連携
+calendar_sync:
+  enabled: false
+  interval_hours: 6
+
+# Notionプロパティマッピング
+property_mapping:
+  title: "名前"
+  date: "日付"
+  location: "場所"
+  custom:
+    - variable: "speaker"
+      property: "登壇者"
+    - variable: "category"
+      property: "カテゴリ"
+
+# コンテンツ抽出ルール
+content_rules:
+  start_heading: "活動内容"
+  include_start_heading: false
+  stop_at_next_heading: true
+  stop_at_delimiter: true
+
+# 通知抑制
+snooze_until: "" # ISO8601日時、空白=無効
+mute_until: "" # ISO8601日時、空白=無効
+
+# セキュリティ（オプション）
+security:
+  basic_auth:
+    enabled: false
+    username: ""
+    password: ""

@@ -1,0 +1,5 @@
+config.yaml
+env.yaml
+data.db
+*.log
+.DS_Store
