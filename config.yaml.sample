@@ -18,24 +18,8 @@ notifications:
         days_of_week: []
         property_filters: []
 
-  # 毎日通知
-  daily:
-    enabled: true
-    time: "09:00"
-    today_only: true
-    message: |
-      @everyone 今日の予定をお届けします！
-
-      {{range .Events}}
-      📅 **{{.Name}}**
-      🕐 {{.Time}}
-      📍 {{.Location}}
-      🔗 {{.URL}}
-
-      {{end}}
-
-  # 週次通知（複数設定可）
-  weekly:
+  # 定期通知（複数設定可）
+  periodic:
     - enabled: true
       days_of_week: [1, 4] # 月曜、木曜
       time: "09:00"
@@ -63,6 +47,7 @@ webhook:
 calendar_sync:
   enabled: false
   interval_hours: 6
+  lookahead_days: 30
 
 # Notionプロパティマッピング
 property_mapping:

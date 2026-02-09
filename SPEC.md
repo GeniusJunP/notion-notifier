@@ -97,16 +97,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 
 **精度**: 事前通知はデータ同期時に次回発火時刻を計算し、`time.AfterFunc` で正確にスケジューリングする。チェック間隔（デフォルト15分）に依存しない。
 
-#### 2.2 定時通知（毎日）
-
-| 設定項目     | 説明             |
-| ------------ | ---------------- |
-| 有効/無効    | ON/OFF           |
-| 時刻         | HH:mm形式        |
-| 今日だけ通知 | 今日の予定のみ   |
-| メッセージ   | テンプレート使用 |
-
-#### 2.3 週次通知
+#### 2.2 定期通知
 
 | 設定項目   | 説明                 |
 | ---------- | -------------------- |
@@ -116,16 +107,16 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | 範囲       | 1/3/7/14/30日先まで  |
 | メッセージ | テンプレート使用     |
 
-#### 2.4 手動通知
+#### 2.3 手動通知
 
 | 設定項目     | 説明                                          |
 | ------------ | --------------------------------------------- |
 | 日付         | カレンダー選択                                |
-| テンプレート | 今日/明日/週間予定/カスタムから選択           |
+| テンプレート | 定期テンプレート/カスタムから選択             |
 | プレビュー   | 送信前にWebhookペイロードをプレビュー         |
 | 送信         | Webhookに即座に通知                           |
 
-#### 2.5 通知抑制
+#### 2.4 通知抑制
 
 | 機能     | 説明                                                           |
 | -------- | -------------------------------------------------------------- |
@@ -138,6 +129,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | ------------ | ---------------------- |
 | 有効/無効    | ON/OFF                 |
 | 自動同期間隔 | 1/3/6/12/24時間        |
+| 同期対象日数 | 7/14/30日など           |
 | 手動同期     | 日付範囲指定           |
 | 状態表示     | 最終同期時刻、同期件数 |
 | 履歴クリア   | 同期レコード削除       |
@@ -187,24 +179,8 @@ notifications:
         days_of_week: []
         property_filters: []
 
-  # 毎日通知
-  daily:
-    enabled: true
-    time: "09:00"
-    today_only: true
-    message: |
-      @everyone 今日の予定をお届けします！
-
-      {{range .Events}}
-      📅 **{{.Name}}**
-      🕐 {{.Time}}
-      📍 {{.Location}}
-      🔗 {{.URL}}
-
-      {{end}}
-
-  # 週次通知（複数設定可）
-  weekly:
+  # 定期通知（複数設定可）
+  periodic:
     - enabled: true
       days_of_week: [1, 4] # 月曜、木曜
       time: "09:00"
@@ -232,6 +208,7 @@ webhook:
 calendar_sync:
   enabled: false
   interval_hours: 6
+  lookahead_days: 30
 
 # Notionプロパティマッピング
 property_mapping:
@@ -309,7 +286,7 @@ Webhookの `payload_template` では以下の変数を使用できる：
 | 変数                   | 説明                                   |
 | ---------------------- | -------------------------------------- |
 | `{{.Message}}`         | 生成済み通知メッセージ本文             |
-| `{{.Type}}`            | 通知種別（advance/daily/weekly/manual） |
+| `{{.Type}}`            | 通知種別（advance/periodic/manual） |
 | `{{.Events}}`          | 通知対象のイベント配列                 |
 | `{{.Event}}`           | 先頭イベント（単一通知の簡易参照）     |
 | `{{.MinutesBefore}}`   | 事前通知の分数（advanceのみ）          |
@@ -326,8 +303,8 @@ Webhookの `payload_template` では以下の変数を使用できる：
 ### テンプレート例
 
 ```
-# 週次通知
-@everyone 今週の予定！
+# 定期通知
+@everyone 次の予定一覧！
 
 {{range .Events}}
 - **{{.Name}}** ({{.Date}} {{.Time}}){{if .Location}} 📍{{.Location}}{{end}}
@@ -359,7 +336,7 @@ var webAssets embed.FS
 | タブ           | 機能                                              |
 | -------------- | ------------------------------------------------- |
 | ダッシュボード | 予定一覧、同期ボタン、スヌーズ/ミュート、手動通知 |
-| 通知設定       | 事前通知/毎日通知/週次通知の設定                  |
+| 通知設定       | 事前通知/定期通知の設定                          |
 | カレンダー連携 | Google Calendar連携設定                           |
 | プロパティ     | Notionカラムとテンプレートのマッピング            |
 | 履歴           | 通知履歴表示・クリア                              |
@@ -395,7 +372,7 @@ CREATE TABLE events (
 -- 通知履歴テーブル
 CREATE TABLE notification_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL,        -- advance/daily/weekly/manual
+    type TEXT NOT NULL,        -- advance/periodic/manual
     status TEXT NOT NULL,      -- success/failed
     message TEXT,
     notion_page_id TEXT,

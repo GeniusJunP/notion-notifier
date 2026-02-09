@@ -1,15 +1,15 @@
 {{define "content-notifications"}}
 <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500" x-data="{
     advanceNotifications: {{ .Config.Notifications.Advance | json }} || [],
-    weeklyNotifications: {{ .Config.Notifications.Weekly | json }} || [],
+    periodicNotifications: {{ .Config.Notifications.Periodic | json }} || [],
     snoozeUntil: {{ .SnoozeDate | json }},
     muteUntil: {{ .MuteDate | json }},
     init() {
         this.normalizeAdvance();
-        this.normalizeWeekly();
+        this.normalizePeriodic();
     },
     addRule() {
-        this.advanceNotifications.push({ enabled: true, minutes_before: 60, message: '', location: '', url: '', conditions: { enabled: false, days_of_week: [], property_filters: [] } });
+        this.advanceNotifications.push({ enabled: true, minutes_before: 60, message: '', original_message: '', location: '', url: '', conditions: { enabled: false, days_of_week: [], property_filters: [] } });
     },
     removeRule(index) {
         if(confirm('このルールを削除しますか？')) {
@@ -31,7 +31,12 @@
         if (!Array.isArray(this.advanceNotifications)) {
             this.advanceNotifications = [];
         }
-        this.advanceNotifications.forEach(rule => this.ensureAdvance(rule));
+        this.advanceNotifications.forEach(rule => {
+            this.ensureAdvance(rule);
+            if (rule.original_message === undefined) {
+                rule.original_message = rule.message || '';
+            }
+        });
     },
     toggleAdvanceDay(rule, day) {
         this.ensureAdvance(rule);
@@ -51,25 +56,28 @@
         this.ensureAdvance(rule);
         rule.conditions.property_filters.splice(index, 1);
     },
-    addWeeklyRule() {
-        this.weeklyNotifications.push({ enabled: true, days_of_week: [1], time: '09:00', days_ahead: 7, message: '' });
+    addPeriodicRule() {
+        this.periodicNotifications.push({ enabled: true, days_of_week: [1], time: '09:00', days_ahead: 7, message: '', original_message: '' });
     },
-    removeWeeklyRule(index) {
-        if(confirm('この週次ルールを削除しますか？')) {
-            this.weeklyNotifications.splice(index, 1);
+    removePeriodicRule(index) {
+        if(confirm('この定期ルールを削除しますか？')) {
+            this.periodicNotifications.splice(index, 1);
         }
     },
-    normalizeWeekly() {
-        if (!Array.isArray(this.weeklyNotifications)) {
-            this.weeklyNotifications = [];
+    normalizePeriodic() {
+        if (!Array.isArray(this.periodicNotifications)) {
+            this.periodicNotifications = [];
         }
-        this.weeklyNotifications.forEach(rule => {
+        this.periodicNotifications.forEach(rule => {
             if (!Array.isArray(rule.days_of_week)) {
                 rule.days_of_week = [];
             }
+            if (rule.original_message === undefined) {
+                rule.original_message = rule.message || '';
+            }
         });
     },
-    toggleWeeklyDay(rule, day) {
+    togglePeriodicDay(rule, day) {
         if (!Array.isArray(rule.days_of_week)) {
             rule.days_of_week = [];
         }
@@ -80,6 +88,16 @@
             rule.days_of_week.push(day);
             rule.days_of_week.sort((a, b) => a - b);
         }
+    },
+    resetAdvanceTemplate(index) {
+        const rule = this.advanceNotifications[index];
+        if (!rule) return;
+        rule.message = rule.original_message || '';
+    },
+    resetPeriodicTemplate(index) {
+        const rule = this.periodicNotifications[index];
+        if (!rule) return;
+        rule.message = rule.original_message || '';
     },
     dateToYMD(date) {
         return date.toISOString().slice(0, 10);
@@ -123,6 +141,8 @@
     </div>
 
     <form id="notifications-form" hx-post="/api/config" hx-ext="json-enc" hx-swap="none" hx-indicator="#save-indicator">
+        <input type="hidden" name="notifications.advance_clear" :value="advanceNotifications.length === 0">
+        <input type="hidden" name="notifications.periodic_clear" :value="periodicNotifications.length === 0">
         <div class="grid grid-cols-1 gap-10">
             <!-- Advance Notifications Section -->
             <section id="snooze-mute" class="space-y-6">
@@ -196,15 +216,15 @@
                                             class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium"
                                             placeholder="例: {{.Name}} が始まります">
                                         <div class="mt-2 flex gap-2">
-                                            <span
+                                            <code
                                                 class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                                title="予定の名前">`{{.Name}}`</span>
-                                            <span
+                                                title="予定の名前">{{"{{.Name}}"}}</code>
+                                            <code
                                                 class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                                title="開始時刻">`{{.Time}}`</span>
-                                            <span
+                                                title="開始時刻">{{"{{.Time}}"}}</code>
+                                            <code
                                                 class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                                title="場所">`{{.Location}}`</span>
+                                                title="場所">{{"{{.Location}}"}}</code>
                                         </div>
                                         <div :id="'advance-preview-'+index"
                                             class="mt-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-xs text-slate-500 dark:text-slate-400">
@@ -213,6 +233,16 @@
                                         <div :id="'advance-preview-indicator-'+index"
                                             class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-2">
                                             <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>更新中...
+                                        </div>
+                                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                                            <button type="button" @click="resetAdvanceTemplate(index)"
+                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                                テンプレートをリセット
+                                            </button>
+                                            <button type="submit" form="notifications-form"
+                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm shadow-primary-500/20 transition-all">
+                                                テンプレートを保存
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -307,90 +337,16 @@
                 </div>
             </section>
 
-            <!-- Daily Notification Section -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold flex items-center gap-3">
-                    <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
-                        <i data-lucide="sun" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
-                    </div>
-                    毎日通知 (Daily Digest)
-                </h2>
-                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"
-                    x-data="{ enabled: {{.Config.Notifications.Daily.Enabled}}, todayOnly: {{.Config.Notifications.Daily.TodayOnly}} }">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div class="lg:col-span-2">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">STATUS</label>
-                            <div class="flex items-center gap-3">
-                                <button type="button" @click="enabled = !enabled"
-                                    :class="enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
-                                    class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
-                                    <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
-                                        class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
-                                </button>
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400"
-                                    x-text="enabled ? 'ON' : 'OFF'"></span>
-                                <input type="hidden" name="notifications.daily.enabled" :value="enabled">
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">TIME</label>
-                            <input type="time" name="notifications.daily.time"
-                                value="{{.Config.Notifications.Daily.Time}}"
-                                class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-bold text-lg">
-                        </div>
-                        <div class="lg:col-span-3">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">RANGE</label>
-                            <div class="flex items-center gap-3">
-                                <button type="button" @click="todayOnly = !todayOnly"
-                                    :class="todayOnly ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
-                                    class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
-                                    <span :class="todayOnly ? 'translate-x-5' : 'translate-x-0'"
-                                        class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out"></span>
-                                </button>
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400"
-                                    x-text="todayOnly ? '今日のみ' : '明日まで'"></span>
-                                <input type="hidden" name="notifications.daily.today_only" :value="todayOnly">
-                            </div>
-                        </div>
-                        <div class="lg:col-span-12">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">MESSAGE
-                                BODY</label>
-                            <textarea id="daily-message" name="notifications.daily.message" rows="4"
-                                oninput="document.getElementById('daily-preview-template').value = this.value;"
-                                class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium resize-none tracking-tight">{{.Config.Notifications.Daily.Message}}</textarea>
-                            <form id="daily-preview-form" hx-post="/api/notifications/preview" hx-ext="json-enc"
-                                hx-trigger="keyup changed delay:700ms from:#daily-message" hx-target="#daily-preview"
-                                hx-swap="innerHTML" hx-indicator="#daily-preview-indicator">
-                                <input type="hidden" name="template" id="daily-preview-template"
-                                    value="{{.Config.Notifications.Daily.Message}}">
-                            </form>
-                            <div id="daily-preview"
-                                class="mt-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-xs text-slate-500 dark:text-slate-400">
-                                ここにリアルタイムプレビューが表示されます。
-                            </div>
-                            <div id="daily-preview-indicator"
-                                class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-2">
-                                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>更新中...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Weekly Notification Section -->
+            <!-- Periodic Notification Section -->
             <section class="space-y-6">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-bold flex items-center gap-3">
                         <div class="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-xl">
                             <i data-lucide="calendar-days" class="w-5 h-5 text-sky-600 dark:text-sky-400"></i>
                         </div>
-                        週次通知 (Weekly Digest)
+                        定期通知 (Periodic Digest)
                     </h2>
-                    <button type="button" @click="addWeeklyRule()"
+                    <button type="button" @click="addPeriodicRule()"
                         class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 group">
                         <i data-lucide="plus" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"></i>
                         ルールを追加
@@ -398,10 +354,10 @@
                 </div>
 
                 <div class="space-y-4">
-                    <template x-for="(rule, index) in weeklyNotifications" :key="'weekly-'+index">
+                    <template x-for="(rule, index) in periodicNotifications" :key="'periodic-'+index">
                         <div
                             class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-sky-200 dark:hover:border-sky-900/50 transition-all duration-300">
-                            <button @click="removeWeeklyRule(index)" type="button"
+                            <button @click="removePeriodicRule(index)" type="button"
                                 class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all lg:opacity-0 group-hover:opacity-100">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
@@ -419,7 +375,7 @@
                                         </button>
                                         <span class="text-xs font-bold text-slate-600 dark:text-slate-400"
                                             x-text="rule.enabled ? 'ON' : 'OFF'"></span>
-                                        <input type="hidden" :name="'notifications.weekly['+index+'].enabled'"
+                                        <input type="hidden" :name="'notifications.periodic['+index+'].enabled'"
                                             :value="rule.enabled">
                                     </div>
                                 </div>
@@ -430,17 +386,17 @@
                                     <div class="flex flex-wrap gap-2">
                                         <template
                                             x-for="day in [{value:1,label:'月'},{value:2,label:'火'},{value:3,label:'水'},{value:4,label:'木'},{value:5,label:'金'},{value:6,label:'土'},{value:7,label:'日'}]"
-                                            :key="'weekly-day-'+day.value">
-                                            <button type="button" @click="toggleWeeklyDay(rule, day.value)"
+                                            :key="'periodic-day-'+day.value">
+                                            <button type="button" @click="togglePeriodicDay(rule, day.value)"
                                                 :class="(rule.days_of_week || []).includes(day.value) ? 'bg-sky-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'"
                                                 class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-sky-300 transition-all">
                                                 <span x-text="day.label"></span>
                                             </button>
                                         </template>
                                         <template x-for="(day, dayIndex) in (rule.days_of_week || [])"
-                                            :key="'weekly-day-input-'+dayIndex">
+                                            :key="'periodic-day-input-'+dayIndex">
                                             <input type="hidden"
-                                                :name="'notifications.weekly['+index+'].days_of_week['+dayIndex+']'"
+                                                :name="'notifications.periodic['+index+'].days_of_week['+dayIndex+']'"
                                                 :value="day">
                                         </template>
                                     </div>
@@ -449,7 +405,7 @@
                                 <div class="lg:col-span-2">
                                     <label
                                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">TIME</label>
-                                    <input type="time" :name="'notifications.weekly['+index+'].time'"
+                                    <input type="time" :name="'notifications.periodic['+index+'].time'"
                                         x-model="rule.time"
                                         class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all font-bold text-lg">
                                 </div>
@@ -458,7 +414,7 @@
                                     <label
                                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">DAYS
                                         AHEAD</label>
-                                    <select :name="'notifications.weekly['+index+'].days_ahead'"
+                                    <select :name="'notifications.periodic['+index+'].days_ahead'"
                                         x-model.number="rule.days_ahead"
                                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all font-bold">
                                         <option value="1">1日先</option>
@@ -473,42 +429,52 @@
                                     <label
                                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">MESSAGE
                                         TEMPLATE</label>
-                                    <textarea :id="'weekly-message-'+index"
-                                        :name="'notifications.weekly['+index+'].message'" rows="4"
+                                    <textarea :id="'periodic-message-'+index"
+                                        :name="'notifications.periodic['+index+'].message'" rows="4"
                                         x-model="rule.message" :data-days-ahead="rule.days_ahead"
                                         hx-post="/api/notifications/preview" hx-ext="json-enc"
-                                        hx-trigger="keyup changed delay:700ms" :hx-target="'#weekly-preview-'+index"
-                                        :hx-indicator="'#weekly-preview-indicator-'+index" hx-swap="innerHTML"
+                                        hx-trigger="keyup changed delay:700ms" :hx-target="'#periodic-preview-'+index"
+                                        :hx-indicator="'#periodic-preview-indicator-'+index" hx-swap="innerHTML"
                                         hx-vals="js:{template: this.value, to_date: (function(el){ const days = parseInt(el.dataset.daysAhead || '0', 10); const d = new Date(); d.setDate(d.getDate() + (isNaN(days) ? 0 : days)); return d.toISOString().slice(0,10); })(this) }"
                                         class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all font-medium resize-none tracking-tight"
                                         placeholder="例: {{range .Events}}...{{end}}"></textarea>
                                     <div class="mt-2 flex flex-wrap gap-2">
-                                        <span
+                                        <code
                                             class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                            title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
-                                        <span
+                                            title="イベント配列">{{"{{.Events}}"}}</code>
+                                        <code
                                             class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                            title="イベント名">`{{`{{.Name}}`}}`</span>
-                                        <span
+                                            title="イベント名">{{"{{.Name}}"}}</code>
+                                        <code
                                             class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                            title="日付">`{{`}}{{.Date}}`}}`</span>
+                                            title="日付">{{"{{.Date}}"}}</code>
                                     </div>
-                                    <div :id="'weekly-preview-'+index"
+                                    <div :id="'periodic-preview-'+index"
                                         class="mt-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-xs text-slate-500 dark:text-slate-400">
                                         ここにリアルタイムプレビューが表示されます。
                                     </div>
-                                    <div :id="'weekly-preview-indicator-'+index"
+                                    <div :id="'periodic-preview-indicator-'+index"
                                         class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-2">
                                         <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>更新中...
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                                        <button type="button" @click="resetPeriodicTemplate(index)"
+                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                            テンプレートをリセット
+                                        </button>
+                                        <button type="submit" form="notifications-form"
+                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-sky-600 text-white hover:bg-sky-700 shadow-sm shadow-sky-500/20 transition-all">
+                                            テンプレートを保存
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </template>
 
-                    <div x-show="weeklyNotifications.length === 0"
+                    <div x-show="periodicNotifications.length === 0"
                         class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400 text-center">
-                        週次通知ルールはまだありません。右上の「追加」から作成できます。
+                        定期通知ルールはまだありません。右上の「追加」から作成できます。
                     </div>
                 </div>
             </section>
@@ -644,15 +610,15 @@
                                     class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium resize-none tracking-tight"
                                     placeholder='{"content":"{{.Message}}"}'>{{.Config.Webhook.Schedule.PayloadTemplate}}</textarea>
                                 <div class="flex flex-wrap gap-2">
-                                    <span
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="生成済み通知メッセージ">`{{`}}{{.Message}}{{`}}`</span>
-                                    <span
+                                        title="生成済み通知メッセージ">{{"{{.Message}}"}}</code>
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="通知種別">`{{`}}{{.Type}}{{`}}`</span>
-                                    <span
+                                        title="通知種別">{{"{{.Type}}"}}</code>
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
+                                        title="イベント配列">{{"{{.Events}}"}}</code>
                                 </div>
                             </div>
                         </div>
@@ -677,15 +643,15 @@
                                     class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium resize-none tracking-tight"
                                     placeholder='{"content":"{{.Message}}"}'>{{.Config.Webhook.Notification.PayloadTemplate}}</textarea>
                                 <div class="flex flex-wrap gap-2">
-                                    <span
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="生成済み通知メッセージ">`{{`}}{{.Message}}{{`}}`</span>
-                                    <span
+                                        title="生成済み通知メッセージ">{{"{{.Message}}"}}</code>
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="通知種別">`{{`}}{{.Type}}{{`}}`</span>
-                                    <span
+                                        title="通知種別">{{"{{.Type}}"}}</code>
+                                    <code
                                         class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                                        title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
+                                        title="イベント配列">{{"{{.Events}}"}}</code>
                                 </div>
                             </div>
                         </div>

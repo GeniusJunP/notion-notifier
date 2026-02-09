@@ -46,6 +46,7 @@ type upcomingView struct {
 	TimeLabel string
 	Location  string
 	URL       string
+	SyncStatus string
 }
 
 type historyView struct {
@@ -131,6 +132,21 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	snoozeActive := config.IsSnoozed(cfg, now)
 	muteActive := config.IsMuted(cfg, now)
 
+	syncMap := map[string]string{}
+	if len(upcomingEvents) > 0 {
+		ids := make([]string, 0, len(upcomingEvents))
+		for _, ev := range upcomingEvents {
+			if ev.NotionPageID != "" {
+				ids = append(ids, ev.NotionPageID)
+			}
+		}
+		if len(ids) > 0 {
+			if statusMap, err := s.repo.GetSyncStatusMap(r.Context(), ids); err == nil {
+				syncMap = statusMap
+			}
+		}
+	}
+
 	view := dashboardView{
 		TodayCount:    len(todayEvents),
 		NextSyncLabel: nextSyncLabel,
@@ -142,25 +158,21 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		SnoozeUntil:   formatDateOnly(cfg.SnoozeUntil, loc),
 		MuteActive:    muteActive,
 		MuteUntil:     formatDateOnly(cfg.MuteUntil, loc),
-		Upcoming:      buildUpcomingViews(upcomingEvents, 10, loc),
+		Upcoming:      buildUpcomingViews(upcomingEvents, 10, loc, syncMap),
 		History:       buildHistoryViews(historyItems, loc),
 	}
 
 	manualTemplates := map[string]string{
-		"daily":  cfg.Notifications.Daily.Message,
-		"weekly": "",
+		"periodic": "",
 	}
-	if len(cfg.Notifications.Weekly) > 0 {
-		manualTemplates["weekly"] = cfg.Notifications.Weekly[0].Message
+	if len(cfg.Notifications.Periodic) > 0 {
+		manualTemplates["periodic"] = cfg.Notifications.Periodic[0].Message
 	}
-	manualPreset := "daily"
-	if manualTemplates["daily"] == "" && manualTemplates["weekly"] != "" {
-		manualPreset = "weekly"
+	manualPreset := "periodic"
+	if manualTemplates["periodic"] == "" {
+		manualPreset = "custom"
 	}
 	defaultTemplate := manualTemplates[manualPreset]
-	if defaultTemplate == "" {
-		defaultTemplate = manualTemplates["weekly"]
-	}
 
 	s.render(w, "dashboard.html", map[string]interface{}{
 		"Page":            "dashboard",
@@ -194,6 +206,10 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	now := time.Now().In(loc)
+	lookahead := cfg.CalendarSync.LookaheadDays
+	if lookahead <= 0 {
+		lookahead = 30
+	}
 	lastSyncedAt, syncCount, _ := s.repo.GetSyncSummary(r.Context())
 	lastSyncLabel := "未実行"
 	if lastSyncedAt != "" {
@@ -208,7 +224,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 		"CalendarLast":  lastSyncLabel,
 		"CalendarCount": syncCount,
 		"CalendarFrom":  now.Format("2006-01-02"),
-		"CalendarTo":    now.AddDate(0, 0, 30).Format("2006-01-02"),
+		"CalendarTo":    now.AddDate(0, 0, lookahead).Format("2006-01-02"),
 	})
 }
 
@@ -231,7 +247,7 @@ func (s *Server) handleAPISync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast": "同期を完了しました (%d件)"}`, count))
+	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast":{"type":"sync_complete","count":%d}}`, count))
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -263,6 +279,14 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	if notifications, ok := updates["notifications"]; ok {
 		nb, _ := json.Marshal(notifications)
 		json.Unmarshal(nb, &mergedCfg.Notifications)
+		if m, ok := notifications.(map[string]interface{}); ok {
+			if isTruthy(m["advance_clear"]) {
+				mergedCfg.Notifications.Advance = nil
+			}
+			if isTruthy(m["periodic_clear"]) {
+				mergedCfg.Notifications.Periodic = nil
+			}
+		}
 	}
 	if webhook, ok := updates["webhook"]; ok {
 		wb, _ := json.Marshal(webhook)
@@ -310,7 +334,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Trigger", `{"showToast": "設定を保存しました"}`)
+	w.Header().Set("HX-Trigger", `{"showToast":{"type":"config_saved"}}`)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -383,7 +407,7 @@ func (s *Server) handleAPIManualNotification(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Send failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("HX-Trigger", `{"showToast": "手動通知を送信しました"}`)
+	w.Header().Set("HX-Trigger", `{"showToast":{"type":"manual_sent"}}`)
 	writePreviewHTML(w, message, "")
 }
 
@@ -412,7 +436,7 @@ func (s *Server) handleAPICalendarSync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Calendar sync failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast": "カレンダー同期完了 (%d件)"}`, count))
+	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast":{"type":"calendar_sync_complete","count":%d}}`, count))
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -425,7 +449,7 @@ func (s *Server) handleAPICalendarClear(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to clear sync records: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("HX-Trigger", `{"showToast": "同期レコードをクリアしました"}`)
+	w.Header().Set("HX-Trigger", `{"showToast":{"type":"sync_records_cleared"}}`)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -438,7 +462,7 @@ func (s *Server) handleAPIHistoryClear(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to clear history: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("HX-Trigger", `{"showToast": "通知履歴をクリアしました"}`)
+	w.Header().Set("HX-Trigger", `{"showToast":{"type":"history_cleared"}}`)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -469,11 +493,17 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func buildUpcomingViews(events []models.Event, limit int, loc *time.Location) []upcomingView {
+func buildUpcomingViews(events []models.Event, limit int, loc *time.Location, syncMap map[string]string) []upcomingView {
 	out := make([]upcomingView, 0, limit)
 	for _, ev := range events {
 		if limit > 0 && len(out) >= limit {
 			break
+		}
+		status := "unsynced"
+		if syncMap != nil {
+			if v, ok := syncMap[ev.NotionPageID]; ok && v != "" {
+				status = v
+			}
 		}
 		out = append(out, upcomingView{
 			Title:     ev.Title,
@@ -481,6 +511,7 @@ func buildUpcomingViews(events []models.Event, limit int, loc *time.Location) []
 			TimeLabel: formatEventTime(ev, loc),
 			Location:  ev.Location,
 			URL:       ev.URL,
+			SyncStatus: status,
 		})
 	}
 	return out
@@ -553,6 +584,19 @@ func firstLine(input string) string {
 	}
 	parts := strings.SplitN(line, "\n", 2)
 	return strings.TrimSpace(parts[0])
+}
+
+func isTruthy(value interface{}) bool {
+	switch v := value.(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true" || v == "1"
+	case float64:
+		return v != 0
+	default:
+		return false
+	}
 }
 
 func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {

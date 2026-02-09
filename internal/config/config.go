@@ -28,9 +28,9 @@ type SyncConfig struct {
 }
 
 type Notifications struct {
-	Advance []AdvanceNotification `yaml:"advance" json:"advance"`
-	Daily   DailyNotification     `yaml:"daily" json:"daily"`
-	Weekly  []WeeklyNotification  `yaml:"weekly" json:"weekly"`
+	Advance  []AdvanceNotification   `yaml:"advance" json:"advance"`
+	Periodic []PeriodicNotification  `yaml:"periodic" json:"periodic"`
+	Weekly   []PeriodicNotification  `yaml:"weekly" json:"-"`
 }
 
 type WebhookConfig struct {
@@ -64,14 +64,7 @@ type PropertyFilter struct {
 	Value    string `yaml:"value" json:"value"`
 }
 
-type DailyNotification struct {
-	Enabled   bool   `yaml:"enabled" json:"enabled"`
-	Time      string `yaml:"time" json:"time"`
-	TodayOnly bool   `yaml:"today_only" json:"today_only"`
-	Message   string `yaml:"message" json:"message"`
-}
-
-type WeeklyNotification struct {
+type PeriodicNotification struct {
 	Enabled    bool   `yaml:"enabled" json:"enabled"`
 	DaysOfWeek []int  `yaml:"days_of_week" json:"days_of_week"`
 	Time       string `yaml:"time" json:"time"`
@@ -80,8 +73,9 @@ type WeeklyNotification struct {
 }
 
 type CalendarSyncConfig struct {
-	Enabled       bool `yaml:"enabled" json:"enabled"`
-	IntervalHours int  `yaml:"interval_hours" json:"interval_hours"`
+	Enabled        bool `yaml:"enabled" json:"enabled"`
+	IntervalHours  int  `yaml:"interval_hours" json:"interval_hours"`
+	LookaheadDays  int  `yaml:"lookahead_days" json:"lookahead_days"`
 }
 
 type PropertyMapping struct {
@@ -205,26 +199,24 @@ func ValidateConfig(cfg Config) error {
 	if cfg.CalendarSync.IntervalHours <= 0 {
 		return errors.New("calendar_sync.interval_hours must be > 0")
 	}
+	if cfg.CalendarSync.LookaheadDays <= 0 {
+		return errors.New("calendar_sync.lookahead_days must be > 0")
+	}
 	for i, adv := range cfg.Notifications.Advance {
 		if adv.MinutesBefore <= 0 {
 			return fmt.Errorf("notifications.advance[%d].minutes_before must be > 0", i)
 		}
 	}
-	if cfg.Notifications.Daily.Enabled {
-		if err := validateHHMM(cfg.Notifications.Daily.Time); err != nil {
-			return fmt.Errorf("notifications.daily.time: %w", err)
+	for i, periodic := range cfg.Notifications.Periodic {
+		if periodic.DaysAhead <= 0 {
+			return fmt.Errorf("notifications.periodic[%d].days_ahead must be > 0", i)
 		}
-	}
-	for i, weekly := range cfg.Notifications.Weekly {
-		if weekly.DaysAhead <= 0 {
-			return fmt.Errorf("notifications.weekly[%d].days_ahead must be > 0", i)
+		if err := validateHHMM(periodic.Time); err != nil {
+			return fmt.Errorf("notifications.periodic[%d].time: %w", i, err)
 		}
-		if err := validateHHMM(weekly.Time); err != nil {
-			return fmt.Errorf("notifications.weekly[%d].time: %w", i, err)
-		}
-		for _, d := range weekly.DaysOfWeek {
+		for _, d := range periodic.DaysOfWeek {
 			if d < 1 || d > 7 {
-				return fmt.Errorf("notifications.weekly[%d].days_of_week must be 1-7", i)
+				return fmt.Errorf("notifications.periodic[%d].days_of_week must be 1-7", i)
 			}
 		}
 	}
@@ -292,6 +284,10 @@ func WriteConfig(path string, cfg Config) error {
 }
 
 func NormalizeConfig(cfg Config) Config {
+	if len(cfg.Notifications.Periodic) == 0 && len(cfg.Notifications.Weekly) > 0 {
+		cfg.Notifications.Periodic = cfg.Notifications.Weekly
+	}
+	cfg.Notifications.Weekly = nil
 	if cfg.Webhook.Schedule.ContentType == "" {
 		cfg.Webhook.Schedule.ContentType = "application/json"
 	}
@@ -303,6 +299,9 @@ func NormalizeConfig(cfg Config) Config {
 	}
 	if cfg.Webhook.Notification.PayloadTemplate == "" {
 		cfg.Webhook.Notification.PayloadTemplate = `{"content":"{{.Message}}"}`
+	}
+	if cfg.CalendarSync.LookaheadDays <= 0 {
+		cfg.CalendarSync.LookaheadDays = 30
 	}
 	cfg.Webhook.Schedule.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Schedule.PayloadTemplate)
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)

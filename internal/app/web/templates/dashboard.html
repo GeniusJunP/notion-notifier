@@ -112,12 +112,24 @@
                     <div class="flex gap-4">
                         <div class="w-1.5 h-12 bg-primary-500 rounded-full"></div>
                         <div class="flex-1">
-                            {{if .URL}}
-                            <a href="{{.URL}}" target="_blank"
-                                class="text-sm font-bold dark:text-white hover:underline">{{.Title}}</a>
-                            {{else}}
-                            <p class="text-sm font-bold dark:text-white">{{.Title}}</p>
-                            {{end}}
+                            <div class="flex flex-wrap items-center gap-2">
+                                {{if .URL}}
+                                <a href="{{.URL}}" target="_blank"
+                                    class="text-sm font-bold dark:text-white hover:underline">{{.Title}}</a>
+                                {{else}}
+                                <p class="text-sm font-bold dark:text-white">{{.Title}}</p>
+                                {{end}}
+                                {{if eq .SyncStatus "synced"}}
+                                <span
+                                    class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full">同期済み</span>
+                                {{else if eq .SyncStatus "error"}}
+                                <span
+                                    class="text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 px-2 py-0.5 rounded-full">同期エラー</span>
+                                {{else}}
+                                <span
+                                    class="text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-2 py-0.5 rounded-full">未同期</span>
+                                {{end}}
+                            </div>
                             <p class="text-xs text-slate-400 mt-1">
                                 {{if .DateLabel}}{{.DateLabel}}{{end}}
                                 {{if .TimeLabel}} {{.TimeLabel}}{{end}}
@@ -183,8 +195,7 @@
                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">TEMPLATE</label>
                     <select x-model="manualPreset" @change="setManualPreset(manualPreset)"
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
-                        <option value="daily">日次テンプレート</option>
-                        <option value="weekly" :disabled="!manualTemplates.weekly">週次テンプレート</option>
+                        <option value="periodic" :disabled="!manualTemplates.periodic">定期テンプレート</option>
                         <option value="custom">カスタム</option>
                     </select>
                 </div>

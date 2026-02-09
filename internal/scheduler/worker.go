@@ -22,8 +22,7 @@ import (
 
 const (
 	notificationTypeAdvance = "advance"
-	notificationTypeDaily   = "daily"
-	notificationTypeWeekly  = "weekly"
+	notificationTypePeriodic = "periodic"
 	notificationTypeManual  = "manual"
 )
 
@@ -37,8 +36,7 @@ type Scheduler struct {
 
 	mu             sync.Mutex
 	advanceTimers  map[string]*time.Timer
-	dailyLastSent  string
-	weeklyLastSent map[int]string
+	periodicLastSent map[int]string
 	notionKey      string
 	calendarKey    string
 	calendarID     string
@@ -63,7 +61,7 @@ func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, 
 		calendar:       calendarClient,
 		renderer:       renderer,
 		advanceTimers:  map[string]*time.Timer{},
-		weeklyLastSent: map[int]string{},
+		periodicLastSent: map[int]string{},
 		stopCh:         make(chan struct{}),
 	}
 }
@@ -73,10 +71,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 	go s.syncLoop(ctx)
 
 	s.wg.Add(1)
-	go s.dailyLoop(ctx)
-
-	s.wg.Add(1)
-	go s.weeklyLoop(ctx)
+	go s.periodicLoop(ctx)
 
 	s.wg.Add(1)
 	go s.calendarLoop(ctx)
@@ -93,8 +88,7 @@ func (s *Scheduler) Stop() {
 }
 
 func (s *Scheduler) Reload(ctx context.Context) error {
-	s.dailyLastSent = ""
-	s.weeklyLastSent = map[int]string{}
+	s.periodicLastSent = map[int]string{}
 	return s.RebuildAdvanceSchedules(ctx)
 }
 
@@ -119,40 +113,7 @@ func (s *Scheduler) syncLoop(ctx context.Context) {
 	}
 }
 
-func (s *Scheduler) dailyLoop(ctx context.Context) {
-	defer s.wg.Done()
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-s.stopCh:
-			return
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			cfg, _ := s.cfg.Get()
-			if !cfg.Notifications.Daily.Enabled {
-				continue
-			}
-			loc, _ := time.LoadLocation(cfg.Timezone)
-			now := time.Now().In(loc)
-			if now.Format("15:04") != cfg.Notifications.Daily.Time {
-				continue
-			}
-			today := now.Format("2006-01-02")
-			if s.dailyLastSent == today {
-				continue
-			}
-			err := s.sendDaily(ctx, now)
-			if err != nil {
-				log.Printf("daily notification failed: %v", err)
-			}
-			s.dailyLastSent = today
-		}
-	}
-}
-
-func (s *Scheduler) weeklyLoop(ctx context.Context) {
+func (s *Scheduler) periodicLoop(ctx context.Context) {
 	defer s.wg.Done()
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -166,7 +127,7 @@ func (s *Scheduler) weeklyLoop(ctx context.Context) {
 			cfg, _ := s.cfg.Get()
 			loc, _ := time.LoadLocation(cfg.Timezone)
 			now := time.Now().In(loc)
-			for i, rule := range cfg.Notifications.Weekly {
+			for i, rule := range cfg.Notifications.Periodic {
 				if !rule.Enabled {
 					continue
 				}
@@ -177,14 +138,14 @@ func (s *Scheduler) weeklyLoop(ctx context.Context) {
 					continue
 				}
 				key := now.Format("2006-01-02")
-				if s.weeklyLastSent[i] == key {
+				if s.periodicLastSent[i] == key {
 					continue
 				}
-				err := s.sendWeekly(ctx, now, i, rule)
+				err := s.sendPeriodic(ctx, now, i, rule)
 				if err != nil {
-					log.Printf("weekly notification failed: %v", err)
+					log.Printf("periodic notification failed: %v", err)
 				}
-				s.weeklyLastSent[i] = key
+				s.periodicLastSent[i] = key
 			}
 		}
 	}
@@ -207,7 +168,11 @@ func (s *Scheduler) calendarLoop(ctx context.Context) {
 			}
 			interval := time.Duration(cfg.CalendarSync.IntervalHours) * time.Hour
 			ticker.Reset(interval)
-			if _, err := s.SyncCalendar(ctx, time.Now(), time.Now().AddDate(0, 0, 30)); err != nil {
+			lookahead := cfg.CalendarSync.LookaheadDays
+			if lookahead <= 0 {
+				lookahead = 30
+			}
+			if _, err := s.SyncCalendar(ctx, time.Now(), time.Now().AddDate(0, 0, lookahead)); err != nil {
 				log.Printf("calendar sync failed: %v", err)
 			}
 		}
@@ -321,27 +286,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 	return nil
 }
 
-func (s *Scheduler) sendDaily(ctx context.Context, now time.Time) error {
-	cfg, _ := s.cfg.Get()
-	loc, _ := time.LoadLocation(cfg.Timezone)
-	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	to := from
-	if !cfg.Notifications.Daily.TodayOnly {
-		to = from.AddDate(0, 0, 1)
-	}
-	events, err := s.repo.ListEventsBetween(ctx, from, to)
-	if err != nil {
-		return err
-	}
-	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
-	message, err := s.renderer.RenderList(cfg.Notifications.Daily.Message, templateEvents)
-	if err != nil {
-		return err
-	}
-	return s.sendWebhook(ctx, notificationTypeDaily, message, templateEvents, 0, "", cfg, true)
-}
-
-func (s *Scheduler) sendWeekly(ctx context.Context, now time.Time, idx int, rule config.WeeklyNotification) error {
+func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, idx int, rule config.PeriodicNotification) error {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
@@ -355,7 +300,7 @@ func (s *Scheduler) sendWeekly(ctx context.Context, now time.Time, idx int, rule
 	if err != nil {
 		return err
 	}
-	return s.sendWebhook(ctx, notificationTypeWeekly, message, templateEvents, 0, "", cfg, true)
+	return s.sendWebhook(ctx, notificationTypePeriodic, message, templateEvents, 0, "", cfg, true)
 }
 
 func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {

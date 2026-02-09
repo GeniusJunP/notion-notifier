@@ -44,7 +44,7 @@
             </div>
 
             <div class="p-10 space-y-10">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
                     <div class="space-y-4">
                         <label
                             class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">同期の頻度</label>
@@ -54,6 +54,17 @@
                                 class="w-full pl-6 pr-16 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-black text-xl">
                             <span
                                 class="absolute right-6 top-4.5 text-xs font-bold text-slate-400 uppercase tracking-widest pointer-events-none group-focus-within/input:text-primary-500 transition-colors">時間ごと</span>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <label
+                            class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">同期対象日数</label>
+                        <div class="relative group/input max-w-xs">
+                            <input type="number" name="calendar_sync.lookahead_days"
+                                value="{{.Config.CalendarSync.LookaheadDays}}"
+                                class="w-full pl-6 pr-16 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-black text-xl">
+                            <span
+                                class="absolute right-6 top-4.5 text-xs font-bold text-slate-400 uppercase tracking-widest pointer-events-none group-focus-within/input:text-primary-500 transition-colors">日分</span>
                         </div>
                     </div>
                 </div>

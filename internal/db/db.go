@@ -309,6 +309,34 @@ func (r *Repository) GetSyncRecord(ctx context.Context, notionPageID string) (mo
 	return record, true, nil
 }
 
+func (r *Repository) GetSyncStatusMap(ctx context.Context, notionPageIDs []string) (map[string]string, error) {
+	statuses := make(map[string]string)
+	if len(notionPageIDs) == 0 {
+		return statuses, nil
+	}
+	placeholders := strings.Repeat("?,", len(notionPageIDs))
+	placeholders = strings.TrimRight(placeholders, ",")
+	query := fmt.Sprintf("SELECT notion_page_id, sync_status FROM sync_records WHERE notion_page_id IN (%s);", placeholders)
+	args := make([]interface{}, len(notionPageIDs))
+	for i, id := range notionPageIDs {
+		args[i] = id
+	}
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return statuses, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var status string
+		if err := rows.Scan(&id, &status); err != nil {
+			return statuses, err
+		}
+		statuses[id] = status
+	}
+	return statuses, rows.Err()
+}
+
 func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRecord) error {
 	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, notion_updated_at, calendar_updated_at, last_synced_at, sync_status)
 	VALUES (?, ?, ?, ?, ?, ?)
