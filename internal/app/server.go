@@ -64,32 +64,36 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	cfg, _ := s.cfg.Get()
 	s.render(w, "dashboard.html", map[string]interface{}{
-		"Page":   "dashboard",
-		"Config": cfg,
+		"Page":            "dashboard",
+		"PageTitle":       "ダッシュボード - Notion Notifier",
+		"Config":          cfg,
 	})
 }
 
 func (s *Server) handleNotifications(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
 	s.render(w, "notifications.html", map[string]interface{}{
-		"Page":   "notifications",
-		"Config": cfg,
+		"Page":            "notifications",
+		"PageTitle":       "通知設定 - Notion Notifier",
+		"Config":          cfg,
 	})
 }
 
 func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
 	s.render(w, "calendar.html", map[string]interface{}{
-		"Page":   "calendar",
-		"Config": cfg,
+		"Page":            "calendar",
+		"PageTitle":       "カレンダー連携 - Notion Notifier",
+		"Config":          cfg,
 	})
 }
 
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
 	s.render(w, "settings.html", map[string]interface{}{
-		"Page":   "settings",
-		"Config": cfg,
+		"Page":            "settings",
+		"PageTitle":       "システム設定 - Notion Notifier",
+		"Config":          cfg,
 	})
 }
 
@@ -170,10 +174,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 			mergedCfg.MuteUntil = v
 		}
 	}
-	if security, ok := updates["security"]; ok {
-		sb, _ := json.Marshal(security)
-		json.Unmarshal(sb, &mergedCfg.Security)
-	}
+	// security.basic_auth is config-only (not updated via UI)
 
 	if err := s.cfg.UpdateConfig(mergedCfg); err != nil {
 		http.Error(w, "Failed to update config: "+err.Error(), http.StatusInternalServerError)

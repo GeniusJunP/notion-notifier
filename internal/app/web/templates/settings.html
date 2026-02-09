@@ -1,6 +1,4 @@
-{{define "title"}}システム設定 - Notion Notifier{{end}}
-
-{{define "content"}}
+{{define "content-settings"}}
 <div class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -85,68 +83,6 @@
                             </div>
                         </template>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Security Section -->
-        <section class="space-y-6">
-            <h2 class="text-xl font-bold flex items-center gap-3">
-                <div class="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-xl">
-                    <i data-lucide="shield-lock" class="w-5 h-5 text-rose-600 dark:text-rose-400"></i>
-                </div>
-                セキュリティ
-            </h2>
-
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm"
-                x-data="{ enabled: {{.Config.Security.BasicAuth.Enabled}} }">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div class="lg:col-span-3">
-                        <label
-                            class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">BASIC認証</label>
-                        <div class="flex items-center gap-4">
-                            <button type="button" @click="enabled = !enabled"
-                                :class="enabled ? 'bg-rose-600' : 'bg-slate-200 dark:bg-slate-700'"
-                                class="relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
-                                <span :class="enabled ? 'translate-x-6' : 'translate-x-0'"
-                                    class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-xl ring-0 transition duration-300 ease-in-out"></span>
-                            </button>
-                            <span class="text-sm font-black text-slate-700 dark:text-slate-300"
-                                x-text="enabled ? 'ENABLED' : 'DISABLED'"></span>
-                            <input type="hidden" name="security.basic_auth.enabled" :value="enabled">
-                        </div>
-                    </div>
-
-                    <div class="lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-8" x-show="enabled" x-collapse
-                        x-cloak>
-                        <div class="space-y-3">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">ユーザー名</label>
-                            <div class="relative">
-                                <i data-lucide="user" class="absolute left-4 top-3.5 w-5 h-5 text-slate-300"></i>
-                                <input type="text" name="security.basic_auth.username"
-                                    value="{{.Config.Security.BasicAuth.Username}}"
-                                    class="w-full pl-12 pr-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 outline-none transition-all font-bold">
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <label
-                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">パスワード</label>
-                            <div class="relative">
-                                <i data-lucide="key" class="absolute left-4 top-3.5 w-5 h-5 text-slate-300"></i>
-                                <input type="password" name="security.basic_auth.password"
-                                    value="{{.Config.Security.BasicAuth.Password}}"
-                                    class="w-full pl-12 pr-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 outline-none transition-all font-bold">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div x-show="!enabled"
-                    class="mt-8 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex items-center gap-4">
-                    <i data-lucide="info" class="w-5 h-5 text-slate-400"></i>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                        BASIC認証が無効な場合、管理画面は誰でもアクセス可能になります。公開環境では有効にすることを強く推奨します。</p>
                 </div>
             </div>
         </section>
