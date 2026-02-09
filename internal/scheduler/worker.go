@@ -28,12 +28,12 @@ const (
 )
 
 type Scheduler struct {
-	cfg       *config.Manager
-	repo      *db.Repository
-	notion    *notion.Client
-	webhook   *webhook.Client
-	calendar  *calendar.Client
-	renderer  *tpl.Renderer
+	cfg      *config.Manager
+	repo     *db.Repository
+	notion   *notion.Client
+	webhook  *webhook.Client
+	calendar *calendar.Client
+	renderer *tpl.Renderer
 
 	mu             sync.Mutex
 	advanceTimers  map[string]*time.Timer
@@ -385,6 +385,32 @@ func (s *Scheduler) PreviewTemplate(ctx context.Context, template string, from, 
 	return s.renderer.RenderList(template, templateEvents)
 }
 
+func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, from, to time.Time) (string, string, error) {
+	cfg, _ := s.cfg.Get()
+	events, err := s.repo.ListEventsBetween(ctx, from, to)
+	if err != nil {
+		return "", "", err
+	}
+	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
+	message, err := s.renderer.RenderList(template, templateEvents)
+	if err != nil {
+		return "", "", err
+	}
+	payloadCtx := models.WebhookPayloadContext{
+		Type:    notificationTypeManual,
+		Message: message,
+		Events:  templateEvents,
+	}
+	if len(templateEvents) > 0 {
+		payloadCtx.Event = templateEvents[0]
+	}
+	payload, err := s.renderer.RenderPayload(cfg.Webhook.Notification.PayloadTemplate, payloadCtx)
+	if err != nil {
+		return message, "", err
+	}
+	return message, payload, nil
+}
+
 func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 	cfg, env := s.cfg.Get()
 	if !cfg.CalendarSync.Enabled {
@@ -437,12 +463,12 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 			return count, err
 		}
 		record = models.SyncRecord{
-			NotionPageID:       ev.NotionPageID,
-			CalendarEventID:    newID,
-			NotionUpdatedAt:    ev.NotionUpdatedAt,
-			CalendarUpdatedAt:  updatedAt,
-			LastSyncedAt:       time.Now().In(loc).Format(time.RFC3339),
-			SyncStatus:         "synced",
+			NotionPageID:      ev.NotionPageID,
+			CalendarEventID:   newID,
+			NotionUpdatedAt:   ev.NotionUpdatedAt,
+			CalendarUpdatedAt: updatedAt,
+			LastSyncedAt:      time.Now().In(loc).Format(time.RFC3339),
+			SyncStatus:        "synced",
 		}
 		if err := s.repo.UpsertSyncRecord(ctx, record); err != nil {
 			return count, err

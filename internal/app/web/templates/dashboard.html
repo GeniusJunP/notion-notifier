@@ -116,17 +116,16 @@
                 class="bg-gradient-to-br from-primary-600 to-indigo-700 p-8 rounded-3xl shadow-xl text-white relative overflow-hidden group">
                 <div class="relative z-10">
                     <h3 class="text-xl font-bold mb-2">クイック操作</h3>
-                    <p class="text-primary-100 text-sm mb-6 opacity-80">未実装のため操作できません。</p>
+                    <p class="text-primary-100 text-sm mb-6 opacity-80">通知の調整や履歴クリアを素早く実行します。</p>
                     <div class="space-y-3">
-                        <button
-                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 opacity-60 cursor-not-allowed"
-                            disabled>
+                        <a href="/notifications#snooze-mute"
+                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 hover:bg-white/20">
                             <i data-lucide="volume-x" class="w-4 h-4"></i>
                             通知をミュート
-                        </button>
-                        <button
-                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 opacity-60 cursor-not-allowed"
-                            disabled>
+                        </a>
+                        <button hx-post="/api/history/clear" hx-swap="none"
+                            hx-confirm="通知履歴をクリアしますか？"
+                            class="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-2xl text-sm font-bold transition-all flex items-center gap-3 hover:bg-white/20">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                             ログをクリア
                         </button>

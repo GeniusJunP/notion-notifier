@@ -82,6 +82,71 @@
         </div>
     </form>
 
+    <section class="space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold flex items-center gap-3">
+                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
+                    <i data-lucide="activity" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+                </div>
+                同期ステータス
+            </h2>
+            <button type="button" hx-post="/api/calendar/clear" hx-swap="none"
+                hx-confirm="同期レコードをクリアしますか？\nGoogle Calendar上のイベントは削除されません。"
+                class="px-4 py-2 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                レコードをクリア
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">最終同期</p>
+                <p class="mt-2 text-lg font-black dark:text-white">{{.CalendarLast}}</p>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">同期レコード数</p>
+                <p class="mt-2 text-lg font-black dark:text-white">{{.CalendarCount}}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="space-y-6">
+        <h2 class="text-xl font-bold flex items-center gap-3">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                <i data-lucide="play-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+            </div>
+            手動同期
+        </h2>
+
+        <form id="calendar-sync-form" hx-post="/api/calendar/sync" hx-ext="json-enc" hx-swap="none"
+            hx-indicator="#calendar-sync-indicator"
+            class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">FROM</label>
+                    <input type="date" name="from_date" value="{{.CalendarFrom}}"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">TO</label>
+                    <input type="date" name="to_date" value="{{.CalendarTo}}"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit"
+                        class="px-6 py-3 rounded-2xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        同期を実行
+                    </button>
+                </div>
+            </div>
+        </form>
+        <div id="calendar-sync-indicator"
+            class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+            同期中...
+        </div>
+    </section>
+
     <div id="save-indicator"
         class="htmx-indicator fixed top-4 right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 z-[100]">
         <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary-600"></i>

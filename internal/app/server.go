@@ -43,7 +43,7 @@ type upcomingView struct {
 }
 
 type historyView struct {
-	Title      string
+	Title     string
 	Status    string
 	TimeLabel string
 }
@@ -80,6 +80,11 @@ func (s *Server) Routes() http.Handler {
 	// API routes
 	mux.HandleFunc("/api/sync", s.requireAuth(s.handleAPISync))
 	mux.HandleFunc("/api/config", s.requireAuth(s.handleAPIConfig))
+	mux.HandleFunc("/api/notifications/preview", s.requireAuth(s.handleAPIPreviewNotification))
+	mux.HandleFunc("/api/notifications/manual", s.requireAuth(s.handleAPIManualNotification))
+	mux.HandleFunc("/api/calendar/sync", s.requireAuth(s.handleAPICalendarSync))
+	mux.HandleFunc("/api/calendar/clear", s.requireAuth(s.handleAPICalendarClear))
+	mux.HandleFunc("/api/history/clear", s.requireAuth(s.handleAPIHistoryClear))
 
 	return mux
 }
@@ -97,7 +102,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 
 	todayEvents, _ := s.repo.ListEventsBetween(r.Context(), todayStart, todayEnd)
 	upcomingEvents, _ := s.repo.ListUpcomingEvents(r.Context(), 14, now)
-	historyItems, _ := s.repo.ListNotificationHistory(r.Context(), 10)
+	historyItems, _ := s.repo.ListNotificationHistory(r.Context(), 50)
 
 	status := s.scheduler.NotionSyncStatus()
 	nextSyncLabel := "—"
@@ -129,37 +134,72 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render(w, "dashboard.html", map[string]interface{}{
-		"Page":            "dashboard",
-		"PageTitle":       "ダッシュボード - Notion Notifier",
-		"Config":          cfg,
-		"Dashboard":       view,
+		"Page":      "dashboard",
+		"PageTitle": "ダッシュボード - Notion Notifier",
+		"Config":    cfg,
+		"Dashboard": view,
 	})
 }
 
 func (s *Server) handleNotifications(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
+	loc, _ := time.LoadLocation(cfg.Timezone)
+	now := time.Now().In(loc)
+	today := now.Format("2006-01-02")
+	manualTemplates := map[string]string{
+		"daily":  cfg.Notifications.Daily.Message,
+		"weekly": "",
+	}
+	if len(cfg.Notifications.Weekly) > 0 {
+		manualTemplates["weekly"] = cfg.Notifications.Weekly[0].Message
+	}
+	defaultTemplate := manualTemplates["daily"]
+	if defaultTemplate == "" {
+		defaultTemplate = manualTemplates["weekly"]
+	}
 	s.render(w, "notifications.html", map[string]interface{}{
-		"Page":            "notifications",
-		"PageTitle":       "通知設定 - Notion Notifier",
-		"Config":          cfg,
+		"Page":                  "notifications",
+		"PageTitle":             "通知設定 - Notion Notifier",
+		"Config":                cfg,
+		"SnoozeDate":            formatDateOnly(cfg.SnoozeUntil, loc),
+		"MuteDate":              formatDateOnly(cfg.MuteUntil, loc),
+		"SnoozeActive":          config.IsSnoozed(cfg, now),
+		"MuteActive":            config.IsMuted(cfg, now),
+		"ManualTemplates":       manualTemplates,
+		"ManualTemplateDefault": defaultTemplate,
+		"ManualFrom":            today,
+		"ManualTo":              today,
 	})
 }
 
 func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
+	loc, _ := time.LoadLocation(cfg.Timezone)
+	now := time.Now().In(loc)
+	lastSyncedAt, syncCount, _ := s.repo.GetSyncSummary(r.Context())
+	lastSyncLabel := "未実行"
+	if lastSyncedAt != "" {
+		if parsed, err := time.Parse(time.RFC3339, lastSyncedAt); err == nil {
+			lastSyncLabel = parsed.In(loc).Format("2006-01-02 15:04")
+		}
+	}
 	s.render(w, "calendar.html", map[string]interface{}{
-		"Page":            "calendar",
-		"PageTitle":       "カレンダー連携 - Notion Notifier",
-		"Config":          cfg,
+		"Page":          "calendar",
+		"PageTitle":     "カレンダー連携 - Notion Notifier",
+		"Config":        cfg,
+		"CalendarLast":  lastSyncLabel,
+		"CalendarCount": syncCount,
+		"CalendarFrom":  now.Format("2006-01-02"),
+		"CalendarTo":    now.AddDate(0, 0, 30).Format("2006-01-02"),
 	})
 }
 
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	cfg, _ := s.cfg.Get()
 	s.render(w, "settings.html", map[string]interface{}{
-		"Page":            "settings",
-		"PageTitle":       "システム設定 - Notion Notifier",
-		"Config":          cfg,
+		"Page":      "settings",
+		"PageTitle": "システム設定 - Notion Notifier",
+		"Config":    cfg,
 	})
 }
 
@@ -185,6 +225,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 
 	// Get current config
 	currCfg, _ := s.cfg.Get()
+	loc, _ := time.LoadLocation(currCfg.Timezone)
 
 	// Decode into a map first to see what fields are present
 	var updates map[string]interface{}
@@ -232,12 +273,16 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	if snooze, ok := updates["snooze_until"]; ok {
 		if v, ok := snooze.(string); ok {
-			mergedCfg.SnoozeUntil = v
+			if normalized, err := normalizeDateInput(v, loc); err == nil {
+				mergedCfg.SnoozeUntil = normalized
+			}
 		}
 	}
 	if mute, ok := updates["mute_until"]; ok {
 		if v, ok := mute.(string); ok {
-			mergedCfg.MuteUntil = v
+			if normalized, err := normalizeDateInput(v, loc); err == nil {
+				mergedCfg.MuteUntil = normalized
+			}
 		}
 	}
 	// security.basic_auth is config-only (not updated via UI)
@@ -248,6 +293,114 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("HX-Trigger", `{"showToast": "設定を保存しました"}`)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type notificationRequest struct {
+	Template string `json:"template"`
+	FromDate string `json:"from_date"`
+	ToDate   string `json:"to_date"`
+}
+
+func (s *Server) handleAPIPreviewNotification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req notificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	from, to, err := parseDateRange(req.FromDate, req.ToDate, s.cfg)
+	if err != nil {
+		http.Error(w, "Invalid date: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	message, payload, err := s.scheduler.PreviewManualPayload(r.Context(), req.Template, from, to)
+	if err != nil {
+		http.Error(w, "Preview failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writePreviewHTML(w, message, payload)
+}
+
+func (s *Server) handleAPIManualNotification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req notificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	from, to, err := parseDateRange(req.FromDate, req.ToDate, s.cfg)
+	if err != nil {
+		http.Error(w, "Invalid date: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	message, err := s.scheduler.SendManualNotification(r.Context(), req.Template, from, to)
+	if err != nil {
+		http.Error(w, "Send failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Trigger", `{"showToast": "手動通知を送信しました"}`)
+	writePreviewHTML(w, message, "")
+}
+
+type calendarSyncRequest struct {
+	FromDate string `json:"from_date"`
+	ToDate   string `json:"to_date"`
+}
+
+func (s *Server) handleAPICalendarSync(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req calendarSyncRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	from, to, err := parseDateRange(req.FromDate, req.ToDate, s.cfg)
+	if err != nil {
+		http.Error(w, "Invalid date: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	count, err := s.scheduler.SyncCalendar(r.Context(), from, to)
+	if err != nil {
+		http.Error(w, "Calendar sync failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast": "カレンダー同期完了 (%d件)"}`, count))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleAPICalendarClear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := s.repo.ClearSyncRecords(r.Context()); err != nil {
+		http.Error(w, "Failed to clear sync records: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Trigger", `{"showToast": "同期レコードをクリアしました"}`)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleAPIHistoryClear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := s.repo.ClearNotificationHistory(r.Context()); err != nil {
+		http.Error(w, "Failed to clear history: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Trigger", `{"showToast": "通知履歴をクリアしました"}`)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -302,7 +455,7 @@ func buildHistoryViews(items []models.NotificationHistory, loc *time.Location) [
 		}
 		timeLabel := item.SentAt.In(loc).Format("01/02 15:04")
 		out = append(out, historyView{
-			Title:      title,
+			Title:     title,
 			Status:    item.Status,
 			TimeLabel: timeLabel,
 		})
@@ -347,4 +500,106 @@ func firstLine(input string) string {
 	}
 	parts := strings.SplitN(line, "\n", 2)
 	return strings.TrimSpace(parts[0])
+}
+
+func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
+	current, _ := cfg.Get()
+	loc, _ := time.LoadLocation(current.Timezone)
+	now := time.Now().In(loc)
+	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	to := from
+
+	fromStr = strings.TrimSpace(fromStr)
+	toStr = strings.TrimSpace(toStr)
+
+	if fromStr != "" {
+		parsed, err := parseDateInput(fromStr, loc)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		from = parsed
+	}
+
+	if toStr != "" {
+		parsed, err := parseDateInput(toStr, loc)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		to = parsed
+	} else if fromStr != "" {
+		to = from
+	}
+
+	if to.Before(from) {
+		return time.Time{}, time.Time{}, fmt.Errorf("to_date must be after from_date")
+	}
+
+	return from, to, nil
+}
+
+func parseDateInput(value string, loc *time.Location) (time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}, fmt.Errorf("date is required")
+	}
+	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
+		return parsed.In(loc), nil
+	}
+	layouts := []string{
+		"2006-01-02",
+		"2006-01-02T15:04",
+		"2006-01-02 15:04",
+		"2006-01-02T15:04:05",
+	}
+	for _, layout := range layouts {
+		if parsed, err := time.ParseInLocation(layout, value, loc); err == nil {
+			return parsed, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("invalid date format")
+}
+
+func normalizeDateInput(value string, loc *time.Location) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", nil
+	}
+	if len(value) == len("2006-01-02") && strings.Count(value, "-") == 2 {
+		parsed, err := time.ParseInLocation("2006-01-02", value, loc)
+		if err != nil {
+			return "", err
+		}
+		return parsed.Add(24 * time.Hour).Format(time.RFC3339), nil
+	}
+	parsed, err := parseDateInput(value, loc)
+	if err != nil {
+		return "", err
+	}
+	return parsed.Format(time.RFC3339), nil
+}
+
+func writePreviewHTML(w http.ResponseWriter, message string, payload string) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	escaped := template.HTMLEscapeString(message)
+	parts := []string{
+		fmt.Sprintf(`<div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Message</div><pre class="whitespace-pre-wrap font-mono text-xs leading-relaxed">%s</pre>`, escaped),
+	}
+	if payload != "" {
+		parts = append(parts, fmt.Sprintf(`<div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-6 mb-2">Payload</div><pre class="whitespace-pre-wrap font-mono text-xs leading-relaxed">%s</pre>`, template.HTMLEscapeString(payload)))
+	}
+	fmt.Fprintf(w, `<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-4 text-sm text-slate-700 dark:text-slate-200">%s</div>`, strings.Join(parts, ""))
+}
+
+func formatDateOnly(value string, loc *time.Location) string {
+	if value == "" {
+		return ""
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return ""
+	}
+	if loc == nil {
+		loc = time.Local
+	}
+	return parsed.In(loc).Format("2006-01-02")
 }
