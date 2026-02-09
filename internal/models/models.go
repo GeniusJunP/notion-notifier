@@ -12,6 +12,7 @@ type Event struct {
 	IsAllDay     bool
 	Location     string
 	URL          string
+	Content      string
 	Custom       map[string]string
 	RawPropsJSON string
 	FetchedAt    time.Time
@@ -53,6 +54,7 @@ type TemplateEvent struct {
 	IsAllDay      bool
 	Location      string
 	URL           string
+	Content       string
 	MinutesBefore int
 	Custom        map[string]string
 }

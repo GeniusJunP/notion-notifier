@@ -228,6 +228,12 @@ content_rules:
   stop_at_next_heading: true
   stop_at_delimiter: true
 
+# コンテンツ抽出ルールの挙動
+# - start_heading と一致する見出し（h1〜h3）を起点に本文を抽出
+# - stop_at_next_heading が true の場合、次の見出しで終了
+# - stop_at_delimiter が true の場合、Notionの区切り線（dividerブロック）で終了
+# - 抽出結果は {{.Content}} で参照可能
+
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効
 mute_until: "" # ISO8601日時、空白=無効
@@ -277,6 +283,7 @@ google:
 | `{{.IsAllDay}}`      | 終日イベントかどうか             |
 | `{{.Location}}`      | 場所                             |
 | `{{.URL}}`           | NotionページURL                  |
+| `{{.Content}}`       | 抽出済み本文（コンテンツ抽出ルール適用） |
 | `{{.MinutesBefore}}` | 事前通知の分数                   |
 
 ### Webhookペイロード用変数
@@ -365,6 +372,7 @@ CREATE TABLE events (
     is_all_day INTEGER DEFAULT 0,  -- 1=終日
     location TEXT,
     url TEXT,
+    content TEXT,
     raw_properties TEXT,           -- JSONで保存
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

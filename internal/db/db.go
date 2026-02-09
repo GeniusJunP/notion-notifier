@@ -44,6 +44,7 @@ func initSchema(db *sql.DB) error {
 			is_all_day INTEGER DEFAULT 0,
 			location TEXT,
 			url TEXT,
+			content TEXT,
 			raw_properties TEXT,
 			fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
 		);`,
@@ -78,6 +79,11 @@ func initSchema(db *sql.DB) error {
 			return err
 		}
 	}
+	if _, err := db.Exec(`ALTER TABLE events ADD COLUMN content TEXT;`); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column") {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -86,8 +92,8 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		return nil
 	}
 	query := `INSERT INTO events (
-		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, raw_properties, fetched_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
 		title=excluded.title,
 		start_date=excluded.start_date,
@@ -97,6 +103,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		is_all_day=excluded.is_all_day,
 		location=excluded.location,
 		url=excluded.url,
+		content=excluded.content,
 		raw_properties=excluded.raw_properties,
 		fetched_at=excluded.fetched_at;`
 
@@ -125,6 +132,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 			isAllDay,
 			ev.Location,
 			ev.URL,
+			ev.Content,
 			ev.RawPropsJSON,
 			ev.FetchedAt.Format(time.RFC3339),
 		)
@@ -137,7 +145,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 }
 
 func (r *Repository) ListEventsBetween(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, raw_properties, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
 	FROM events
 	WHERE start_date <= ? AND (end_date IS NULL OR end_date = '' OR end_date >= ?)
 	ORDER BY start_date ASC, start_time ASC;`
@@ -155,13 +163,13 @@ func (r *Repository) ListUpcomingEvents(ctx context.Context, days int, now time.
 }
 
 func (r *Repository) GetEvent(ctx context.Context, notionPageID string) (models.Event, bool, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, raw_properties, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
 	FROM events WHERE notion_page_id = ?;`
 	row := r.db.QueryRowContext(ctx, query, notionPageID)
 	var ev models.Event
 	var isAllDay int
 	var fetchedAt string
-	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.RawPropsJSON, &fetchedAt); err != nil {
+	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &fetchedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return ev, false, nil
 		}
@@ -182,7 +190,7 @@ func scanEvents(rows *sql.Rows) ([]models.Event, error) {
 		var ev models.Event
 		var isAllDay int
 		var fetchedAt string
-		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.RawPropsJSON, &fetchedAt); err != nil {
+		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &fetchedAt); err != nil {
 			return nil, err
 		}
 		ev.IsAllDay = isAllDay == 1

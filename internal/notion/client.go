@@ -338,3 +338,169 @@ func joinRichText(value any) string {
 	}
 	return strings.Join(parts, "")
 }
+
+type blockListResponse struct {
+	Results    []block `json:"results"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor string  `json:"next_cursor"`
+}
+
+type block struct {
+	ID               string        `json:"id"`
+	Type             string        `json:"type"`
+	HasChildren      bool          `json:"has_children"`
+	Paragraph        *blockText    `json:"paragraph,omitempty"`
+	Heading1         *blockText    `json:"heading_1,omitempty"`
+	Heading2         *blockText    `json:"heading_2,omitempty"`
+	Heading3         *blockText    `json:"heading_3,omitempty"`
+	BulletedListItem *blockText    `json:"bulleted_list_item,omitempty"`
+	NumberedListItem *blockText    `json:"numbered_list_item,omitempty"`
+	ToDo             *blockText    `json:"to_do,omitempty"`
+	Divider          *struct{}     `json:"divider,omitempty"`
+}
+
+type blockText struct {
+	RichText []richText `json:"rich_text"`
+	Checked  bool       `json:"checked"`
+}
+
+type richText struct {
+	PlainText string `json:"plain_text"`
+}
+
+func (c *Client) FetchContent(ctx context.Context, pageID string, rules config.ContentRules) (string, error) {
+	if c == nil || pageID == "" || rules.StartHeading == "" {
+		return "", nil
+	}
+	blocks, err := c.listBlocks(ctx, pageID)
+	if err != nil {
+		return "", err
+	}
+	return extractContentFromBlocks(blocks, rules), nil
+}
+
+func (c *Client) listBlocks(ctx context.Context, blockID string) ([]block, error) {
+	var out []block
+	cursor := ""
+	for {
+		url := fmt.Sprintf("%s/blocks/%s/children?page_size=100", c.baseURL, blockID)
+		if cursor != "" {
+			url += "&start_cursor=" + cursor
+		}
+		resp, err := c.doRequest(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+		var br blockListResponse
+		if err := json.Unmarshal(resp, &br); err != nil {
+			return nil, err
+		}
+		out = append(out, br.Results...)
+		if !br.HasMore || br.NextCursor == "" {
+			break
+		}
+		cursor = br.NextCursor
+	}
+	return out, nil
+}
+
+func extractContentFromBlocks(blocks []block, rules config.ContentRules) string {
+	if rules.StartHeading == "" {
+		return ""
+	}
+	var lines []string
+	started := false
+	for _, b := range blocks {
+		text, kind, level, isHeading, isDivider, checked := blockInfo(b)
+		if !started {
+			if isHeading && headingMatches(text, rules.StartHeading) {
+				started = true
+				if rules.IncludeStart && text != "" {
+					lines = append(lines, formatHeading(level, text))
+				}
+			}
+			continue
+		}
+		if rules.StopAtDelimiter && isDivider {
+			break
+		}
+		if rules.StopAtNextHeading && isHeading {
+			break
+		}
+		if text == "" {
+			continue
+		}
+		lines = append(lines, formatBlock(kind, level, text, checked))
+	}
+	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+func blockInfo(b block) (text string, kind string, level int, isHeading bool, isDivider bool, checked bool) {
+	switch b.Type {
+	case "paragraph":
+		return joinBlockText(b.Paragraph), "paragraph", 0, false, false, false
+	case "heading_1":
+		return joinBlockText(b.Heading1), "heading", 1, true, false, false
+	case "heading_2":
+		return joinBlockText(b.Heading2), "heading", 2, true, false, false
+	case "heading_3":
+		return joinBlockText(b.Heading3), "heading", 3, true, false, false
+	case "bulleted_list_item":
+		return joinBlockText(b.BulletedListItem), "bulleted", 0, false, false, false
+	case "numbered_list_item":
+		return joinBlockText(b.NumberedListItem), "numbered", 0, false, false, false
+	case "to_do":
+		return joinBlockText(b.ToDo), "todo", 0, false, false, b.ToDo != nil && b.ToDo.Checked
+	case "divider":
+		return "", "divider", 0, false, true, false
+	default:
+		return "", "", 0, false, false, false
+	}
+}
+
+func joinBlockText(bt *blockText) string {
+	if bt == nil || len(bt.RichText) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, rt := range bt.RichText {
+		if rt.PlainText != "" {
+			parts = append(parts, rt.PlainText)
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+func headingMatches(text, start string) bool {
+	return strings.EqualFold(strings.TrimSpace(text), strings.TrimSpace(start))
+}
+
+func formatHeading(level int, text string) string {
+	prefix := "#"
+	switch level {
+	case 2:
+		prefix = "##"
+	case 3:
+		prefix = "###"
+	}
+	return prefix + " " + text
+}
+
+func formatBlock(kind string, level int, text string, checked bool) string {
+	switch kind {
+	case "bulleted":
+		return "- " + text
+	case "numbered":
+		return "1. " + text
+	case "todo":
+		if checked {
+			return "- [x] " + text
+		}
+		return "- [ ] " + text
+	default:
+		if kind == "heading" {
+			return formatHeading(level, text)
+		}
+		return text
+	}
+}

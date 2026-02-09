@@ -299,6 +299,11 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	if propertyMapping, ok := updates["property_mapping"]; ok {
 		pb, _ := json.Marshal(propertyMapping)
 		json.Unmarshal(pb, &mergedCfg.PropertyMap)
+		if m, ok := propertyMapping.(map[string]interface{}); ok {
+			if isTruthy(m["custom_clear"]) {
+				mergedCfg.PropertyMap.Custom = nil
+			}
+		}
 	}
 	if contentRules, ok := updates["content_rules"]; ok {
 		cr, _ := json.Marshal(contentRules)

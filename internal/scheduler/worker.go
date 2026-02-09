@@ -201,6 +201,16 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	events := notion.MapPagesToEvents(pages, cfg.PropertyMap, loc)
+	if cfg.ContentRules.StartHeading != "" && s.notion != nil {
+		for i := range events {
+			content, err := s.notion.FetchContent(ctx, events[i].NotionPageID, cfg.ContentRules)
+			if err != nil {
+				log.Printf("content extract failed for %s: %v", events[i].NotionPageID, err)
+				continue
+			}
+			events[i].Content = content
+		}
+	}
 	if err := s.repo.UpsertEvents(ctx, events); err != nil {
 		s.setNotionStatus(0, err)
 		return 0, err
@@ -619,6 +629,7 @@ func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateE
 		IsAllDay: ev.IsAllDay,
 		Location: ev.Location,
 		URL:      ev.URL,
+		Content:  ev.Content,
 		Custom:   custom,
 	}
 }
