@@ -34,9 +34,11 @@ Notion予定通知ツールの管理画面を、**「直感的な操作性」** 
 ### サイトマップ
 1. **ダッシュボード (`/`)**
    - **Metrics Card**: 本日の予定件数、次の同期までの時間、エラー発生状況
-   - **Quick Actions**: 手動同期、全てミュート、ログクリア
+   - **Notification Status**: ミュート/スヌーズ状態の表示
+   - **Manual Notification**: テンプレート選択と手動送信
    - **Recent Activity**: 直近の通知履歴タイムライン
    - **Upcoming**: 直近の予定リスト（カード形式）
+   - **Quick Actions**: サイドバー内に配置（手動同期/ミュート/履歴クリア）
 
 2. **通知設定 (`/notifications`)**
    - **Rules Engine UI**: 

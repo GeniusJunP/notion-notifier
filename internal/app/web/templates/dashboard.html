@@ -16,7 +16,7 @@
     </div>
 
     <!-- Metrics Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div
             class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-center justify-between mb-6">
@@ -52,6 +52,29 @@
         <div
             class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div class="flex items-center justify-between mb-6">
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">通知状態</span>
+                <div
+                    class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors duration-300">
+                    <i data-lucide="bell-off"></i>
+                </div>
+            </div>
+            <div class="space-y-2 text-xs font-bold">
+                {{if .Dashboard.MuteActive}}
+                <div class="text-rose-600">ミュート中: {{.Dashboard.MuteUntil}}まで</div>
+                {{else}}
+                <div class="text-slate-500 dark:text-slate-400">ミュートなし</div>
+                {{end}}
+                {{if .Dashboard.SnoozeActive}}
+                <div class="text-amber-600">スヌーズ中: {{.Dashboard.SnoozeUntil}}まで</div>
+                {{else}}
+                <div class="text-slate-500 dark:text-slate-400">スヌーズなし</div>
+                {{end}}
+            </div>
+        </div>
+
+        <div
+            class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="flex items-center justify-between mb-6">
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">最終同期</span>
                 <div
                     class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
@@ -71,73 +94,200 @@
 
     <!-- Main Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Recent Activity -->
+        <!-- Upcoming Schedule -->
         <div
             class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="p-8 border-b border-slate-100 dark:border-slate-800">
                 <h2 class="text-lg font-bold flex items-center gap-3">
                     <div class="p-2 bg-primary-50 dark:bg-primary-900/40 rounded-lg">
-                        <i data-lucide="activity" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
+                        <i data-lucide="list-todo" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
                     </div>
-                    最近の活動
+                    予定プレビュー
                 </h2>
             </div>
-            <div class="p-0">
-                {{if .Dashboard.History}}
-                <ul class="divide-y divide-slate-50 dark:divide-slate-800">
-                    {{range .Dashboard.History}}
-                    <li class="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <div class="flex items-start gap-5">
-                            <div
-                                class="w-12 h-12 rounded-2xl {{if eq .Status "failed"}}bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400{{else}}bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400{{end}} flex items-center justify-center flex-shrink-0">
-                                <i data-lucide="{{if eq .Status "failed"}}alert-triangle{{else}}check-circle{{end}}" class="w-5 h-5"></i>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between mb-1">
-                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{.Title}}</p>
-                                    <span
-                                        class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{.TimeLabel}}</span>
-                                </div>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Status: {{.Status}}</p>
-                            </div>
-                        </div>
-                    </li>
-                    {{end}}
-                </ul>
-                {{else}}
-                <div class="p-8 text-sm text-slate-500 dark:text-slate-400">通知履歴はありません。</div>
-                {{end}}
-            </div>
-        </div>
-
-        <!-- Upcoming Mini List -->
-        <div class="space-y-8">
-            <div
-                class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div class="p-8 border-b border-slate-100 dark:border-slate-800">
-                    <h3 class="font-bold flex items-center gap-2">
-                        <i data-lucide="list-todo" class="w-4 h-4 text-slate-400"></i>
-                        予定プレビュー
-                    </h3>
-                </div>
-                {{if .Dashboard.Upcoming}}
-                <div class="divide-y divide-slate-50 dark:divide-slate-800">
-                    {{range .Dashboard.Upcoming}}
-                    <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <div class="flex gap-4">
-                            <div class="w-1 h-10 bg-primary-500 rounded-full"></div>
-                            <div>
-                                <p class="text-sm font-bold dark:text-white">{{.Title}}</p>
-                                <p class="text-xs text-slate-400">{{.TimeLabel}}</p>
-                            </div>
+            {{if .Dashboard.Upcoming}}
+            <div class="divide-y divide-slate-50 dark:divide-slate-800">
+                {{range .Dashboard.Upcoming}}
+                <div class="p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div class="flex gap-4">
+                        <div class="w-1.5 h-12 bg-primary-500 rounded-full"></div>
+                        <div class="flex-1">
+                            {{if .URL}}
+                            <a href="{{.URL}}" target="_blank"
+                                class="text-sm font-bold dark:text-white hover:underline">{{.Title}}</a>
+                            {{else}}
+                            <p class="text-sm font-bold dark:text-white">{{.Title}}</p>
+                            {{end}}
+                            <p class="text-xs text-slate-400 mt-1">
+                                {{if .DateLabel}}{{.DateLabel}}{{end}}
+                                {{if .TimeLabel}} {{.TimeLabel}}{{end}}
+                                {{if .Location}} · {{.Location}}{{end}}
+                            </p>
                         </div>
                     </div>
-                    {{end}}
                 </div>
-                {{else}}
-                <div class="p-4 text-sm text-slate-500 dark:text-slate-400">予定がありません。</div>
                 {{end}}
             </div>
+            {{else}}
+            <div class="p-6 text-sm text-slate-500 dark:text-slate-400">予定がありません。</div>
+            {{end}}
+        </div>
+
+        <!-- Manual Notification -->
+        <div
+            class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 space-y-5"
+            x-data="{
+                manualPreset: {{ .ManualPreset | json }},
+                manualTemplates: {{ .ManualTemplates | json }},
+                manualTemplate: {{ .ManualTemplate | json }},
+                manualFrom: {{ .ManualFrom | json }},
+                manualTo: {{ .ManualTo | json }},
+                setManualPreset(preset) {
+                    this.manualPreset = preset;
+                    if (preset === 'custom') {
+                        return;
+                    }
+                    const value = this.manualTemplates[preset] || '';
+                    if (value) {
+                        this.manualTemplate = value;
+                    }
+                },
+                dateToYMD(date) {
+                    return date.toISOString().slice(0, 10);
+                },
+                setManualSingle(offsetDays) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + offsetDays);
+                    const v = this.dateToYMD(d);
+                    this.manualFrom = v;
+                    this.manualTo = v;
+                },
+                setManualRange(daysAhead) {
+                    const start = new Date();
+                    const end = new Date();
+                    end.setDate(end.getDate() + daysAhead);
+                    this.manualFrom = this.dateToYMD(start);
+                    this.manualTo = this.dateToYMD(end);
+                }
+            }">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                    <i data-lucide="send" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                </div>
+                <h2 class="text-lg font-bold">手動通知</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">TEMPLATE</label>
+                    <select x-model="manualPreset" @change="setManualPreset(manualPreset)"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
+                        <option value="daily">日次テンプレート</option>
+                        <option value="weekly" :disabled="!manualTemplates.weekly">週次テンプレート</option>
+                        <option value="custom">カスタム</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label
+                            class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">FROM</label>
+                        <input type="date" x-model="manualFrom" name="from_date" form="manual-notification-form"
+                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">TO</label>
+                        <input type="date" x-model="manualTo" name="to_date" form="manual-notification-form"
+                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" @click="setManualSingle(0)"
+                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">今日</button>
+                    <button type="button" @click="setManualSingle(1)"
+                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">明日</button>
+                    <button type="button" @click="setManualRange(7)"
+                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">1週間</button>
+                </div>
+
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">MESSAGE
+                        TEMPLATE</label>
+                    <textarea x-model="manualTemplate" name="template" form="manual-notification-form" rows="6"
+                        hx-post="/api/notifications/preview" hx-ext="json-enc" hx-trigger="keyup changed delay:700ms"
+                        hx-target="#manual-preview" hx-swap="innerHTML" hx-include="#manual-notification-form"
+                        hx-indicator="#manual-indicator"
+                        class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium resize-none tracking-tight"
+                        placeholder="テンプレートを入力してください"></textarea>
+                </div>
+
+                <form id="manual-notification-form" hx-ext="json-enc" hx-indicator="#manual-indicator"
+                    class="flex flex-wrap gap-3 items-center">
+                    <input type="hidden" name="preview_payload" value="true">
+                    <button type="submit" hx-post="/api/notifications/preview" hx-target="#manual-preview"
+                        hx-swap="innerHTML"
+                        class="px-4 py-2 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                        プレビュー
+                    </button>
+                    <button type="submit" hx-post="/api/notifications/manual" hx-target="#manual-preview"
+                        hx-swap="innerHTML"
+                        class="px-5 py-2 rounded-2xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all">
+                        送信
+                    </button>
+                    <span class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2"
+                        id="manual-indicator">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>送信中...
+                    </span>
+                </form>
+
+                <div id="manual-preview"
+                    class="text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                    プレビュー結果がここに表示されます。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div
+        class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h2 class="text-lg font-bold flex items-center gap-3">
+                <div class="p-2 bg-primary-50 dark:bg-primary-900/40 rounded-lg">
+                    <i data-lucide="activity" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
+                </div>
+                最近の活動
+            </h2>
+        </div>
+        <div class="p-0">
+            {{if .Dashboard.History}}
+            <ul class="divide-y divide-slate-50 dark:divide-slate-800">
+                {{range .Dashboard.History}}
+                <li class="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div class="flex items-start gap-5">
+                        <div
+                            class="w-12 h-12 rounded-2xl {{if eq .Status "failed"}}bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400{{else}}bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400{{end}} flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="{{if eq .Status "failed"}}alert-triangle{{else}}check-circle{{end}}" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{.Title}}</p>
+                                <span
+                                    class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{.TimeLabel}}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Status: {{.Status}}</p>
+                        </div>
+                    </div>
+                </li>
+                {{end}}
+            </ul>
+            {{else}}
+            <div class="p-8 text-sm text-slate-500 dark:text-slate-400">通知履歴はありません。</div>
+            {{end}}
         </div>
     </div>
 </div>

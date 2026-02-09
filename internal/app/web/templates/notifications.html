@@ -4,20 +4,9 @@
     weeklyNotifications: {{ .Config.Notifications.Weekly | json }} || [],
     snoozeUntil: {{ .SnoozeDate | json }},
     muteUntil: {{ .MuteDate | json }},
-    manualPreset: 'daily',
-    manualTemplates: {{ .ManualTemplates | json }},
-    manualTemplate: {{ .ManualTemplateDefault | json }},
-    manualFrom: {{ .ManualFrom | json }},
-    manualTo: {{ .ManualTo | json }},
     init() {
         this.normalizeAdvance();
         this.normalizeWeekly();
-        if (!this.manualTemplates.daily && this.manualTemplates.weekly) {
-            this.manualPreset = 'weekly';
-        }
-        if (!this.manualTemplate) {
-            this.manualTemplate = this.manualTemplates[this.manualPreset] || '';
-        }
     },
     addRule() {
         this.advanceNotifications.push({ enabled: true, minutes_before: 60, message: '', location: '', url: '', conditions: { enabled: false, days_of_week: [], property_filters: [] } });
@@ -92,32 +81,8 @@
             rule.days_of_week.sort((a, b) => a - b);
         }
     },
-    setManualPreset(preset) {
-        this.manualPreset = preset;
-        if (preset === 'custom') {
-            return;
-        }
-        const value = this.manualTemplates[preset] || '';
-        if (value) {
-            this.manualTemplate = value;
-        }
-    },
     dateToYMD(date) {
         return date.toISOString().slice(0, 10);
-    },
-    setManualSingle(offsetDays) {
-        const d = new Date();
-        d.setDate(d.getDate() + offsetDays);
-        const v = this.dateToYMD(d);
-        this.manualFrom = v;
-        this.manualTo = v;
-    },
-    setManualRange(daysAhead) {
-        const start = new Date();
-        const end = new Date();
-        end.setDate(end.getDate() + daysAhead);
-        this.manualFrom = this.dateToYMD(start);
-        this.manualTo = this.dateToYMD(end);
     },
     setSnoozeDays(days) {
         const d = new Date();
@@ -729,104 +694,6 @@
             </section>
         </div>
     </form>
-
-    <section class="space-y-6">
-        <h2 class="text-xl font-bold flex items-center gap-3">
-            <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-                <i data-lucide="send" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
-            </div>
-            手動通知
-        </h2>
-
-        <div
-            class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-                <div class="lg:col-span-4 space-y-2">
-                    <label
-                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">TEMPLATE</label>
-                    <select x-model="manualPreset" @change="setManualPreset(manualPreset)"
-                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
-                        <option value="daily">日次テンプレート</option>
-                        <option value="weekly" :disabled="!manualTemplates.weekly">週次テンプレート</option>
-                        <option value="custom">カスタム</option>
-                    </select>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">選択するとテンプレート本文に反映されます。</p>
-                </div>
-
-                <div class="lg:col-span-3 space-y-2">
-                    <label
-                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">FROM</label>
-                    <input type="date" x-model="manualFrom" name="from_date" form="manual-notification-form"
-                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
-                </div>
-                <div class="lg:col-span-3 space-y-2">
-                    <label
-                        class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">TO</label>
-                    <input type="date" x-model="manualTo" name="to_date" form="manual-notification-form"
-                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
-                </div>
-
-                <div class="lg:col-span-2 flex flex-wrap gap-2">
-                    <button type="button" @click="setManualSingle(0)"
-                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">今日</button>
-                    <button type="button" @click="setManualSingle(1)"
-                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">明日</button>
-                    <button type="button" @click="setManualRange(7)"
-                        class="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">1週間</button>
-                </div>
-            </div>
-
-            <div>
-                <label
-                    class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">MESSAGE
-                    TEMPLATE</label>
-                <textarea x-model="manualTemplate" name="template" form="manual-notification-form" rows="6"
-                    hx-post="/api/notifications/preview" hx-ext="json-enc" hx-trigger="keyup changed delay:700ms"
-                    hx-target="#manual-preview" hx-swap="innerHTML" hx-include="#manual-notification-form"
-                    hx-indicator="#manual-indicator"
-                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium resize-none tracking-tight"
-                    placeholder="テンプレートを入力してください"></textarea>
-                <div class="mt-2 flex flex-wrap gap-2">
-                    <span
-                        class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                        title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
-                    <span
-                        class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                        title="イベント名">`{{`}}{{.Name}}{{`}}`</span>
-                    <span
-                        class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                        title="日付">`{{`}}{{.Date}}{{`}}`</span>
-                    <span
-                        class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
-                        title="時刻">`{{`}}{{.Time}}{{`}}`</span>
-                </div>
-            </div>
-
-            <form id="manual-notification-form" hx-ext="json-enc" hx-indicator="#manual-indicator"
-                class="flex flex-wrap gap-3 items-center">
-                <input type="hidden" name="preview_payload" value="true">
-                <button type="submit" hx-post="/api/notifications/preview" hx-target="#manual-preview"
-                    hx-swap="innerHTML"
-                    class="px-5 py-2.5 rounded-2xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-                    プレビュー
-                </button>
-                <button type="submit" hx-post="/api/notifications/manual" hx-target="#manual-preview"
-                    hx-swap="innerHTML"
-                    class="px-6 py-2.5 rounded-2xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all">
-                    送信
-                </button>
-                <span class="htmx-indicator text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2"
-                    id="manual-indicator">
-                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>送信中...
-                </span>
-            </form>
-
-            <div id="manual-preview"
-                class="text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                プレビュー結果がここに表示されます。
-            </div>
-        </div>
-    </section>
 
     <div id="save-indicator"
         class="htmx-indicator fixed top-4 right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 z-[100]">

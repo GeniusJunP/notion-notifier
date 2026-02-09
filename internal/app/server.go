@@ -32,13 +32,19 @@ type dashboardView struct {
 	LastSyncLabel string
 	LastSyncCount int
 	LastSyncError string
+	SnoozeActive  bool
+	SnoozeUntil   string
+	MuteActive    bool
+	MuteUntil     string
 	Upcoming      []upcomingView
 	History       []historyView
 }
 
 type upcomingView struct {
 	Title     string
+	DateLabel string
 	TimeLabel string
+	Location  string
 	URL       string
 }
 
@@ -122,6 +128,9 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		lastSyncLabel = status.LastSyncedAt.In(loc).Format("2006-01-02 15:04")
 	}
 
+	snoozeActive := config.IsSnoozed(cfg, now)
+	muteActive := config.IsMuted(cfg, now)
+
 	view := dashboardView{
 		TodayCount:    len(todayEvents),
 		NextSyncLabel: nextSyncLabel,
@@ -129,23 +138,14 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		LastSyncLabel: lastSyncLabel,
 		LastSyncCount: status.LastCount,
 		LastSyncError: status.LastError,
+		SnoozeActive:  snoozeActive,
+		SnoozeUntil:   formatDateOnly(cfg.SnoozeUntil, loc),
+		MuteActive:    muteActive,
+		MuteUntil:     formatDateOnly(cfg.MuteUntil, loc),
 		Upcoming:      buildUpcomingViews(upcomingEvents, 10, loc),
 		History:       buildHistoryViews(historyItems, loc),
 	}
 
-	s.render(w, "dashboard.html", map[string]interface{}{
-		"Page":      "dashboard",
-		"PageTitle": "ダッシュボード - Notion Notifier",
-		"Config":    cfg,
-		"Dashboard": view,
-	})
-}
-
-func (s *Server) handleNotifications(w http.ResponseWriter, r *http.Request) {
-	cfg, _ := s.cfg.Get()
-	loc, _ := time.LoadLocation(cfg.Timezone)
-	now := time.Now().In(loc)
-	today := now.Format("2006-01-02")
 	manualTemplates := map[string]string{
 		"daily":  cfg.Notifications.Daily.Message,
 		"weekly": "",
@@ -153,22 +153,40 @@ func (s *Server) handleNotifications(w http.ResponseWriter, r *http.Request) {
 	if len(cfg.Notifications.Weekly) > 0 {
 		manualTemplates["weekly"] = cfg.Notifications.Weekly[0].Message
 	}
-	defaultTemplate := manualTemplates["daily"]
+	manualPreset := "daily"
+	if manualTemplates["daily"] == "" && manualTemplates["weekly"] != "" {
+		manualPreset = "weekly"
+	}
+	defaultTemplate := manualTemplates[manualPreset]
 	if defaultTemplate == "" {
 		defaultTemplate = manualTemplates["weekly"]
 	}
+
+	s.render(w, "dashboard.html", map[string]interface{}{
+		"Page":            "dashboard",
+		"PageTitle":       "ダッシュボード - Notion Notifier",
+		"Config":          cfg,
+		"Dashboard":       view,
+		"ManualTemplates": manualTemplates,
+		"ManualPreset":    manualPreset,
+		"ManualTemplate":  defaultTemplate,
+		"ManualFrom":      now.Format("2006-01-02"),
+		"ManualTo":        now.Format("2006-01-02"),
+	})
+}
+
+func (s *Server) handleNotifications(w http.ResponseWriter, r *http.Request) {
+	cfg, _ := s.cfg.Get()
+	loc, _ := time.LoadLocation(cfg.Timezone)
+	now := time.Now().In(loc)
 	s.render(w, "notifications.html", map[string]interface{}{
-		"Page":                  "notifications",
-		"PageTitle":             "通知設定 - Notion Notifier",
-		"Config":                cfg,
-		"SnoozeDate":            formatDateOnly(cfg.SnoozeUntil, loc),
-		"MuteDate":              formatDateOnly(cfg.MuteUntil, loc),
-		"SnoozeActive":          config.IsSnoozed(cfg, now),
-		"MuteActive":            config.IsMuted(cfg, now),
-		"ManualTemplates":       manualTemplates,
-		"ManualTemplateDefault": defaultTemplate,
-		"ManualFrom":            today,
-		"ManualTo":              today,
+		"Page":         "notifications",
+		"PageTitle":    "通知設定 - Notion Notifier",
+		"Config":       cfg,
+		"SnoozeDate":   formatDateOnly(cfg.SnoozeUntil, loc),
+		"MuteDate":     formatDateOnly(cfg.MuteUntil, loc),
+		"SnoozeActive": config.IsSnoozed(cfg, now),
+		"MuteActive":   config.IsMuted(cfg, now),
 	})
 }
 
@@ -459,7 +477,9 @@ func buildUpcomingViews(events []models.Event, limit int, loc *time.Location) []
 		}
 		out = append(out, upcomingView{
 			Title:     ev.Title,
+			DateLabel: formatEventDate(ev, loc),
 			TimeLabel: formatEventTime(ev, loc),
+			Location:  ev.Location,
 			URL:       ev.URL,
 		})
 	}
@@ -488,6 +508,19 @@ func formatEventTime(ev models.Event, loc *time.Location) string {
 		return "終日"
 	}
 	return ev.StartTime
+}
+
+func formatEventDate(ev models.Event, loc *time.Location) string {
+	if ev.StartDate == "" {
+		return ""
+	}
+	if loc == nil {
+		loc = time.Local
+	}
+	if parsed, err := time.ParseInLocation("2006-01-02", ev.StartDate, loc); err == nil {
+		return parsed.Format("01/02")
+	}
+	return ev.StartDate
 }
 
 func formatDurationShort(d time.Duration) string {
