@@ -160,6 +160,78 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Webhook Delivery Section -->
+            <section class="space-y-6">
+                <h2 class="text-xl font-bold flex items-center gap-3">
+                    <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
+                        <i data-lucide="webhook" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+                    </div>
+                    Webhook 配信設定
+                </h2>
+
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-8">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                        <p class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                            Webhook URL は <code class="font-mono text-[11px]">env.yaml</code> の
+                            <code class="font-mono text-[11px]">webhook.schedule_url</code> /
+                            <code class="font-mono text-[11px]">webhook.notification_url</code> で設定します。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                                定期通知用
+                            </h3>
+                            <div class="space-y-3">
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">CONTENT TYPE</label>
+                                <input type="text" name="webhook.schedule.content_type" value="{{.Config.Webhook.Schedule.ContentType}}"
+                                    class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-bold">
+                            </div>
+                            <div class="space-y-3">
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">PAYLOAD TEMPLATE</label>
+                                <textarea name="webhook.schedule.payload_template" rows="5"
+                                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium resize-none tracking-tight"
+                                    placeholder='{"content":"{{.Message}}"}'>{{.Config.Webhook.Schedule.PayloadTemplate}}</textarea>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="生成済み通知メッセージ">`{{`}}{{.Message}}{{`}}`</span>
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="通知種別">`{{`}}{{.Type}}{{`}}`</span>
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                                手動通知用
+                            </h3>
+                            <div class="space-y-3">
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">CONTENT TYPE</label>
+                                <input type="text" name="webhook.notification.content_type" value="{{.Config.Webhook.Notification.ContentType}}"
+                                    class="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-bold">
+                            </div>
+                            <div class="space-y-3">
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">PAYLOAD TEMPLATE</label>
+                                <textarea name="webhook.notification.payload_template" rows="5"
+                                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium resize-none tracking-tight"
+                                    placeholder='{"content":"{{.Message}}"}'>{{.Config.Webhook.Notification.PayloadTemplate}}</textarea>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="生成済み通知メッセージ">`{{`}}{{.Message}}{{`}}`</span>
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="通知種別">`{{`}}{{.Type}}{{`}}`</span>
+                                    <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded cursor-help"
+                                        title="イベント配列">`{{`}}{{.Events}}{{`}}`</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </form>
 

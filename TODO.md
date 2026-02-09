@@ -7,6 +7,7 @@
 - [x] Implement webhook sender with retries
 - [x] Implement notification rendering and scheduler (advance/daily/weekly)
 - [x] Implement Google Calendar sync service
-- [ ] Implement HTTP server + htmx UI (later)
+- [x] Implement HTTP server + htmx UI
 - [x] Wire app in main.go and add sample configs
-- [ ] Implement htmx UI pages (later)
+- [x] Implement htmx UI pages
+- [x] Add webhook settings UI
