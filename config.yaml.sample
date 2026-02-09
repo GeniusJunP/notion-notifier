@@ -66,6 +66,7 @@ content_rules:
   include_start_heading: false
   stop_at_next_heading: true
   stop_at_delimiter: true
+  delimiter_text: "---"
 
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効

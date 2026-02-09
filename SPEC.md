@@ -227,11 +227,13 @@ content_rules:
   include_start_heading: false
   stop_at_next_heading: true
   stop_at_delimiter: true
+  delimiter_text: "---"
 
 # コンテンツ抽出ルールの挙動
 # - start_heading と一致する見出し（h1〜h3）を起点に本文を抽出
 # - stop_at_next_heading が true の場合、次の見出しで終了
-# - stop_at_delimiter が true の場合、Notionの区切り線（dividerブロック）で終了
+# - stop_at_delimiter が true の場合、Notionの区切り線（dividerブロック）または
+#   delimiter_text と一致する行で終了
 # - 抽出結果は {{.Content}} で参照可能
 
 # 通知抑制

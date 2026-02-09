@@ -95,6 +95,7 @@ type ContentRules struct {
 	IncludeStart      bool   `yaml:"include_start_heading" json:"include_start_heading"`
 	StopAtNextHeading bool   `yaml:"stop_at_next_heading" json:"stop_at_next_heading"`
 	StopAtDelimiter   bool   `yaml:"stop_at_delimiter" json:"stop_at_delimiter"`
+	DelimiterText     string `yaml:"delimiter_text" json:"delimiter_text"`
 }
 
 type SecurityConfig struct {

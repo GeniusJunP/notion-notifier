@@ -408,6 +408,7 @@ func extractContentFromBlocks(blocks []block, rules config.ContentRules) string 
 	if rules.StartHeading == "" {
 		return ""
 	}
+	delimiterText := strings.TrimSpace(rules.DelimiterText)
 	var lines []string
 	started := false
 	for _, b := range blocks {
@@ -422,6 +423,9 @@ func extractContentFromBlocks(blocks []block, rules config.ContentRules) string 
 			continue
 		}
 		if rules.StopAtDelimiter && isDivider {
+			break
+		}
+		if rules.StopAtDelimiter && delimiterText != "" && strings.TrimSpace(text) == delimiterText {
 			break
 		}
 		if rules.StopAtNextHeading && isHeading {

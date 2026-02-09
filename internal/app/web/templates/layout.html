@@ -70,6 +70,14 @@
         .dark ::-webkit-scrollbar-thumb {
             background: #475569;
         }
+
+        main {
+            scroll-padding-top: 96px;
+        }
+
+        #page-content [id] {
+            scroll-margin-top: 96px;
+        }
     </style>
 </head>
 
@@ -249,12 +257,33 @@
         document.addEventListener('DOMContentLoaded', function () {
             updateNavActive();
             updateDateTime();
+            scrollToHash();
             setInterval(updateDateTime, 1000);
         });
-        document.body.addEventListener('htmx:afterOnLoad', updateNavActive);
-        document.body.addEventListener('htmx:afterSwap', updateNavActive);
-        document.body.addEventListener('htmx:historyRestore', updateNavActive);
-        window.addEventListener('popstate', updateNavActive);
+        document.body.addEventListener('htmx:afterOnLoad', function () {
+            updateNavActive();
+            scrollToHash();
+        });
+        document.body.addEventListener('htmx:afterSwap', function () {
+            updateNavActive();
+            scrollToHash();
+        });
+        document.body.addEventListener('htmx:historyRestore', function () {
+            updateNavActive();
+            scrollToHash();
+        });
+        window.addEventListener('popstate', function () {
+            updateNavActive();
+            scrollToHash();
+        });
+
+        function scrollToHash() {
+            const hash = window.location.hash;
+            if (!hash) return;
+            const target = document.querySelector(hash);
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         // Toast Handler
         function resolveToastMessage(value) {
