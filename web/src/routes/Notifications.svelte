@@ -1,0 +1,632 @@
+<script lang="ts">
+    import { onMount } from "svelte";
+    import {
+        api,
+        type Config,
+        type AdvanceNotification,
+        type PeriodicNotification,
+    } from "../lib/api";
+    import { configStore, addToast } from "../lib/store";
+    import {
+        Plus,
+        Trash2,
+        Save,
+        Play,
+        MessageSquare,
+        Clock,
+        Calendar,
+        Settings2,
+        Check,
+        RotateCcw,
+        BellOff,
+        Bell,
+        X,
+    } from "lucide-svelte";
+
+    let config: Config | null = null;
+    configStore.subscribe((v) => (config = v));
+
+    let activeTab: "advance" | "periodic" = "advance";
+    let isSaving = false;
+    let previewResult: string = "";
+    let isPreviewLoading = false;
+
+    async function saveConfig() {
+        if (!config) return;
+        isSaving = true;
+        try {
+            const saved = await api.updateConfig(config);
+            configStore.set(saved);
+            addToast("設定を保存しました", "success");
+        } catch (e: any) {
+            addToast(
+                `保存に失敗しました: ${e.error || "不明なエラー"}`,
+                "error",
+            );
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    function addAdvanceRule() {
+        if (!config) return;
+        const newRule: AdvanceNotification = {
+            enabled: true,
+            minutes_before: 30,
+            message: "",
+            location: "",
+            url: "",
+            conditions: {
+                enabled: false,
+                days_of_week: [1, 2, 3, 4, 5],
+                property_filters: [],
+            },
+        };
+        config.notifications.advance = [
+            ...config.notifications.advance,
+            newRule,
+        ];
+        configStore.set(config);
+    }
+
+    function addPeriodicRule() {
+        if (!config) return;
+        const newRule: PeriodicNotification = {
+            enabled: true,
+            days_of_week: [1],
+            time: "09:00",
+            days_ahead: 7,
+            message: "",
+        };
+        config.notifications.periodic = [
+            ...config.notifications.periodic,
+            newRule,
+        ];
+        configStore.set(config);
+    }
+
+    function removeAdvanceRule(index: number) {
+        if (!config) return;
+        config.notifications.advance = config.notifications.advance.filter(
+            (_, i) => i !== index,
+        );
+        configStore.set(config);
+    }
+
+    function removePeriodicRule(index: number) {
+        if (!config) return;
+        config.notifications.periodic = config.notifications.periodic.filter(
+            (_, i) => i !== index,
+        );
+        configStore.set(config);
+    }
+
+    async function previewTemplate(template: string, minutes_before?: number) {
+        isPreviewLoading = true;
+        try {
+            const res = await api.previewNotification({
+                template,
+                minutes_before,
+            });
+            previewResult = res.message;
+        } catch (e) {
+            addToast("プレビューに失敗しました", "error");
+        } finally {
+            isPreviewLoading = false;
+        }
+    }
+
+    async function resetAdvanceTemplate(index: number) {
+        if (!config) return;
+        try {
+            const defaults = await api.getDefaultTemplates();
+            config.notifications.advance[index].message =
+                defaults.advance || "";
+            configStore.set(config);
+            addToast("デフォルトテンプレートを適用しました", "info");
+        } catch {
+            addToast("デフォルトテンプレートの取得に失敗しました", "error");
+        }
+    }
+
+    async function resetPeriodicTemplate(index: number) {
+        if (!config) return;
+        try {
+            const defaults = await api.getDefaultTemplates();
+            config.notifications.periodic[index].message =
+                defaults.periodic || "";
+            configStore.set(config);
+            addToast("デフォルトテンプレートを適用しました", "info");
+        } catch {
+            addToast("デフォルトテンプレートの取得に失敗しました", "error");
+        }
+    }
+
+    function clearSnooze() {
+        if (!config) return;
+        config.snooze_until = "";
+        configStore.set(config);
+    }
+
+    function clearMute() {
+        if (!config) return;
+        config.mute_until = "";
+        configStore.set(config);
+    }
+
+    const daysLabels = ["月", "火", "水", "木", "金", "土", "日"];
+    const dayValues = [1, 2, 3, 4, 5, 6, 7];
+
+    function toggleDay(list: number[], day: number) {
+        if (list.includes(day)) {
+            return list.filter((d) => d !== day);
+        } else {
+            return [...list, day].sort();
+        }
+    }
+</script>
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex gap-1 bg-gray-100 p-1 rounded-xl">
+            <button
+                on:click={() => (activeTab = "advance")}
+                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
+                'advance'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'}"
+            >
+                事前通知
+            </button>
+            <button
+                on:click={() => (activeTab = "periodic")}
+                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
+                'periodic'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'}"
+            >
+                定期通知
+            </button>
+        </div>
+
+        <button
+            on:click={saveConfig}
+            disabled={isSaving}
+            class="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-brand-100"
+        >
+            {#if isSaving}
+                <div
+                    class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                ></div>
+            {:else}
+                <Save size={18} />
+            {/if}
+            変更を保存
+        </button>
+    </div>
+
+    {#if config}
+        <!-- Snooze/Mute Controls -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div
+                class="flex-1 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+            >
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"
+                    >
+                        <BellOff size={18} />
+                    </div>
+                    <div>
+                        <span class="text-sm font-bold text-gray-900"
+                            >スヌーズ</span
+                        >
+                        <p class="text-[10px] text-gray-400">
+                            指定日時まで通知を一時停止
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="datetime-local"
+                        bind:value={config.snooze_until}
+                        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 transition-all"
+                    />
+                    {#if config.snooze_until}
+                        <button
+                            on:click={clearSnooze}
+                            class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                        >
+                            <X size={14} />
+                        </button>
+                    {/if}
+                </div>
+            </div>
+            <div
+                class="flex-1 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+            >
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center text-red-600"
+                    >
+                        <Bell size={18} />
+                    </div>
+                    <div>
+                        <span class="text-sm font-bold text-gray-900"
+                            >ミュート</span
+                        >
+                        <p class="text-[10px] text-gray-400">
+                            指定日時まで全通知を無効化
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="datetime-local"
+                        bind:value={config.mute_until}
+                        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 transition-all"
+                    />
+                    {#if config.mute_until}
+                        <button
+                            on:click={clearMute}
+                            class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                        >
+                            <X size={14} />
+                        </button>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+            {#if activeTab === "advance"}
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            事前通知ルール
+                        </h2>
+                        <button
+                            on:click={addAdvanceRule}
+                            class="text-brand-600 flex items-center gap-1 text-sm font-bold hover:underline"
+                        >
+                            <Plus size={16} /> ルールを追加
+                        </button>
+                    </div>
+
+                    {#each config.notifications.advance as rule, i}
+                        <div
+                            class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:border-brand-200"
+                        >
+                            <div
+                                class="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400"
+                                    >
+                                        {i + 1}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={rule.enabled}
+                                        class="w-5 h-5 accent-brand-600 rounded"
+                                    />
+                                    <span class="font-bold text-gray-900"
+                                        >事前通知 {i + 1}</span
+                                    >
+                                </div>
+                                <button
+                                    on:click={() => removeAdvanceRule(i)}
+                                    class="text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+
+                            <div
+                                class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8"
+                            >
+                                <div class="space-y-4">
+                                    <div>
+                                        <label
+                                            for="adv-minutes-{i}"
+                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            >通知タイミング (分前)</label
+                                        >
+                                        <div class="relative">
+                                            <Clock
+                                                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                size={16}
+                                            />
+                                            <input
+                                                id="adv-minutes-{i}"
+                                                type="number"
+                                                bind:value={rule.minutes_before}
+                                                class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            for="adv-message-{i}"
+                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            >メッセージテンプレート</label
+                                        >
+                                        <textarea
+                                            id="adv-message-{i}"
+                                            bind:value={rule.message}
+                                            placeholder="空欄の場合はデフォルトが使用されます"
+                                            class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono text-sm min-h-[120px]"
+                                        ></textarea>
+                                        <div
+                                            class="mt-2 flex items-center gap-3"
+                                        >
+                                            <button
+                                                on:click={() =>
+                                                    previewTemplate(
+                                                        rule.message,
+                                                        rule.minutes_before,
+                                                    )}
+                                                class="text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline"
+                                            >
+                                                <Play size={12} /> プレビューを実行
+                                            </button>
+                                            <button
+                                                on:click={() =>
+                                                    resetAdvanceTemplate(i)}
+                                                class="text-xs font-bold text-gray-400 flex items-center gap-1 hover:text-gray-600"
+                                            >
+                                                <RotateCcw size={12} /> デフォルトに戻す
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div
+                                        class="p-4 bg-brand-50 rounded-2xl border border-brand-100"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between mb-3"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
+                                                <Settings2
+                                                    size={16}
+                                                    class="text-brand-600"
+                                                />
+                                                <span
+                                                    class="text-sm font-bold text-brand-800"
+                                                    >配信フィルタ</span
+                                                >
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                bind:checked={
+                                                    rule.conditions.enabled
+                                                }
+                                                class="w-4 h-4 accent-brand-600"
+                                            />
+                                        </div>
+
+                                        <div
+                                            class="space-y-3 opacity-{rule
+                                                .conditions.enabled
+                                                ? '100'
+                                                : '50'} pointer-events-{rule
+                                                .conditions.enabled
+                                                ? 'auto'
+                                                : 'none'}"
+                                        >
+                                            <label
+                                                for="adv-days-{i}"
+                                                class="block text-xs font-bold text-brand-700 uppercase tracking-wider"
+                                                >実行する曜日</label
+                                            >
+                                            <div
+                                                id="adv-days-{i}"
+                                                class="flex flex-wrap gap-2"
+                                            >
+                                                {#each dayValues as day, idx}
+                                                    <button
+                                                        on:click={() =>
+                                                            (rule.conditions.days_of_week =
+                                                                toggleDay(
+                                                                    rule
+                                                                        .conditions
+                                                                        .days_of_week,
+                                                                    day,
+                                                                ))}
+                                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all {rule.conditions.days_of_week.includes(
+                                                            day,
+                                                        )
+                                                            ? 'bg-brand-600 text-white shadow-md'
+                                                            : 'bg-white text-gray-400 border border-gray-200'}"
+                                                    >
+                                                        {daysLabels[idx]}
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {#if previewResult && activeTab === "advance"}
+                                        <div
+                                            class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative group animate-in zoom-in-95 duration-200"
+                                        >
+                                            <div
+                                                class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500"
+                                            >
+                                                <MessageSquare size={10} /> Preview
+                                            </div>
+                                            {previewResult}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            {:else}
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            定期通知ルール
+                        </h2>
+                        <button
+                            on:click={addPeriodicRule}
+                            class="text-brand-600 flex items-center gap-1 text-sm font-bold hover:underline"
+                        >
+                            <Plus size={16} /> ルールを追加
+                        </button>
+                    </div>
+
+                    {#each config.notifications.periodic as rule, i}
+                        <div
+                            class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:border-brand-200"
+                        >
+                            <div
+                                class="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400"
+                                    >
+                                        {i + 1}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={rule.enabled}
+                                        class="w-5 h-5 accent-brand-600 rounded"
+                                    />
+                                    <span class="font-bold text-gray-900"
+                                        >定期通知 {i + 1}</span
+                                    >
+                                </div>
+                                <button
+                                    on:click={() => removePeriodicRule(i)}
+                                    class="text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+
+                            <div
+                                class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8"
+                            >
+                                <div class="space-y-6">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label
+                                                for="per-time-{i}"
+                                                class="block text-sm font-bold text-gray-700 mb-2"
+                                                >通知時刻</label
+                                            >
+                                            <input
+                                                id="per-time-{i}"
+                                                type="time"
+                                                bind:value={rule.time}
+                                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label
+                                                for="per-days-ahead-{i}"
+                                                class="block text-sm font-bold text-gray-700 mb-2"
+                                                >参照範囲 (何日分)</label
+                                            >
+                                            <input
+                                                id="per-days-ahead-{i}"
+                                                type="number"
+                                                bind:value={rule.days_ahead}
+                                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            for="per-weekdays-{i}"
+                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            >実行する曜日</label
+                                        >
+                                        <div
+                                            id="per-weekdays-{i}"
+                                            class="flex flex-wrap gap-2"
+                                        >
+                                            {#each dayValues as day, idx}
+                                                <button
+                                                    on:click={() =>
+                                                        (rule.days_of_week =
+                                                            toggleDay(
+                                                                rule.days_of_week,
+                                                                day,
+                                                            ))}
+                                                    class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all {rule.days_of_week.includes(
+                                                        day,
+                                                    )
+                                                        ? 'bg-brand-600 text-white shadow-lg shadow-brand-100 scale-105'
+                                                        : 'bg-gray-50 text-gray-400 border border-gray-100 hover:bg-gray-100'}"
+                                                >
+                                                    {daysLabels[idx]}
+                                                </button>
+                                            {/each}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label
+                                            for="per-message-{i}"
+                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            >メッセージテンプレート</label
+                                        >
+                                        <textarea
+                                            id="per-message-{i}"
+                                            bind:value={rule.message}
+                                            placeholder="空欄の場合はデフォルトが使用されます"
+                                            class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono text-sm min-h-[150px]"
+                                        ></textarea>
+                                        <div
+                                            class="mt-2 flex items-center gap-3"
+                                        >
+                                            <button
+                                                on:click={() =>
+                                                    previewTemplate(
+                                                        rule.message,
+                                                    )}
+                                                class="text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline"
+                                            >
+                                                <Play size={12} /> プレビューを実行
+                                            </button>
+                                            <button
+                                                on:click={() =>
+                                                    resetPeriodicTemplate(i)}
+                                                class="text-xs font-bold text-gray-400 flex items-center gap-1 hover:text-gray-600"
+                                            >
+                                                <RotateCcw size={12} /> デフォルトに戻す
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {#if previewResult && activeTab === "periodic"}
+                                        <div
+                                            class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
+                                        >
+                                            {previewResult}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+        </div>
+    {/if}
+</div>

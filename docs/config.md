@@ -36,10 +36,10 @@ notifications:
 webhook:
   schedule:
     content_type: "application/json"
-    payload_template: '{"content":"{{.Message}}"}'
+    payload_template: '{"content":{{json .Message}}}'
   notification:
     content_type: "application/json"
-    payload_template: '{"content":"{{.Message}}"}'
+    payload_template: '{"content":{{json .Message}}}'
 
 calendar_sync:
   enabled: false

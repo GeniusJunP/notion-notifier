@@ -1,0 +1,579 @@
+<script lang="ts">
+    import { api, type Config } from "../lib/api";
+    import { configStore, addToast } from "../lib/store";
+    import {
+        Settings,
+        Save,
+        Database,
+        FileText,
+        Globe,
+        ShieldCheck,
+        Plus,
+        Trash2,
+        Hash,
+    } from "lucide-svelte";
+
+    let config: Config | null = null;
+    configStore.subscribe((v) => (config = v));
+
+    let isSaving = false;
+
+    async function saveConfig() {
+        if (!config) return;
+        isSaving = true;
+        try {
+            const saved = await api.updateConfig(config);
+            configStore.set(saved);
+            addToast("システム設定を保存しました", "success");
+        } catch (e: any) {
+            addToast(`保存失敗: ${e.error || "不明なエラー"}`, "error");
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    function addCustomMapping() {
+        if (!config) return;
+        config.property_mapping.custom = [
+            ...config.property_mapping.custom,
+            { variable: "", property: "" },
+        ];
+        configStore.set(config);
+    }
+
+    function removeCustomMapping(index: number) {
+        if (!config) return;
+        config.property_mapping.custom = config.property_mapping.custom.filter(
+            (_, i) => i !== index,
+        );
+        configStore.set(config);
+    }
+</script>
+
+<div class="space-y-8 max-w-5xl">
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Settings size={28} class="text-brand-600" />
+            システム設定
+        </h2>
+        <button
+            on:click={saveConfig}
+            disabled={isSaving}
+            class="px-8 py-3 bg-brand-600 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-brand-700 active:scale-95 disabled:opacity-50 shadow-xl shadow-brand-100 transition-all"
+        >
+            {#if isSaving}
+                <div
+                    class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                ></div>
+            {:else}
+                <Save size={20} />
+            {/if}
+            全ての変更を適用
+        </button>
+    </div>
+
+    {#if config}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- General & Notion Mapping -->
+            <div class="space-y-8">
+                <section
+                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                >
+                    <h3
+                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                    >
+                        <Globe size={20} class="text-blue-500" />
+                        基本設定
+                    </h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label
+                                for="settings-timezone"
+                                class="block text-sm font-bold text-gray-700 mb-2"
+                                >タイムゾーン</label
+                            >
+                            <input
+                                id="settings-timezone"
+                                type="text"
+                                bind:value={config.timezone}
+                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                            />
+                            <p class="mt-1 text-[11px] text-gray-400">
+                                IANA形式 (例: Asia/Tokyo)
+                            </p>
+                        </div>
+                        <div>
+                            <label
+                                for="settings-sync-interval"
+                                class="block text-sm font-bold text-gray-700 mb-2"
+                                >Notion 同期間隔 (分)</label
+                            >
+                            <input
+                                id="settings-sync-interval"
+                                type="number"
+                                bind:value={config.sync.check_interval}
+                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                >
+                    <div class="flex items-center justify-between">
+                        <h3
+                            class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                        >
+                            <Database size={20} class="text-indigo-500" />
+                            Notion プロパティマッピング
+                        </h3>
+                        <button
+                            on:click={addCustomMapping}
+                            class="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                        >
+                            <Plus size={14} /> カスタム
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    for="settings-mapping-usage"
+                                    class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center"
+                                    >用途</label
+                                >
+                                <div
+                                    id="settings-mapping-usage"
+                                    class="space-y-3"
+                                >
+                                    <div
+                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                    >
+                                        タイトル
+                                    </div>
+                                    <div
+                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                    >
+                                        日付 (Date)
+                                    </div>
+                                    <div
+                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                    >
+                                        場所
+                                    </div>
+                                    <div
+                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                    >
+                                        参加者 (People)
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    for="settings-mapping-properties"
+                                    class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center"
+                                    >Notion プロパティ名</label
+                                >
+                                <div
+                                    id="settings-mapping-properties"
+                                    class="space-y-3"
+                                >
+                                    <input
+                                        type="text"
+                                        bind:value={
+                                            config.property_mapping.title
+                                        }
+                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                    />
+                                    <input
+                                        type="text"
+                                        bind:value={
+                                            config.property_mapping.date
+                                        }
+                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                    />
+                                    <input
+                                        type="text"
+                                        bind:value={
+                                            config.property_mapping.location
+                                        }
+                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                    />
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            bind:value={
+                                                config.property_mapping
+                                                    .attendees
+                                            }
+                                            class="flex-1 h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                        />
+                                        <button
+                                            on:click={() => {
+                                                if (!config) return;
+                                                config.property_mapping.attendees_enabled =
+                                                    !config.property_mapping
+                                                        .attendees_enabled;
+                                            }}
+                                            class="h-10 px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
+                                                .property_mapping
+                                                .attendees_enabled
+                                                ? 'bg-green-500 text-white border-green-500'
+                                                : 'bg-white text-gray-400'}"
+                                        >
+                                            {config.property_mapping
+                                                .attendees_enabled
+                                                ? "ON"
+                                                : "OFF"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {#if config.property_mapping.custom.length > 0}
+                            <div
+                                class="pt-4 border-t border-gray-100 space-y-3"
+                            >
+                                <label
+                                    for="settings-custom-mappings"
+                                    class="block text-xs font-bold text-gray-400 uppercase tracking-widest"
+                                    >カスタムマッピング</label
+                                >
+                                {#each config.property_mapping.custom as custom, idx}
+                                    <div
+                                        id="settings-custom-mappings"
+                                        class="flex items-center gap-2 group"
+                                    >
+                                        <div
+                                            class="flex-1 grid grid-cols-2 gap-2"
+                                        >
+                                            <input
+                                                type="text"
+                                                bind:value={custom.variable}
+                                                placeholder="変数名"
+                                                class="h-9 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono"
+                                            />
+                                            <input
+                                                type="text"
+                                                bind:value={custom.property}
+                                                placeholder="Notion属性"
+                                                class="h-9 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                                            />
+                                        </div>
+                                        <button
+                                            on:click={() =>
+                                                removeCustomMapping(idx)}
+                                            class="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Content Rules & Advanced -->
+            <div class="space-y-8">
+                <section
+                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                >
+                    <h3
+                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                    >
+                        <FileText size={20} class="text-orange-500" />
+                        コンテンツ抽出ルール
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label
+                                for="settings-start-heading"
+                                class="block text-sm font-bold text-gray-700 mb-2"
+                                >開始見出し</label
+                            >
+                            <div class="flex gap-2">
+                                <input
+                                    id="settings-start-heading"
+                                    type="text"
+                                    bind:value={
+                                        config.content_rules.start_heading
+                                    }
+                                    placeholder="例: メモ"
+                                    class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                />
+                                <button
+                                    on:click={() => {
+                                        if (!config) return;
+                                        config.content_rules.include_start_heading =
+                                            !config.content_rules
+                                                .include_start_heading;
+                                    }}
+                                    class="px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
+                                        .content_rules.include_start_heading
+                                        ? 'bg-orange-500 text-white border-orange-500'
+                                        : 'bg-white text-gray-400'}"
+                                >
+                                    見出し含む
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 pt-2">
+                            <label
+                                class="flex items-center gap-3 cursor-pointer group"
+                            >
+                                <div
+                                    class="w-10 h-6 bg-gray-200 rounded-full relative transition-colors {config
+                                        .content_rules.stop_at_next_heading
+                                        ? 'bg-orange-500'
+                                        : ''}"
+                                >
+                                    <div
+                                        class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform {config
+                                            .content_rules.stop_at_next_heading
+                                            ? 'translate-x-4'
+                                            : ''}"
+                                    ></div>
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={
+                                            config.content_rules
+                                                .stop_at_next_heading
+                                        }
+                                        class="sr-only"
+                                    />
+                                </div>
+                                <span class="text-sm font-medium text-gray-700"
+                                    >次の見出しで停止する</span
+                                >
+                            </label>
+
+                            <label
+                                class="flex items-center gap-3 cursor-pointer group"
+                            >
+                                <div
+                                    class="w-10 h-6 bg-gray-200 rounded-full relative transition-colors {config
+                                        .content_rules.stop_at_delimiter
+                                        ? 'bg-orange-500'
+                                        : ''}"
+                                >
+                                    <div
+                                        class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform {config
+                                            .content_rules.stop_at_delimiter
+                                            ? 'translate-x-4'
+                                            : ''}"
+                                    ></div>
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={
+                                            config.content_rules
+                                                .stop_at_delimiter
+                                        }
+                                        class="sr-only"
+                                    />
+                                </div>
+                                <span class="text-sm font-medium text-gray-700"
+                                    >区切り文字で停止する</span
+                                >
+                            </label>
+                        </div>
+
+                        {#if config.content_rules.stop_at_delimiter}
+                            <div
+                                class="animate-in slide-in-from-top-2 duration-200"
+                            >
+                                <label
+                                    for="settings-delimiter-text"
+                                    class="block text-xs font-bold text-gray-400 uppercase mb-2"
+                                    >区切り文字</label
+                                >
+                                <input
+                                    id="settings-delimiter-text"
+                                    type="text"
+                                    bind:value={
+                                        config.content_rules.delimiter_text
+                                    }
+                                    placeholder="---"
+                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                                />
+                            </div>
+                        {/if}
+                    </div>
+                </section>
+
+                <section
+                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                >
+                    <h3
+                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                    >
+                        <ShieldCheck size={20} class="text-green-500" />
+                        セキュリティ・その他
+                    </h3>
+                    <div class="space-y-4">
+                        <div
+                            class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl"
+                        >
+                            <div>
+                                <span
+                                    class="block text-sm font-bold text-gray-800"
+                                    >Basic 認証</span
+                                >
+                                <span class="text-[11px] text-gray-400"
+                                    >認証情報は env.yaml で設定してください</span
+                                >
+                            </div>
+                            <div
+                                class="px-3 py-1 bg-{config.security.basic_auth
+                                    .enabled
+                                    ? 'green'
+                                    : 'gray'}-100 text-{config.security
+                                    .basic_auth.enabled
+                                    ? 'green'
+                                    : 'gray'}-700 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                            >
+                                {config.security.basic_auth.enabled
+                                    ? "Enabled"
+                                    : "Disabled"}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    for="settings-snooze"
+                                    class="block text-xs font-bold text-gray-500 mb-2"
+                                    >スヌーズ (Snooze)</label
+                                >
+                                <input
+                                    id="settings-snooze"
+                                    type="datetime-local"
+                                    bind:value={config.snooze_until}
+                                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="settings-mute"
+                                    class="block text-xs font-bold text-gray-500 mb-2"
+                                    >ミュート (Mute)</label
+                                >
+                                <input
+                                    id="settings-mute"
+                                    type="datetime-local"
+                                    bind:value={config.mute_until}
+                                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div
+                    class="p-6 bg-brand-50 rounded-3xl border border-brand-100 space-y-5"
+                >
+                    <h4
+                        class="font-bold text-brand-900 flex items-center gap-2"
+                    >
+                        <Globe size={18} class="text-brand-600" />
+                        Webhook 設定
+                    </h4>
+                    <p
+                        class="text-xs text-brand-700 leading-relaxed opacity-80"
+                    >
+                        Webhook で送信される JSON ペイロードのテンプレートです。<code
+                            class="font-mono bg-white/50 px-1 rounded"
+                            >{"{{"}.Message{"}}"}</code
+                        >
+                        変数が通知内容に置き換わります。
+                    </p>
+
+                    <!-- Schedule Webhook -->
+                    <div
+                        class="space-y-3 p-4 bg-white rounded-2xl border border-brand-100"
+                    >
+                        <h5
+                            class="text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        >
+                            Schedule Webhook
+                        </h5>
+                        <div>
+                            <label
+                                for="wh-schedule-ct"
+                                class="block text-xs font-bold text-gray-600 mb-1"
+                                >Content-Type</label
+                            >
+                            <input
+                                id="wh-schedule-ct"
+                                type="text"
+                                bind:value={
+                                    config.webhook.schedule.content_type
+                                }
+                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                for="wh-schedule-pt"
+                                class="block text-xs font-bold text-gray-600 mb-1"
+                                >Payload Template</label
+                            >
+                            <textarea
+                                id="wh-schedule-pt"
+                                bind:value={
+                                    config.webhook.schedule.payload_template
+                                }
+                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 transition-all"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Notification Webhook -->
+                    <div
+                        class="space-y-3 p-4 bg-white rounded-2xl border border-brand-100"
+                    >
+                        <h5
+                            class="text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        >
+                            Notification Webhook
+                        </h5>
+                        <div>
+                            <label
+                                for="wh-notif-ct"
+                                class="block text-xs font-bold text-gray-600 mb-1"
+                                >Content-Type</label
+                            >
+                            <input
+                                id="wh-notif-ct"
+                                type="text"
+                                bind:value={
+                                    config.webhook.notification.content_type
+                                }
+                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                for="wh-notif-pt"
+                                class="block text-xs font-bold text-gray-600 mb-1"
+                                >Payload Template</label
+                            >
+                            <textarea
+                                id="wh-notif-pt"
+                                bind:value={
+                                    config.webhook.notification.payload_template
+                                }
+                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 transition-all"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
+</div>

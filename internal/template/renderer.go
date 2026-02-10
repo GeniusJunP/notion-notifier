@@ -2,6 +2,7 @@ package template
 
 import (
 	"bytes"
+	"encoding/json"
 	"text/template"
 
 	"notion-notifier/internal/config"
@@ -14,9 +15,18 @@ func New() *Renderer {
 	return &Renderer{}
 }
 
+func newTemplate(name string) *template.Template {
+	return template.New(name).Funcs(template.FuncMap{
+		"json": func(v any) (string, error) {
+			b, err := json.Marshal(v)
+			return string(b), err
+		},
+	})
+}
+
 func (r *Renderer) RenderSingle(tmpl string, event models.TemplateEvent, minutesBefore int) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
-	t, err := template.New("message").Parse(tmpl)
+	t, err := newTemplate("message").Parse(tmpl)
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +43,7 @@ func (r *Renderer) RenderSingle(tmpl string, event models.TemplateEvent, minutes
 
 func (r *Renderer) RenderList(tmpl string, events []models.TemplateEvent) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
-	t, err := template.New("message").Parse(tmpl)
+	t, err := newTemplate("message").Parse(tmpl)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +57,7 @@ func (r *Renderer) RenderList(tmpl string, events []models.TemplateEvent) (strin
 
 func (r *Renderer) RenderPayload(tmpl string, ctx any) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
-	t, err := template.New("payload").Parse(tmpl)
+	t, err := newTemplate("payload").Parse(tmpl)
 	if err != nil {
 		return "", err
 	}

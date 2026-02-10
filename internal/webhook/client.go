@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -42,14 +43,16 @@ func (c *Client) Send(ctx context.Context, webhookURL, contentType string, paylo
 		if err != nil {
 			lastErr = err
 		} else {
-			_ = resp.Body.Close()
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
 			if resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusAccepted {
 				return nil
 			}
+			errMsg := string(bodyBytes)
 			if !retry.IsRetryableStatus(resp.StatusCode) {
-				return fmt.Errorf("webhook failed: status %d", resp.StatusCode)
+				return fmt.Errorf("webhook failed: status %d, body: %s", resp.StatusCode, errMsg)
 			}
-			lastErr = fmt.Errorf("webhook failed: status %d", resp.StatusCode)
+			lastErr = fmt.Errorf("webhook failed: status %d, body: %s", resp.StatusCode, errMsg)
 			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
 			delay := retry.BackoffDelay(c.retry, attempt, retryAfter)
 			if err := retry.Sleep(ctx, delay); err != nil {

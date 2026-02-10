@@ -117,7 +117,9 @@
     "is_all_day": false,
     "location": "会議室A",
     "url": "https://notion.so/abc123",
-    "sync_status": "synced"  // "synced" | "pending" | "unsynced"
+    "sync_status": "synced",  // cache status (backward compatibility)
+    "cache_status": "synced", // "synced" | "pending" | "unsynced"
+    "calendar_status": "present" // "present" | "missing" | "disabled" | "unavailable"
   }
 ]
 ```

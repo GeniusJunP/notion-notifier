@@ -391,6 +391,7 @@ func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, f
 
 func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 	cfg, env := s.cfg.Get()
+	logging.Info("CALENDAR", "calendar sync started")
 	if !cfg.CalendarSync.Enabled {
 		logging.Info("CALENDAR", "calendar sync skipped (disabled)")
 		return 0, nil
@@ -428,11 +429,13 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 	}
 
 	// 2. Get Calendar events from Google Calendar API
+	logging.Info("CALENDAR", "fetching calendar events from Google API (range: %s ~ %s)", from.Format("2006-01-02"), to.Format("2006-01-02"))
 	calEvents, err := s.calendar.ListEvents(ctx, from, to)
 	if err != nil {
 		logging.Error("CALENDAR", "list calendar events failed: %v", err)
 		return 0, err
 	}
+	logging.Info("CALENDAR", "fetched %d calendar events from Google API", len(calEvents))
 	calMap := make(map[string]calendar.CalendarEvent, len(calEvents))
 	for _, ce := range calEvents {
 		calMap[ce.NotionPageID] = ce
@@ -455,9 +458,14 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 			existingCalID = ce.ID
 		}
 
-		// Skip if already synced and Notion hasn't changed
+		// Skip if already synced, Notion hasn't changed, AND the calendar event still exists
 		if hasRecord && record.Synced && record.NotionUpdatedAt == ev.NotionUpdatedAt {
-			continue
+			if _, stillExists := calMap[ev.NotionPageID]; stillExists {
+				continue
+			}
+			// Calendar event was deleted externally — re-create it
+			logging.Info("CALENDAR", "calendar event missing for %s, re-creating", ev.NotionPageID)
+			existingCalID = ""
 		}
 
 		newID, _, err := s.calendar.UpsertEvent(ctx, ev, existingCalID, loc)
@@ -504,7 +512,7 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 		}
 	}
 
-	logging.Info("CALENDAR", "calendar sync finished (count=%d)", count)
+	logging.Info("CALENDAR", "calendar sync finished (synced=%d, db_events=%d, cal_events=%d)", count, len(dbEvents), len(calEvents))
 	return count, nil
 }
 
@@ -730,6 +738,66 @@ func (s *Scheduler) currentTimezone() string {
 		return time.Local.String()
 	}
 	return cfg.Timezone
+}
+
+// CalendarStatusMap returns calendar presence status for each Notion page ID.
+// Status values: present | missing | disabled | unavailable
+func (s *Scheduler) CalendarStatusMap(ctx context.Context, from, to time.Time, notionIDs []string) (map[string]string, error) {
+	statuses := make(map[string]string, len(notionIDs))
+	if len(notionIDs) == 0 {
+		return statuses, nil
+	}
+
+	cfg, env := s.cfg.Get()
+	if !cfg.CalendarSync.Enabled {
+		for _, id := range notionIDs {
+			statuses[id] = "disabled"
+		}
+		return statuses, nil
+	}
+	if env.Google.CalendarID == "" || env.Google.ServiceAccountKey == "" {
+		for _, id := range notionIDs {
+			statuses[id] = "unavailable"
+		}
+		return statuses, nil
+	}
+
+	s.mu.Lock()
+	if s.calendar == nil || s.calendarKey != env.Google.ServiceAccountKey || s.calendarID != env.Google.CalendarID {
+		client, err := calendar.NewClient(ctx, env.Google.CalendarID, env.Google.ServiceAccountKey)
+		if err != nil {
+			s.mu.Unlock()
+			return statuses, err
+		}
+		s.calendar = client
+		s.calendarKey = env.Google.ServiceAccountKey
+		s.calendarID = env.Google.CalendarID
+	}
+	s.mu.Unlock()
+
+	if s.calendar == nil {
+		return statuses, errors.New("calendar client not configured")
+	}
+
+	calEvents, err := s.calendar.ListEvents(ctx, from, to)
+	if err != nil {
+		return statuses, err
+	}
+	present := make(map[string]struct{}, len(calEvents))
+	for _, ce := range calEvents {
+		if ce.NotionPageID == "" {
+			continue
+		}
+		present[ce.NotionPageID] = struct{}{}
+	}
+	for _, id := range notionIDs {
+		if _, ok := present[id]; ok {
+			statuses[id] = "present"
+		} else {
+			statuses[id] = "missing"
+		}
+	}
+	return statuses, nil
 }
 
 func (s *Scheduler) NotionSyncStatus() SyncStatus {

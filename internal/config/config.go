@@ -322,11 +322,13 @@ func NormalizeConfig(cfg Config) Config {
 	if cfg.Webhook.Notification.ContentType == "" {
 		cfg.Webhook.Notification.ContentType = "application/json"
 	}
-	if cfg.Webhook.Schedule.PayloadTemplate == "" {
-		cfg.Webhook.Schedule.PayloadTemplate = `{"content":"{{.Message}}"}`
+	defaultPayload := `{"content":{{json .Message}}}`
+	legacyPayload := `{"content":"{{.Message}}"}`
+	if cfg.Webhook.Schedule.PayloadTemplate == "" || cfg.Webhook.Schedule.PayloadTemplate == legacyPayload {
+		cfg.Webhook.Schedule.PayloadTemplate = defaultPayload
 	}
-	if cfg.Webhook.Notification.PayloadTemplate == "" {
-		cfg.Webhook.Notification.PayloadTemplate = `{"content":"{{.Message}}"}`
+	if cfg.Webhook.Notification.PayloadTemplate == "" || cfg.Webhook.Notification.PayloadTemplate == legacyPayload {
+		cfg.Webhook.Notification.PayloadTemplate = defaultPayload
 	}
 	if cfg.CalendarSync.LookaheadDays <= 0 {
 		cfg.CalendarSync.LookaheadDays = 30
