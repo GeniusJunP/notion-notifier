@@ -144,7 +144,7 @@ func MapPagesToEvents(pages []page, mapping config.PropertyMapping, tz *time.Loc
 		}
 		rawProps, _ := json.Marshal(p.Properties)
 		var attendees []string
-		if mapping.Attendees != "" {
+		if mapping.AttendeesEnabled && mapping.Attendees != "" {
 			attendees = ExtractEmails(p.Properties[mapping.Attendees])
 		}
 		events = append(events, models.Event{

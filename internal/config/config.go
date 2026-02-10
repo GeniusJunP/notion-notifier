@@ -83,11 +83,12 @@ type CalendarSyncConfig struct {
 }
 
 type PropertyMapping struct {
-	Title     string          `yaml:"title" json:"title"`
-	Date      string          `yaml:"date" json:"date"`
-	Location  string          `yaml:"location" json:"location"`
-	Attendees string          `yaml:"attendees" json:"attendees"` // Notion people property for Calendar attendee emails
-	Custom    []CustomMapping `yaml:"custom" json:"custom"`
+	Title            string          `yaml:"title" json:"title"`
+	Date             string          `yaml:"date" json:"date"`
+	Location         string          `yaml:"location" json:"location"`
+	Attendees        string          `yaml:"attendees" json:"attendees"`                 // Notion people property for Calendar attendee emails
+	AttendeesEnabled bool            `yaml:"attendees_enabled" json:"attendees_enabled"` // Enable attendee email sync
+	Custom           []CustomMapping `yaml:"custom" json:"custom"`
 }
 
 type CustomMapping struct {

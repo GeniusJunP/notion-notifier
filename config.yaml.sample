@@ -55,6 +55,7 @@ property_mapping:
   date: "日付"
   location: "場所"
   attendees: "" # Notionのpeopleプロパティ名（Calendar招待メール抽出用）
+  attendees_enabled: false # attendees同期を有効にする
   custom:
     - variable: "speaker"
       property: "登壇者"
