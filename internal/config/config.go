@@ -10,7 +10,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// CurrentSchemaVersion is the latest config schema version.
+const CurrentSchemaVersion = 1
+
 type Config struct {
+	SchemaVersion int                `yaml:"schema_version" json:"schema_version"`
 	Timezone      string             `yaml:"timezone" json:"timezone"`
 	Sync          SyncConfig         `yaml:"sync" json:"sync"`
 	Notifications Notifications      `yaml:"notifications" json:"notifications"`
@@ -28,9 +32,9 @@ type SyncConfig struct {
 }
 
 type Notifications struct {
-	Advance  []AdvanceNotification   `yaml:"advance" json:"advance"`
-	Periodic []PeriodicNotification  `yaml:"periodic" json:"periodic"`
-	Weekly   []PeriodicNotification  `yaml:"weekly" json:"-"`
+	Advance  []AdvanceNotification  `yaml:"advance" json:"advance"`
+	Periodic []PeriodicNotification `yaml:"periodic" json:"periodic"`
+	Weekly   []PeriodicNotification `yaml:"weekly" json:"-"`
 }
 
 type WebhookConfig struct {
@@ -73,9 +77,9 @@ type PeriodicNotification struct {
 }
 
 type CalendarSyncConfig struct {
-	Enabled        bool `yaml:"enabled" json:"enabled"`
-	IntervalHours  int  `yaml:"interval_hours" json:"interval_hours"`
-	LookaheadDays  int  `yaml:"lookahead_days" json:"lookahead_days"`
+	Enabled       bool `yaml:"enabled" json:"enabled"`
+	IntervalHours int  `yaml:"interval_hours" json:"interval_hours"`
+	LookaheadDays int  `yaml:"lookahead_days" json:"lookahead_days"`
 }
 
 type PropertyMapping struct {
@@ -285,10 +289,31 @@ func WriteConfig(path string, cfg Config) error {
 }
 
 func NormalizeConfig(cfg Config) Config {
+	// Schema version migration
+	cfg.SchemaVersion = CurrentSchemaVersion
+
+	// Migrate legacy weekly → periodic
 	if len(cfg.Notifications.Periodic) == 0 && len(cfg.Notifications.Weekly) > 0 {
 		cfg.Notifications.Periodic = cfg.Notifications.Weekly
 	}
 	cfg.Notifications.Weekly = nil
+
+	// Timezone default
+	if cfg.Timezone == "" {
+		cfg.Timezone = "Asia/Tokyo"
+	}
+
+	// Sync defaults
+	if cfg.Sync.CheckInterval <= 0 {
+		cfg.Sync.CheckInterval = 15
+	}
+
+	// Calendar defaults
+	if cfg.CalendarSync.IntervalHours <= 0 {
+		cfg.CalendarSync.IntervalHours = 6
+	}
+
+	// Webhook defaults
 	if cfg.Webhook.Schedule.ContentType == "" {
 		cfg.Webhook.Schedule.ContentType = "application/json"
 	}
