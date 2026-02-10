@@ -39,6 +39,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+	updates = expandFlatUpdates(updates)
 
 	// Re-encode and decode into the struct to apply updates
 	// This is a simple way to merge JSON into existing struct
@@ -140,7 +141,7 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Trigger", `{"showToast":{"type":"config_saved"}}`)
+	w.Header().Set("HX-Trigger", `{"showToast":{"type":"config_saved"},"configSaved":true}`)
 	w.WriteHeader(http.StatusNoContent)
 }
 

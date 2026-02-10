@@ -83,6 +83,118 @@ func normalizeBoolSlice(raw interface{}, key string) {
 	}
 }
 
+type pathToken struct {
+	key   string
+	index *int
+}
+
+func expandFlatUpdates(updates map[string]interface{}) map[string]interface{} {
+	expanded := map[string]interface{}{}
+	pathEntries := map[string]interface{}{}
+	for k, v := range updates {
+		if isPathKey(k) {
+			pathEntries[k] = v
+			continue
+		}
+		expanded[k] = v
+	}
+	for k, v := range pathEntries {
+		tokens := parsePath(k)
+		if len(tokens) == 0 {
+			expanded[k] = v
+			continue
+		}
+		if root, ok := setPathValue(expanded, tokens, v).(map[string]interface{}); ok {
+			expanded = root
+		}
+	}
+	return expanded
+}
+
+func isPathKey(key string) bool {
+	return strings.Contains(key, ".") || strings.Contains(key, "[")
+}
+
+func parsePath(path string) []pathToken {
+	parts := strings.Split(path, ".")
+	tokens := make([]pathToken, 0, len(parts))
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		for part != "" {
+			open := strings.Index(part, "[")
+			if open == -1 {
+				tokens = append(tokens, pathToken{key: part})
+				part = ""
+				break
+			}
+			if open > 0 {
+				tokens = append(tokens, pathToken{key: part[:open]})
+			}
+			rest := part[open+1:]
+			close := strings.Index(rest, "]")
+			if close == -1 {
+				tokens = append(tokens, pathToken{key: part})
+				part = ""
+				break
+			}
+			if idx, ok := parseIndex(rest[:close]); ok {
+				tokens = append(tokens, pathToken{index: &idx})
+			}
+			part = rest[close+1:]
+		}
+	}
+	return tokens
+}
+
+func parseIndex(value string) (int, bool) {
+	if value == "" {
+		return 0, false
+	}
+	num, err := strconv.Atoi(value)
+	if err != nil || num < 0 {
+		return 0, false
+	}
+	return num, true
+}
+
+func setPathValue(container interface{}, tokens []pathToken, value interface{}) interface{} {
+	if len(tokens) == 0 {
+		return container
+	}
+	token := tokens[0]
+	if token.key != "" {
+		current, _ := container.(map[string]interface{})
+		if current == nil {
+			current = map[string]interface{}{}
+		}
+		if len(tokens) == 1 {
+			current[token.key] = value
+			return current
+		}
+		current[token.key] = setPathValue(current[token.key], tokens[1:], value)
+		return current
+	}
+	if token.index != nil {
+		current, _ := container.([]interface{})
+		if current == nil {
+			current = []interface{}{}
+		}
+		index := *token.index
+		for len(current) <= index {
+			current = append(current, nil)
+		}
+		if len(tokens) == 1 {
+			current[index] = value
+			return current
+		}
+		current[index] = setPathValue(current[index], tokens[1:], value)
+		return current
+	}
+	return container
+}
+
 func applyAdvanceConditionClears(cfg *config.Config, notifications map[string]interface{}) {
 	raw, ok := notifications["advance"].([]interface{})
 	if !ok {

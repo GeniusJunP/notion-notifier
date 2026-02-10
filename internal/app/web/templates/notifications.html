@@ -128,19 +128,19 @@
             <h1 class="text-3xl font-extrabold tracking-tight dark:text-white">通知設定</h1>
             <p class="text-slate-500 dark:text-slate-400 mt-1">いつ、どのような内容で通知するかをカスタマイズします。</p>
         </div>
-        <button type="submit" form="notifications-form"
-            class="bg-primary-600 dark:bg-primary-500 text-white px-8 py-3 rounded-2xl text-sm font-bold hover:bg-primary-700 dark:hover:bg-primary-600 shadow-xl shadow-primary-500/25 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden">
-            <span class="relative z-10 flex items-center gap-2">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                設定を保存
-            </span>
-            <div
-                class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-            </div>
-        </button>
+        <div class="flex items-center gap-3">
+            <span id="unsaved-indicator"
+                class="hidden rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold px-3 py-1">未保存</span>
+            <button type="submit" form="notifications-form"
+                class="bg-primary-600 dark:bg-primary-500 text-white px-8 py-3 rounded-2xl text-sm font-bold hover:bg-primary-700 dark:hover:bg-primary-600 shadow-xl shadow-primary-500/25 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="save" class="w-4 h-4 save-button-icon"></i>
+                <span class="save-button-label">設定を保存</span>
+            </button>
+        </div>
     </div>
 
-    <form id="notifications-form" hx-post="/api/config" hx-ext="json-enc" hx-swap="none" hx-indicator="#save-indicator">
+    <form id="notifications-form" hx-post="/api/config" hx-ext="json-enc" hx-swap="none"
+        hx-indicator=".save-indicator" data-unsaved-indicator="#unsaved-indicator">
         <input type="hidden" name="notifications.advance_clear" :value="advanceNotifications.length === 0">
         <input type="hidden" name="notifications.periodic_clear" :value="periodicNotifications.length === 0">
         <div class="grid grid-cols-1 gap-10">
@@ -154,21 +154,21 @@
                         事前通知 (Advance Notifications)
                     </h2>
                     <button @click="addRule()" type="button"
-                        class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 group">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"></i>
+                        class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         ルールを追加
                     </button>
                 </div>
 
                 <div class="space-y-4">
                     <template x-for="(rule, index) in advanceNotifications" :key="index">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-primary-200 dark:hover:border-primary-900/50 transition-all duration-300"
+                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-primary-200 dark:hover:border-primary-900/50 transition-colors"
                             x-transition:enter="transition ease-out duration-300"
                             x-transition:enter-start="opacity-0 transform -translate-y-4"
                             x-transition:enter-end="opacity-100 transform translate-y-0">
 
                             <button @click="removeRule(index)" type="button"
-                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all lg:opacity-0 group-hover:opacity-100">
+                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors lg:opacity-0 group-hover:opacity-100">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
 
@@ -240,11 +240,11 @@
                                         </div>
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
                                             <button type="button" @click="resetAdvanceTemplate(index)"
-                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                                 テンプレートをリセット
                                             </button>
                                             <button type="submit" form="notifications-form"
-                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm shadow-primary-500/20 transition-all">
+                                                class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm shadow-primary-500/20 transition-colors">
                                                 テンプレートを保存
                                             </button>
                                         </div>
@@ -281,7 +281,7 @@
                                                         <button type="button" @click="toggleAdvanceDay(rule, day.value)"
                                                             :disabled="!rule.conditions.enabled"
                                                             :class="(rule.conditions.days_of_week || []).includes(day.value) ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'"
-                                                            class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-primary-300 transition-all">
+                                                            class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-primary-300 transition-colors">
                                                             <span x-text="day.label"></span>
                                                         </button>
                                                     </template>
@@ -357,8 +357,8 @@
                         定期通知 (Periodic Digest)
                     </h2>
                     <button type="button" @click="addPeriodicRule()"
-                        class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 group">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"></i>
+                        class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         ルールを追加
                     </button>
                 </div>
@@ -366,9 +366,9 @@
                 <div class="space-y-4">
                     <template x-for="(rule, index) in periodicNotifications" :key="'periodic-'+index">
                         <div
-                            class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-sky-200 dark:hover:border-sky-900/50 transition-all duration-300">
+                            class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-sky-200 dark:hover:border-sky-900/50 transition-colors">
                             <button @click="removePeriodicRule(index)" type="button"
-                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all lg:opacity-0 group-hover:opacity-100">
+                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors lg:opacity-0 group-hover:opacity-100">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
 
@@ -399,7 +399,7 @@
                                             :key="'periodic-day-'+day.value">
                                             <button type="button" @click="togglePeriodicDay(rule, day.value)"
                                                 :class="(rule.days_of_week || []).includes(day.value) ? 'bg-sky-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'"
-                                                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-sky-300 transition-all">
+                                                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-sky-300 transition-colors">
                                                 <span x-text="day.label"></span>
                                             </button>
                                         </template>
@@ -475,11 +475,11 @@
                                     </div>
                                     <div class="mt-3 flex flex-wrap items-center gap-2">
                                         <button type="button" @click="resetPeriodicTemplate(index)"
-                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                             テンプレートをリセット
                                         </button>
                                         <button type="submit" form="notifications-form"
-                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-sky-600 text-white hover:bg-sky-700 shadow-sm shadow-sky-500/20 transition-all">
+                                            class="px-3 py-1.5 text-[10px] font-bold rounded-xl bg-sky-600 text-white hover:bg-sky-700 shadow-sm shadow-sky-500/20 transition-colors">
                                             テンプレートを保存
                                         </button>
                                     </div>
@@ -677,10 +677,10 @@
         </div>
     </form>
 
-    <div id="save-indicator"
-        class="htmx-indicator fixed top-4 right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 z-[100]">
+    <div
+        class="save-indicator htmx-indicator fixed top-4 right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 z-[100]">
         <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary-600"></i>
-        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Saving...</span>
+        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">保存中...</span>
     </div>
 </div>
 {{end}}
