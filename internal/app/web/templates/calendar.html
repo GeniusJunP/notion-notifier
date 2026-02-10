@@ -35,7 +35,7 @@
 
                     <div class="flex items-center gap-4 bg-white dark:bg-slate-800 p-2 pr-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm"
                         x-data="{ enabled: {{.Config.CalendarSync.Enabled}} }">
-                        <button type="button" @click="enabled = !enabled"
+                        <button type="button" @click="enabled = !enabled" data-unsaved-trigger
                             :class="enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
                             class="relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
                             <span :class="enabled ? 'translate-x-6' : 'translate-x-0'"

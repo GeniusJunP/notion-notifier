@@ -83,6 +83,52 @@ func normalizeBoolSlice(raw interface{}, key string) {
 	}
 }
 
+func normalizeIntField(m map[string]interface{}, key string) {
+	raw, ok := m[key]
+	if !ok {
+		return
+	}
+	switch v := raw.(type) {
+	case int:
+		return
+	case float64:
+		m[key] = int(v)
+	case string:
+		if v == "" {
+			m[key] = 0
+			return
+		}
+		if parsed, err := strconv.Atoi(v); err == nil {
+			m[key] = parsed
+		} else {
+			m[key] = 0
+		}
+	}
+}
+
+func normalizeIntSlice(raw interface{}) {
+	items, ok := raw.([]interface{})
+	if !ok {
+		return
+	}
+	for i, item := range items {
+		switch v := item.(type) {
+		case int:
+			continue
+		case float64:
+			items[i] = int(v)
+		case string:
+			if v == "" {
+				items[i] = 0
+				continue
+			}
+			if parsed, err := strconv.Atoi(v); err == nil {
+				items[i] = parsed
+			}
+		}
+	}
+}
+
 type pathToken struct {
 	key   string
 	index *int

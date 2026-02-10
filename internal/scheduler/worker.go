@@ -13,6 +13,7 @@ import (
 	"notion-notifier/internal/calendar"
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/db"
+	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
@@ -21,9 +22,9 @@ import (
 )
 
 const (
-	notificationTypeAdvance = "advance"
+	notificationTypeAdvance  = "advance"
 	notificationTypePeriodic = "periodic"
-	notificationTypeManual  = "manual"
+	notificationTypeManual   = "manual"
 )
 
 type Scheduler struct {
@@ -34,16 +35,16 @@ type Scheduler struct {
 	calendar *calendar.Client
 	renderer *tpl.Renderer
 
-	mu             sync.Mutex
-	advanceTimers  map[string]*time.Timer
+	mu               sync.Mutex
+	advanceTimers    map[string]*time.Timer
 	periodicLastSent map[int]string
-	notionKey      string
-	calendarKey    string
-	calendarID     string
-	statusMu       sync.RWMutex
-	notionStatus   SyncStatus
-	stopCh         chan struct{}
-	wg             sync.WaitGroup
+	notionKey        string
+	calendarKey      string
+	calendarID       string
+	statusMu         sync.RWMutex
+	notionStatus     SyncStatus
+	stopCh           chan struct{}
+	wg               sync.WaitGroup
 }
 
 type SyncStatus struct {
@@ -54,15 +55,15 @@ type SyncStatus struct {
 
 func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, webhookClient *webhook.Client, calendarClient *calendar.Client, renderer *tpl.Renderer) *Scheduler {
 	return &Scheduler{
-		cfg:            cfg,
-		repo:           repo,
-		notion:         notionClient,
-		webhook:        webhookClient,
-		calendar:       calendarClient,
-		renderer:       renderer,
-		advanceTimers:  map[string]*time.Timer{},
+		cfg:              cfg,
+		repo:             repo,
+		notion:           notionClient,
+		webhook:          webhookClient,
+		calendar:         calendarClient,
+		renderer:         renderer,
+		advanceTimers:    map[string]*time.Timer{},
 		periodicLastSent: map[int]string{},
-		stopCh:         make(chan struct{}),
+		stopCh:           make(chan struct{}),
 	}
 }
 
@@ -181,6 +182,7 @@ func (s *Scheduler) calendarLoop(ctx context.Context) {
 
 func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 	cfg, env := s.cfg.Get()
+	logging.Info("SYNC", "notion sync started")
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	if env.Notion.APIKey != "" {
 		s.mu.Lock()
@@ -193,11 +195,13 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 	if s.notion == nil {
 		err := errors.New("notion client not configured")
 		s.setNotionStatus(0, err)
+		logging.Error("SYNC", "notion client not configured")
 		return 0, err
 	}
 	pages, err := s.notion.QueryDatabase(ctx, env.Notion.DatabaseID)
 	if err != nil {
 		s.setNotionStatus(0, err)
+		logging.Error("SYNC", "notion query failed: %v", err)
 		return 0, err
 	}
 	events := notion.MapPagesToEvents(pages, cfg.PropertyMap, loc)
@@ -213,6 +217,7 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 	}
 	if err := s.repo.UpsertEvents(ctx, events); err != nil {
 		s.setNotionStatus(0, err)
+		logging.Error("SYNC", "upsert events failed: %v", err)
 		return 0, err
 	}
 	ids := make([]string, 0, len(events))
@@ -221,12 +226,14 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 	}
 	if err := s.repo.DeleteEventsNotIn(ctx, ids); err != nil {
 		s.setNotionStatus(len(events), err)
+		logging.Error("SYNC", "cleanup stale events failed: %v", err)
 		return len(events), err
 	}
 	if err := s.RebuildAdvanceSchedules(ctx); err != nil {
 		log.Printf("rebuild advance schedules failed: %v", err)
 	}
 	s.setNotionStatus(len(events), nil)
+	logging.Info("SYNC", "notion sync finished (count=%d)", len(events))
 	return len(events), nil
 }
 
@@ -385,6 +392,7 @@ func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, f
 func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 	cfg, env := s.cfg.Get()
 	if !cfg.CalendarSync.Enabled {
+		logging.Info("CALENDAR", "calendar sync skipped (disabled)")
 		return 0, nil
 	}
 	if env.Google.CalendarID != "" && env.Google.ServiceAccountKey != "" {
@@ -393,6 +401,7 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 			client, err := calendar.NewClient(ctx, env.Google.CalendarID, env.Google.ServiceAccountKey)
 			if err != nil {
 				s.mu.Unlock()
+				logging.Error("CALENDAR", "calendar client init failed: %v", err)
 				return 0, err
 			}
 			s.calendar = client
@@ -402,11 +411,13 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 		s.mu.Unlock()
 	}
 	if s.calendar == nil {
+		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")
 	}
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	events, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
+		logging.Error("CALENDAR", "list events failed: %v", err)
 		return 0, err
 	}
 	count := 0
@@ -431,6 +442,7 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 				LastSyncedAt:    time.Now().In(loc).Format(time.RFC3339),
 				SyncStatus:      "error",
 			})
+			logging.Error("CALENDAR", "calendar upsert failed: %v", err)
 			return count, err
 		}
 		record = models.SyncRecord{
@@ -442,10 +454,12 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 			SyncStatus:        "synced",
 		}
 		if err := s.repo.UpsertSyncRecord(ctx, record); err != nil {
+			logging.Error("CALENDAR", "sync record upsert failed: %v", err)
 			return count, err
 		}
 		count++
 	}
+	logging.Info("CALENDAR", "calendar sync finished (count=%d)", count)
 	return count, nil
 }
 
@@ -492,8 +506,10 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	}
 	_ = s.repo.InsertNotificationHistory(ctx, history)
 	if status == "failed" {
+		logging.Error("WEBHOOK", "send failed (%s): %s", typ, errStr)
 		return errors.New(errStr)
 	}
+	logging.Info("WEBHOOK", "send ok (%s)", typ)
 	return nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"notion-notifier/internal/config"
+	"notion-notifier/internal/logging"
 )
 
 func (s *Server) handleAPISync(w http.ResponseWriter, r *http.Request) {
@@ -16,9 +17,11 @@ func (s *Server) handleAPISync(w http.ResponseWriter, r *http.Request) {
 	}
 	count, err := s.scheduler.SyncNotion(r.Context())
 	if err != nil {
+		logging.Error("SYNC", "notion sync failed: %v", err)
 		http.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logging.Info("SYNC", "notion sync complete (count=%d)", count)
 	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast":{"type":"sync_complete","count":%d}}`, count))
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -59,14 +62,30 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 						if !ok {
 							continue
 						}
+						normalizeIntField(rule, "minutes_before")
 						if cond, ok := rule["conditions"].(map[string]interface{}); ok {
 							normalizeBoolField(cond, "enabled")
+							if days, ok := cond["days_of_week"]; ok {
+								normalizeIntSlice(days)
+							}
 						}
 					}
 				}
 			}
 			if periodic, ok := m["periodic"]; ok {
 				normalizeBoolSlice(periodic, "enabled")
+				if items, ok := periodic.([]interface{}); ok {
+					for _, item := range items {
+						rule, ok := item.(map[string]interface{})
+						if !ok {
+							continue
+						}
+						normalizeIntField(rule, "days_ahead")
+						if days, ok := rule["days_of_week"]; ok {
+							normalizeIntSlice(days)
+						}
+					}
+				}
 			}
 		}
 		nb, _ := json.Marshal(notifications)
@@ -89,6 +108,8 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	if calendarSync, ok := updates["calendar_sync"]; ok {
 		if m, ok := calendarSync.(map[string]interface{}); ok {
 			normalizeBoolField(m, "enabled")
+			normalizeIntField(m, "interval_hours")
+			normalizeIntField(m, "lookahead_days")
 		}
 		cb, _ := json.Marshal(calendarSync)
 		json.Unmarshal(cb, &mergedCfg.CalendarSync)
@@ -112,6 +133,9 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(cr, &mergedCfg.ContentRules)
 	}
 	if sync, ok := updates["sync"]; ok {
+		if m, ok := sync.(map[string]interface{}); ok {
+			normalizeIntField(m, "check_interval")
+		}
 		sb, _ := json.Marshal(sync)
 		json.Unmarshal(sb, &mergedCfg.Sync)
 	}
@@ -137,9 +161,11 @@ func (s *Server) handleAPIConfig(w http.ResponseWriter, r *http.Request) {
 	// security.basic_auth.enabled is config-only (credentials are in env.yaml)
 
 	if err := s.cfg.UpdateConfig(mergedCfg); err != nil {
+		logging.Error("CONFIG", "update failed: %v", err)
 		http.Error(w, "Failed to update config: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logging.Info("CONFIG", "config updated from %s", r.RemoteAddr)
 
 	w.Header().Set("HX-Trigger", `{"showToast":{"type":"config_saved"},"configSaved":true}`)
 	w.WriteHeader(http.StatusNoContent)
@@ -240,9 +266,11 @@ func (s *Server) handleAPICalendarSync(w http.ResponseWriter, r *http.Request) {
 	}
 	count, err := s.scheduler.SyncCalendar(r.Context(), from, to)
 	if err != nil {
+		logging.Error("CALENDAR", "calendar sync failed: %v", err)
 		http.Error(w, "Calendar sync failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logging.Info("CALENDAR", "calendar sync complete (count=%d)", count)
 	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"showToast":{"type":"calendar_sync_complete","count":%d}}`, count))
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -253,9 +281,11 @@ func (s *Server) handleAPICalendarClear(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.repo.ClearSyncRecords(r.Context()); err != nil {
+		logging.Error("CALENDAR", "clear sync records failed: %v", err)
 		http.Error(w, "Failed to clear sync records: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logging.Info("CALENDAR", "sync records cleared")
 	w.Header().Set("HX-Trigger", `{"showToast":{"type":"sync_records_cleared"}}`)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -266,9 +296,11 @@ func (s *Server) handleAPIHistoryClear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.repo.ClearNotificationHistory(r.Context()); err != nil {
+		logging.Error("HISTORY", "clear history failed: %v", err)
 		http.Error(w, "Failed to clear history: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	logging.Info("HISTORY", "notification history cleared")
 	w.Header().Set("HX-Trigger", `{"showToast":{"type":"history_cleared"}}`)
 	w.WriteHeader(http.StatusNoContent)
 }

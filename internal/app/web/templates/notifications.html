@@ -8,12 +8,20 @@
         this.normalizeAdvance();
         this.normalizePeriodic();
     },
+    markDirty() {
+        const form = this.$el.querySelector('form[data-unsaved-indicator]');
+        if (form) {
+            form.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    },
     addRule() {
         this.advanceNotifications.push({ enabled: true, minutes_before: 60, message: '', original_message: '', location: '', url: '', conditions: { enabled: false, days_of_week: [], property_filters: [] } });
+        this.markDirty();
     },
     removeRule(index) {
         if(confirm('このルールを削除しますか？')) {
             this.advanceNotifications.splice(index, 1);
+            this.markDirty();
         }
     },
     ensureAdvance(rule) {
@@ -47,21 +55,26 @@
             rule.conditions.days_of_week.push(day);
             rule.conditions.days_of_week.sort((a, b) => a - b);
         }
+        this.markDirty();
     },
     addPropertyFilter(rule) {
         this.ensureAdvance(rule);
         rule.conditions.property_filters.push({ property: '', operator: 'equals', value: '' });
+        this.markDirty();
     },
     removePropertyFilter(rule, index) {
         this.ensureAdvance(rule);
         rule.conditions.property_filters.splice(index, 1);
+        this.markDirty();
     },
     addPeriodicRule() {
         this.periodicNotifications.push({ enabled: true, days_of_week: [1], time: '09:00', days_ahead: 7, message: '', original_message: '' });
+        this.markDirty();
     },
     removePeriodicRule(index) {
         if(confirm('この定期ルールを削除しますか？')) {
             this.periodicNotifications.splice(index, 1);
+            this.markDirty();
         }
     },
     normalizePeriodic() {
@@ -88,16 +101,19 @@
             rule.days_of_week.push(day);
             rule.days_of_week.sort((a, b) => a - b);
         }
+        this.markDirty();
     },
     resetAdvanceTemplate(index) {
         const rule = this.advanceNotifications[index];
         if (!rule) return;
         rule.message = rule.original_message || '';
+        this.markDirty();
     },
     resetPeriodicTemplate(index) {
         const rule = this.periodicNotifications[index];
         if (!rule) return;
         rule.message = rule.original_message || '';
+        this.markDirty();
     },
     dateToYMD(date) {
         return date.toISOString().slice(0, 10);
@@ -106,17 +122,21 @@
         const d = new Date();
         d.setDate(d.getDate() + days);
         this.snoozeUntil = this.dateToYMD(d);
+        this.markDirty();
     },
     clearSnooze() {
         this.snoozeUntil = '';
+        this.markDirty();
     },
     setMuteDays(days) {
         const d = new Date();
         d.setDate(d.getDate() + days);
         this.muteUntil = this.dateToYMD(d);
+        this.markDirty();
     },
     clearMute() {
         this.muteUntil = '';
+        this.markDirty();
     },
     isFuture(value) {
         if (!value) return false;
@@ -168,7 +188,7 @@
                             x-transition:enter-end="opacity-100 transform translate-y-0">
 
                             <button @click="removeRule(index)" type="button"
-                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors lg:opacity-0 group-hover:opacity-100">
+                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
 
@@ -177,7 +197,7 @@
                                     <label
                                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">STATUS</label>
                                     <div class="flex items-center gap-3">
-                                        <button type="button" @click="rule.enabled = !rule.enabled"
+                                        <button type="button" @click="rule.enabled = !rule.enabled; markDirty()"
                                             :class="rule.enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
                                             class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
                                             <span :class="rule.enabled ? 'translate-x-5' : 'translate-x-0'"
@@ -256,7 +276,7 @@
                                         class="mt-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-6 space-y-5">
                                         <div class="flex items-center gap-3">
                                             <button type="button"
-                                                @click="rule.conditions.enabled = !rule.conditions.enabled"
+                                                @click="rule.conditions.enabled = !rule.conditions.enabled; markDirty()"
                                                 :class="rule.conditions.enabled ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'"
                                                 class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
                                                 <span
@@ -368,7 +388,7 @@
                         <div
                             class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative group hover:border-sky-200 dark:hover:border-sky-900/50 transition-colors">
                             <button @click="removePeriodicRule(index)" type="button"
-                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors lg:opacity-0 group-hover:opacity-100">
+                                class="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
 
@@ -377,7 +397,7 @@
                                     <label
                                         class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">STATUS</label>
                                     <div class="flex items-center gap-3">
-                                        <button type="button" @click="rule.enabled = !rule.enabled"
+                                        <button type="button" @click="rule.enabled = !rule.enabled; markDirty()"
                                             :class="rule.enabled ? 'bg-sky-600' : 'bg-slate-200 dark:bg-slate-700'"
                                             class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out">
                                             <span :class="rule.enabled ? 'translate-x-5' : 'translate-x-0'"
@@ -448,7 +468,7 @@
                                         hx-post="/api/notifications/preview" hx-ext="json-enc"
                                         hx-trigger="keyup changed delay:700ms" :hx-target="'#periodic-preview-'+index"
                                         :hx-indicator="'#periodic-preview-indicator-'+index" hx-swap="innerHTML"
-                                        hx-vals="js:{template: this.value, to_date: (function(el){ const days = parseInt(el.dataset.daysAhead || '0', 10); const d = new Date(); d.setDate(d.getDate() + (isNaN(days) ? 0 : days)); return d.toISOString().slice(0,10); })(this) }"
+                                        hx-vals="js:{template: this.value, to_date: (function(el){ const days = parseInt(el.dataset.daysAhead || '0', 10); const d = new Date(); d.setDate(d.getDate() + (isNaN(days) ? 0 : days)); const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}`; })(this) }"
                                         class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all font-medium resize-none tracking-tight"
                                         placeholder="例: {{range .Events}}...{{end}}"></textarea>
                                     <div class="mt-2 flex flex-wrap gap-2">

@@ -323,6 +323,11 @@
                 };
                 form.addEventListener('input', markDirty);
                 form.addEventListener('change', markDirty);
+                form.addEventListener('click', (event) => {
+                    if (event.target.closest('[data-unsaved-trigger]')) {
+                        markDirty();
+                    }
+                });
                 form.addEventListener('htmx:afterRequest', (evt) => {
                     if (evt.detail && evt.detail.successful) {
                         indicator.classList.add('hidden');

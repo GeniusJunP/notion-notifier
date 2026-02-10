@@ -60,5 +60,5 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("/api/calendar/clear", s.requireAuth(s.handleAPICalendarClear))
 	mux.HandleFunc("/api/history/clear", s.requireAuth(s.handleAPIHistoryClear))
 
-	return mux
+	return loggingMiddleware(mux)
 }
