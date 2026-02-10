@@ -3,20 +3,21 @@ package models
 import "time"
 
 type Event struct {
-	NotionPageID string
-	Title        string
-	StartDate    string
-	StartTime    string
-	EndDate      string
-	EndTime      string
-	IsAllDay     bool
-	Location     string
-	URL          string
-	Content      string
-	Custom       map[string]string
-	RawPropsJSON string
-	FetchedAt    time.Time
+	NotionPageID    string
+	Title           string
+	StartDate       string
+	StartTime       string
+	EndDate         string
+	EndTime         string
+	IsAllDay        bool
+	Location        string
+	URL             string
+	Content         string
+	Custom          map[string]string
+	RawPropsJSON    string
+	FetchedAt       time.Time
 	NotionUpdatedAt string
+	Attendees       []string // email addresses extracted from Notion people property
 }
 
 type NotificationHistory struct {
@@ -38,12 +39,10 @@ type AdvanceSchedule struct {
 }
 
 type SyncRecord struct {
-	NotionPageID       string
-	CalendarEventID    string
-	NotionUpdatedAt    string
-	CalendarUpdatedAt  string
-	LastSyncedAt       string
-	SyncStatus         string
+	NotionPageID    string
+	CalendarEventID string
+	NotionUpdatedAt string
+	Synced          bool
 }
 
 type TemplateEvent struct {

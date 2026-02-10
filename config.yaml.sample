@@ -54,6 +54,7 @@ property_mapping:
   title: "名前"
   date: "日付"
   location: "場所"
+  attendees: "" # Notionのpeopleプロパティ名（Calendar招待メール抽出用）
   custom:
     - variable: "speaker"
       property: "登壇者"

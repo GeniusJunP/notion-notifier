@@ -83,10 +83,11 @@ type CalendarSyncConfig struct {
 }
 
 type PropertyMapping struct {
-	Title    string          `yaml:"title" json:"title"`
-	Date     string          `yaml:"date" json:"date"`
-	Location string          `yaml:"location" json:"location"`
-	Custom   []CustomMapping `yaml:"custom" json:"custom"`
+	Title     string          `yaml:"title" json:"title"`
+	Date      string          `yaml:"date" json:"date"`
+	Location  string          `yaml:"location" json:"location"`
+	Attendees string          `yaml:"attendees" json:"attendees"` // Notion people property for Calendar attendee emails
+	Custom    []CustomMapping `yaml:"custom" json:"custom"`
 }
 
 type CustomMapping struct {
@@ -336,4 +337,23 @@ func NormalizeConfig(cfg Config) Config {
 
 func SanitizeTemplate(input string) string {
 	return strings.ReplaceAll(input, "\r\n", "\n")
+}
+
+// DefaultAdvanceMessage is the default message template for advance notifications.
+const DefaultAdvanceMessage = `📢 まもなく「{{.Name}}」が始まります（{{.MinutesBefore}}分前）
+📅 {{.Date}} {{.Time}}
+📍 {{.Location}}
+🔗 {{.URL}}`
+
+// DefaultPeriodicMessage is the default message template for periodic notifications.
+const DefaultPeriodicMessage = `📋 今後の予定（{{len .Events}}件）
+{{range .Events}}• {{.Date}} {{.Time}} - {{.Name}} @ {{.Location}}
+{{end}}`
+
+// DefaultTemplates returns the default message templates keyed by type.
+func DefaultTemplates() map[string]string {
+	return map[string]string{
+		"advance":  DefaultAdvanceMessage,
+		"periodic": DefaultPeriodicMessage,
+	}
 }

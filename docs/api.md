@@ -35,6 +35,7 @@
 | POST   | `/api/history/clear` | 通知履歴削除 |
 | POST   | `/api/notifications/preview` | テンプレートプレビュー |
 | POST   | `/api/notifications/manual` | 手動通知送信 |
+| GET    | `/api/templates/defaults` | デフォルトテンプレート取得 |
 
 ---
 
@@ -116,7 +117,7 @@
     "is_all_day": false,
     "location": "会議室A",
     "url": "https://notion.so/abc123",
-    "sync_status": "synced"
+    "sync_status": "synced"  // "synced" | "pending" | "unsynced"
   }
 ]
 ```
@@ -216,5 +217,17 @@ Notion同期を手動実行。
 ```json
 {
   "message": "今週の予定: ..."
+}
+```
+
+### GET /api/templates/defaults
+
+デフォルトのメッセージテンプレートを取得。テンプレートリセット用。
+
+**Response 200:**
+```json
+{
+  "advance": "📢 まもなく「{{.Name}}」が始まります...",
+  "periodic": "📋 今後の予定（{{len .Events}}件）..."
 }
 ```

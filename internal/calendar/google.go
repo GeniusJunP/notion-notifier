@@ -73,10 +73,66 @@ func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
 	return c.srv.Events.Delete(c.calendarID, eventID).Context(ctx).Do()
 }
 
+// CalendarEvent is a simplified representation of a Google Calendar event with Notion metadata.
+type CalendarEvent struct {
+	ID           string
+	NotionPageID string // from extendedProperties.private.notion_page_id
+	Summary      string
+	Updated      string
+}
+
+// ListEvents fetches all events from Google Calendar in the given time range
+// and returns those that have a notion_page_id in their extended properties.
+func (c *Client) ListEvents(ctx context.Context, from, to time.Time) ([]CalendarEvent, error) {
+	var result []CalendarEvent
+	pageToken := ""
+	for {
+		call := c.srv.Events.List(c.calendarID).
+			Context(ctx).
+			TimeMin(from.Format(time.RFC3339)).
+			TimeMax(to.Format(time.RFC3339)).
+			SingleEvents(true).
+			MaxResults(250).
+			Fields("items(id,summary,updated,extendedProperties),nextPageToken")
+		if pageToken != "" {
+			call = call.PageToken(pageToken)
+		}
+		resp, err := call.Do()
+		if err != nil {
+			return nil, fmt.Errorf("calendar list events: %w", err)
+		}
+		for _, item := range resp.Items {
+			ce := CalendarEvent{
+				ID:      item.Id,
+				Summary: item.Summary,
+				Updated: item.Updated,
+			}
+			if item.ExtendedProperties != nil && item.ExtendedProperties.Private != nil {
+				ce.NotionPageID = item.ExtendedProperties.Private["notion_page_id"]
+			}
+			// Only include events that were created by this tool
+			if ce.NotionPageID != "" {
+				result = append(result, ce)
+			}
+		}
+		if resp.NextPageToken == "" {
+			break
+		}
+		pageToken = resp.NextPageToken
+	}
+	return result, nil
+}
+
 func mapEvent(ev models.Event, tz *time.Location) *calendarapi.Event {
 	start, end := buildStartEnd(ev, tz)
-	description := fmt.Sprintf("Notion: %s", ev.URL)
-	return &calendarapi.Event{
+	description := ev.Content
+	if ev.URL != "" {
+		if description != "" {
+			description += "\n\n"
+		}
+		description += fmt.Sprintf("Notion: %s", ev.URL)
+	}
+	gevent := &calendarapi.Event{
 		Summary:     ev.Title,
 		Location:    ev.Location,
 		Description: description,
@@ -86,6 +142,11 @@ func mapEvent(ev models.Event, tz *time.Location) *calendarapi.Event {
 			Private: map[string]string{"notion_page_id": ev.NotionPageID},
 		},
 	}
+	// Add attendees from Notion people property emails
+	for _, email := range ev.Attendees {
+		gevent.Attendees = append(gevent.Attendees, &calendarapi.EventAttendee{Email: email})
+	}
+	return gevent
 }
 
 func buildStartEnd(ev models.Event, tz *time.Location) (*calendarapi.EventDateTime, *calendarapi.EventDateTime) {

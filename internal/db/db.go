@@ -46,6 +46,7 @@ func initSchema(db *sql.DB) error {
 			url TEXT,
 			content TEXT,
 			raw_properties TEXT,
+			notion_updated_at TEXT,
 			fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
 		);`,
 		`CREATE TABLE IF NOT EXISTS notification_history (
@@ -59,11 +60,9 @@ func initSchema(db *sql.DB) error {
 		);`,
 		`CREATE TABLE IF NOT EXISTS sync_records (
 			notion_page_id TEXT PRIMARY KEY,
-			calendar_event_id TEXT,
-			notion_updated_at TEXT,
-			calendar_updated_at TEXT,
-			last_synced_at TEXT,
-			sync_status TEXT DEFAULT 'synced'
+			calendar_event_id TEXT NOT NULL,
+			notion_updated_at TEXT NOT NULL,
+			synced INTEGER DEFAULT 0
 		);`,
 		`CREATE TABLE IF NOT EXISTS advance_schedules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,12 +78,76 @@ func initSchema(db *sql.DB) error {
 			return err
 		}
 	}
-	if _, err := db.Exec(`ALTER TABLE events ADD COLUMN content TEXT;`); err != nil {
-		if !strings.Contains(err.Error(), "duplicate column") {
+	// Migrations for existing databases
+	migrations := []string{
+		`ALTER TABLE events ADD COLUMN content TEXT;`,
+		`ALTER TABLE events ADD COLUMN notion_updated_at TEXT;`,
+	}
+	for _, m := range migrations {
+		if _, err := db.Exec(m); err != nil {
+			if !strings.Contains(err.Error(), "duplicate column") {
+				return err
+			}
+		}
+	}
+	// Migrate old sync_records schema to new simplified one
+	if err := migrateSyncRecords(db); err != nil {
+		return err
+	}
+	return nil
+}
+
+func migrateSyncRecords(db *sql.DB) error {
+	// Check if old columns exist; if so, rebuild the table
+	rows, err := db.Query(`PRAGMA table_info(sync_records)`)
+	if err != nil {
+		return nil // table might not exist yet
+	}
+	defer rows.Close()
+	hasOldColumns := false
+	for rows.Next() {
+		var cid int
+		var name, typ string
+		var notNull int
+		var dflt sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &typ, &notNull, &dflt, &pk); err != nil {
+			return err
+		}
+		if name == "calendar_updated_at" || name == "last_synced_at" || name == "sync_status" {
+			hasOldColumns = true
+			break
+		}
+	}
+	if !hasOldColumns {
+		return nil
+	}
+	// Rebuild: copy data, drop old, create new, re-insert
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS sync_records_new (
+			notion_page_id TEXT PRIMARY KEY,
+			calendar_event_id TEXT NOT NULL,
+			notion_updated_at TEXT NOT NULL,
+			synced INTEGER DEFAULT 0
+		);`,
+		`INSERT OR IGNORE INTO sync_records_new (notion_page_id, calendar_event_id, notion_updated_at, synced)
+		 SELECT notion_page_id, COALESCE(calendar_event_id, ''), COALESCE(notion_updated_at, ''),
+		        CASE WHEN sync_status = 'synced' THEN 1 ELSE 0 END
+		 FROM sync_records WHERE calendar_event_id IS NOT NULL AND calendar_event_id != '';`,
+		`DROP TABLE sync_records;`,
+		`ALTER TABLE sync_records_new RENAME TO sync_records;`,
+	}
+	for _, s := range stmts {
+		if _, err := tx.Exec(s); err != nil {
+			_ = tx.Rollback()
 			return err
 		}
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) error {
@@ -92,8 +155,8 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		return nil
 	}
 	query := `INSERT INTO events (
-		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
 		title=excluded.title,
 		start_date=excluded.start_date,
@@ -105,6 +168,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		url=excluded.url,
 		content=excluded.content,
 		raw_properties=excluded.raw_properties,
+		notion_updated_at=excluded.notion_updated_at,
 		fetched_at=excluded.fetched_at;`
 
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -134,6 +198,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 			ev.URL,
 			ev.Content,
 			ev.RawPropsJSON,
+			ev.NotionUpdatedAt,
 			ev.FetchedAt.Format(time.RFC3339),
 		)
 		if err != nil {
@@ -145,7 +210,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 }
 
 func (r *Repository) ListEventsBetween(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
 	FROM events
 	WHERE start_date <= ? AND (end_date IS NULL OR end_date = '' OR end_date >= ?)
 	ORDER BY start_date ASC, start_time ASC;`
@@ -163,13 +228,13 @@ func (r *Repository) ListUpcomingEvents(ctx context.Context, days int, now time.
 }
 
 func (r *Repository) GetEvent(ctx context.Context, notionPageID string) (models.Event, bool, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
 	FROM events WHERE notion_page_id = ?;`
 	row := r.db.QueryRowContext(ctx, query, notionPageID)
 	var ev models.Event
 	var isAllDay int
 	var fetchedAt string
-	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &fetchedAt); err != nil {
+	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return ev, false, nil
 		}
@@ -190,7 +255,7 @@ func scanEvents(rows *sql.Rows) ([]models.Event, error) {
 		var ev models.Event
 		var isAllDay int
 		var fetchedAt string
-		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &fetchedAt); err != nil {
+		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
 			return nil, err
 		}
 		ev.IsAllDay = isAllDay == 1
@@ -306,14 +371,16 @@ func (r *Repository) MarkAdvanceScheduleFired(ctx context.Context, id int64) err
 
 func (r *Repository) GetSyncRecord(ctx context.Context, notionPageID string) (models.SyncRecord, bool, error) {
 	var record models.SyncRecord
-	query := `SELECT notion_page_id, calendar_event_id, notion_updated_at, calendar_updated_at, last_synced_at, sync_status FROM sync_records WHERE notion_page_id = ?;`
+	query := `SELECT notion_page_id, calendar_event_id, notion_updated_at, synced FROM sync_records WHERE notion_page_id = ?;`
 	row := r.db.QueryRowContext(ctx, query, notionPageID)
-	if err := row.Scan(&record.NotionPageID, &record.CalendarEventID, &record.NotionUpdatedAt, &record.CalendarUpdatedAt, &record.LastSyncedAt, &record.SyncStatus); err != nil {
+	var synced int
+	if err := row.Scan(&record.NotionPageID, &record.CalendarEventID, &record.NotionUpdatedAt, &synced); err != nil {
 		if err == sql.ErrNoRows {
 			return record, false, nil
 		}
 		return record, false, err
 	}
+	record.Synced = synced == 1
 	return record, true, nil
 }
 
@@ -324,7 +391,7 @@ func (r *Repository) GetSyncStatusMap(ctx context.Context, notionPageIDs []strin
 	}
 	placeholders := strings.Repeat("?,", len(notionPageIDs))
 	placeholders = strings.TrimRight(placeholders, ",")
-	query := fmt.Sprintf("SELECT notion_page_id, sync_status FROM sync_records WHERE notion_page_id IN (%s);", placeholders)
+	query := fmt.Sprintf("SELECT notion_page_id, synced FROM sync_records WHERE notion_page_id IN (%s);", placeholders)
 	args := make([]interface{}, len(notionPageIDs))
 	for i, id := range notionPageIDs {
 		args[i] = id
@@ -336,31 +403,35 @@ func (r *Repository) GetSyncStatusMap(ctx context.Context, notionPageIDs []strin
 	defer rows.Close()
 	for rows.Next() {
 		var id string
-		var status string
-		if err := rows.Scan(&id, &status); err != nil {
+		var synced int
+		if err := rows.Scan(&id, &synced); err != nil {
 			return statuses, err
 		}
-		statuses[id] = status
+		if synced == 1 {
+			statuses[id] = "synced"
+		} else {
+			statuses[id] = "pending"
+		}
 	}
 	return statuses, rows.Err()
 }
 
 func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRecord) error {
-	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, notion_updated_at, calendar_updated_at, last_synced_at, sync_status)
-	VALUES (?, ?, ?, ?, ?, ?)
+	synced := 0
+	if record.Synced {
+		synced = 1
+	}
+	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, notion_updated_at, synced)
+	VALUES (?, ?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
 		calendar_event_id=excluded.calendar_event_id,
 		notion_updated_at=excluded.notion_updated_at,
-		calendar_updated_at=excluded.calendar_updated_at,
-		last_synced_at=excluded.last_synced_at,
-		sync_status=excluded.sync_status;`
+		synced=excluded.synced;`
 	_, err := r.db.ExecContext(ctx, query,
 		record.NotionPageID,
 		record.CalendarEventID,
 		record.NotionUpdatedAt,
-		record.CalendarUpdatedAt,
-		record.LastSyncedAt,
-		record.SyncStatus,
+		synced,
 	)
 	return err
 }
@@ -370,18 +441,40 @@ func (r *Repository) ClearSyncRecords(ctx context.Context) error {
 	return err
 }
 
-func (r *Repository) GetSyncSummary(ctx context.Context) (string, int, error) {
-	query := `SELECT MAX(last_synced_at), COUNT(*) FROM sync_records;`
-	row := r.db.QueryRowContext(ctx, query)
-	var lastSynced sql.NullString
+// ListOrphanedSyncRecords returns sync_records whose notion_page_id no longer exists in the events table.
+func (r *Repository) ListOrphanedSyncRecords(ctx context.Context) ([]models.SyncRecord, error) {
+	query := `SELECT s.notion_page_id, s.calendar_event_id, s.notion_updated_at, s.synced
+	FROM sync_records s LEFT JOIN events e ON s.notion_page_id = e.notion_page_id
+	WHERE e.notion_page_id IS NULL;`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []models.SyncRecord
+	for rows.Next() {
+		var rec models.SyncRecord
+		var synced int
+		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &rec.NotionUpdatedAt, &synced); err != nil {
+			return nil, err
+		}
+		rec.Synced = synced == 1
+		out = append(out, rec)
+	}
+	return out, rows.Err()
+}
+
+// DeleteSyncRecord removes a single sync record by Notion page ID.
+func (r *Repository) DeleteSyncRecord(ctx context.Context, notionPageID string) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM sync_records WHERE notion_page_id = ?;`, notionPageID)
+	return err
+}
+
+// SyncRecordCount returns the total number of synced records.
+func (r *Repository) SyncRecordCount(ctx context.Context) (int, error) {
 	var count int
-	if err := row.Scan(&lastSynced, &count); err != nil {
-		return "", 0, err
-	}
-	if lastSynced.Valid {
-		return lastSynced.String, count, nil
-	}
-	return "", count, nil
+	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM sync_records WHERE synced = 1;`).Scan(&count)
+	return count, err
 }
 
 func (r *Repository) DeleteEventsNotIn(ctx context.Context, ids []string) error {

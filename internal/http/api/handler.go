@@ -37,6 +37,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/history/clear", h.handleHistoryClear)
 	mux.HandleFunc("/api/notifications/preview", h.handlePreviewNotification)
 	mux.HandleFunc("/api/notifications/manual", h.handleManualNotification)
+	mux.HandleFunc("/api/templates/defaults", h.handleDefaultTemplates)
 }
 
 // --- GET /api/config, PUT /api/config ---
@@ -409,6 +410,16 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 	}
 
 	respondJSON(w, http.StatusOK, previewResponse{Message: message})
+}
+
+// --- GET /api/templates/defaults ---
+
+func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	respondJSON(w, http.StatusOK, config.DefaultTemplates())
 }
 
 // --- Utility ---

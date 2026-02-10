@@ -415,50 +415,95 @@ func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, 
 		return 0, errors.New("calendar client not configured")
 	}
 	loc, _ := time.LoadLocation(cfg.Timezone)
-	events, err := s.repo.ListEventsBetween(ctx, from, to)
+
+	// 1. Get Notion events from DB cache
+	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
-		logging.Error("CALENDAR", "list events failed: %v", err)
+		logging.Error("CALENDAR", "list db events failed: %v", err)
 		return 0, err
 	}
+	dbMap := make(map[string]models.Event, len(dbEvents))
+	for _, ev := range dbEvents {
+		dbMap[ev.NotionPageID] = ev
+	}
+
+	// 2. Get Calendar events from Google Calendar API
+	calEvents, err := s.calendar.ListEvents(ctx, from, to)
+	if err != nil {
+		logging.Error("CALENDAR", "list calendar events failed: %v", err)
+		return 0, err
+	}
+	calMap := make(map[string]calendar.CalendarEvent, len(calEvents))
+	for _, ce := range calEvents {
+		calMap[ce.NotionPageID] = ce
+	}
+
 	count := 0
-	for _, ev := range events {
-		record, exists, err := s.repo.GetSyncRecord(ctx, ev.NotionPageID)
+
+	// 3. Create or update Calendar events for DB events
+	for _, ev := range dbEvents {
+		record, hasRecord, err := s.repo.GetSyncRecord(ctx, ev.NotionPageID)
 		if err != nil {
 			return count, err
 		}
-		if exists && record.NotionUpdatedAt == ev.NotionUpdatedAt && record.SyncStatus == "synced" {
+
+		existingCalID := ""
+		if hasRecord {
+			existingCalID = record.CalendarEventID
+		} else if ce, inCal := calMap[ev.NotionPageID]; inCal {
+			// Calendar has the event but no sync_record — adopt it
+			existingCalID = ce.ID
+		}
+
+		// Skip if already synced and Notion hasn't changed
+		if hasRecord && record.Synced && record.NotionUpdatedAt == ev.NotionUpdatedAt {
 			continue
 		}
-		eventID := ""
-		if exists {
-			eventID = record.CalendarEventID
-		}
-		newID, updatedAt, err := s.calendar.UpsertEvent(ctx, ev, eventID, loc)
+
+		newID, _, err := s.calendar.UpsertEvent(ctx, ev, existingCalID, loc)
 		if err != nil {
+			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", ev.NotionPageID, err)
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    ev.NotionPageID,
-				CalendarEventID: eventID,
+				CalendarEventID: existingCalID,
 				NotionUpdatedAt: ev.NotionUpdatedAt,
-				LastSyncedAt:    time.Now().In(loc).Format(time.RFC3339),
-				SyncStatus:      "error",
+				Synced:          false,
 			})
-			logging.Error("CALENDAR", "calendar upsert failed: %v", err)
-			return count, err
+			continue
 		}
-		record = models.SyncRecord{
-			NotionPageID:      ev.NotionPageID,
-			CalendarEventID:   newID,
-			NotionUpdatedAt:   ev.NotionUpdatedAt,
-			CalendarUpdatedAt: updatedAt,
-			LastSyncedAt:      time.Now().In(loc).Format(time.RFC3339),
-			SyncStatus:        "synced",
-		}
-		if err := s.repo.UpsertSyncRecord(ctx, record); err != nil {
-			logging.Error("CALENDAR", "sync record upsert failed: %v", err)
-			return count, err
-		}
+		_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
+			NotionPageID:    ev.NotionPageID,
+			CalendarEventID: newID,
+			NotionUpdatedAt: ev.NotionUpdatedAt,
+			Synced:          true,
+		})
 		count++
 	}
+
+	// 4. Delete Calendar events that no longer exist in Notion DB
+	for notionID, ce := range calMap {
+		if _, exists := dbMap[notionID]; !exists {
+			if err := s.calendar.DeleteEvent(ctx, ce.ID); err != nil {
+				logging.Error("CALENDAR", "calendar delete failed for %s: %v", ce.ID, err)
+				continue
+			}
+			_ = s.repo.DeleteSyncRecord(ctx, notionID)
+			logging.Info("CALENDAR", "deleted orphaned calendar event %s (notion: %s)", ce.ID, notionID)
+			count++
+		}
+	}
+
+	// 5. Clean up orphaned sync_records (no DB event and no Calendar event)
+	orphans, err := s.repo.ListOrphanedSyncRecords(ctx)
+	if err == nil {
+		for _, rec := range orphans {
+			if _, inCal := calMap[rec.NotionPageID]; !inCal {
+				// Calendar event already gone, just clean up the record
+				_ = s.repo.DeleteSyncRecord(ctx, rec.NotionPageID)
+			}
+		}
+	}
+
 	logging.Info("CALENDAR", "calendar sync finished (count=%d)", count)
 	return count, nil
 }

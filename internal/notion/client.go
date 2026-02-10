@@ -20,10 +20,10 @@ import (
 const notionVersion = "2022-06-28"
 
 type Client struct {
-	http       *http.Client
-	apiKey     string
-	retryCfg   retry.Config
-	baseURL    string
+	http     *http.Client
+	apiKey   string
+	retryCfg retry.Config
+	baseURL  string
 }
 
 type queryRequest struct {
@@ -38,10 +38,10 @@ type queryResponse struct {
 }
 
 type page struct {
-	ID             string                 `json:"id"`
-	URL            string                 `json:"url"`
-	LastEditedTime string                 `json:"last_edited_time"`
-	Properties     map[string]any         `json:"properties"`
+	ID             string         `json:"id"`
+	URL            string         `json:"url"`
+	LastEditedTime string         `json:"last_edited_time"`
+	Properties     map[string]any `json:"properties"`
 }
 
 func New(httpClient *http.Client, apiKey string, cfg retry.Config) *Client {
@@ -143,20 +143,25 @@ func MapPagesToEvents(pages []page, mapping config.PropertyMapping, tz *time.Loc
 			custom[cm.Variable] = ExtractString(p.Properties[cm.Property])
 		}
 		rawProps, _ := json.Marshal(p.Properties)
+		var attendees []string
+		if mapping.Attendees != "" {
+			attendees = ExtractEmails(p.Properties[mapping.Attendees])
+		}
 		events = append(events, models.Event{
-			NotionPageID: p.ID,
-			Title:        title,
-			StartDate:    startDate,
-			StartTime:    startTime,
-			EndDate:      endDate,
-			EndTime:      endTime,
-			IsAllDay:     isAllDay,
-			Location:     location,
-			URL:          p.URL,
-			Custom:       custom,
-			RawPropsJSON: string(rawProps),
-			FetchedAt:    time.Now().In(tz),
+			NotionPageID:    p.ID,
+			Title:           title,
+			StartDate:       startDate,
+			StartTime:       startTime,
+			EndDate:         endDate,
+			EndTime:         endTime,
+			IsAllDay:        isAllDay,
+			Location:        location,
+			URL:             p.URL,
+			Custom:          custom,
+			RawPropsJSON:    string(rawProps),
+			FetchedAt:       time.Now().In(tz),
 			NotionUpdatedAt: p.LastEditedTime,
+			Attendees:       attendees,
 		})
 	}
 	sort.Slice(events, func(i, j int) bool {
@@ -323,6 +328,37 @@ func ExtractString(prop any) string {
 	return ""
 }
 
+// ExtractEmails extracts email addresses from a Notion "people" property.
+// Notion users have a "person" object with an "email" field.
+func ExtractEmails(prop any) []string {
+	props, ok := prop.(map[string]any)
+	if !ok {
+		return nil
+	}
+	typ, _ := props["type"].(string)
+	if typ != "people" {
+		return nil
+	}
+	arr, ok := props["people"].([]any)
+	if !ok {
+		return nil
+	}
+	var emails []string
+	for _, item := range arr {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		// Notion person objects have a "person" field with "email"
+		if person, ok := m["person"].(map[string]any); ok {
+			if email, ok := person["email"].(string); ok && email != "" {
+				emails = append(emails, email)
+			}
+		}
+	}
+	return emails
+}
+
 func joinRichText(value any) string {
 	arr, ok := value.([]any)
 	if !ok {
@@ -346,17 +382,17 @@ type blockListResponse struct {
 }
 
 type block struct {
-	ID               string        `json:"id"`
-	Type             string        `json:"type"`
-	HasChildren      bool          `json:"has_children"`
-	Paragraph        *blockText    `json:"paragraph,omitempty"`
-	Heading1         *blockText    `json:"heading_1,omitempty"`
-	Heading2         *blockText    `json:"heading_2,omitempty"`
-	Heading3         *blockText    `json:"heading_3,omitempty"`
-	BulletedListItem *blockText    `json:"bulleted_list_item,omitempty"`
-	NumberedListItem *blockText    `json:"numbered_list_item,omitempty"`
-	ToDo             *blockText    `json:"to_do,omitempty"`
-	Divider          *struct{}     `json:"divider,omitempty"`
+	ID               string     `json:"id"`
+	Type             string     `json:"type"`
+	HasChildren      bool       `json:"has_children"`
+	Paragraph        *blockText `json:"paragraph,omitempty"`
+	Heading1         *blockText `json:"heading_1,omitempty"`
+	Heading2         *blockText `json:"heading_2,omitempty"`
+	Heading3         *blockText `json:"heading_3,omitempty"`
+	BulletedListItem *blockText `json:"bulleted_list_item,omitempty"`
+	NumberedListItem *blockText `json:"numbered_list_item,omitempty"`
+	ToDo             *blockText `json:"to_do,omitempty"`
+	Divider          *struct{}  `json:"divider,omitempty"`
 }
 
 type blockText struct {
