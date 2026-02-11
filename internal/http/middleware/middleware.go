@@ -39,14 +39,6 @@ func BasicAuth(cfg *config.Manager) func(http.Handler) http.Handler {
 	}
 }
 
-// JSON sets Content-Type to application/json for API responses.
-func JSON(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		next.ServeHTTP(w, r)
-	})
-}
-
 type responseRecorder struct {
 	http.ResponseWriter
 	status int

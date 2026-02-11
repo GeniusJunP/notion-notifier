@@ -502,13 +502,6 @@ func (r *Repository) DeleteSyncRecord(ctx context.Context, notionPageID string) 
 	return err
 }
 
-// SyncRecordCount returns the total number of synced records.
-func (r *Repository) SyncRecordCount(ctx context.Context) (int, error) {
-	var count int
-	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM sync_records WHERE synced = 1;`).Scan(&count)
-	return count, err
-}
-
 func (r *Repository) DeleteEventsNotIn(ctx context.Context, ids []string) error {
 	if len(ids) == 0 {
 		_, err := r.db.ExecContext(ctx, `DELETE FROM events;`)

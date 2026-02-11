@@ -25,12 +25,6 @@ func NewManager(cfgPath, envPath string) (*Manager, error) {
 	return &Manager{cfg: cfg, env: env, cfgPath: cfgPath, envPath: envPath}, nil
 }
 
-func (m *Manager) Paths() (string, string) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.cfgPath, m.envPath
-}
-
 func (m *Manager) Get() (Config, Env) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

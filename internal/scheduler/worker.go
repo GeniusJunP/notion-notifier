@@ -393,16 +393,6 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 	return message, nil
 }
 
-func (s *Scheduler) PreviewTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
-	cfg, _ := s.cfg.Get()
-	events, err := s.repo.ListEventsBetween(ctx, from, to)
-	if err != nil {
-		return "", err
-	}
-	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
-	return s.renderer.RenderList(template, templateEvents)
-}
-
 func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
