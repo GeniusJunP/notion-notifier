@@ -164,9 +164,30 @@
                                         場所
                                     </div>
                                     <div
-                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                        class="h-10 flex items-center justify-between px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
                                     >
                                         参加者 (People)
+                                            
+                                        <button
+                                            on:click={() => {
+                                                if (!config) return;
+                                                config.property_mapping.attendees_enabled =
+                                                    !config.property_mapping
+                                                        .attendees_enabled;
+                                            }}
+                                            class="h-8 px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
+                                                .property_mapping
+                                                .attendees_enabled
+                                                ? 'bg-green-500 text-white border-green-500'
+                                                : 'bg-white text-gray-400'}"
+                                        >
+
+                                            {config.property_mapping
+                                                .attendees_enabled
+                                                ? "ON"
+                                                : "OFF"}
+
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -210,24 +231,6 @@
                                             }
                                             class="flex-1 h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
                                         />
-                                        <button
-                                            on:click={() => {
-                                                if (!config) return;
-                                                config.property_mapping.attendees_enabled =
-                                                    !config.property_mapping
-                                                        .attendees_enabled;
-                                            }}
-                                            class="h-10 px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
-                                                .property_mapping
-                                                .attendees_enabled
-                                                ? 'bg-green-500 text-white border-green-500'
-                                                : 'bg-white text-gray-400'}"
-                                        >
-                                            {config.property_mapping
-                                                .attendees_enabled
-                                                ? "ON"
-                                                : "OFF"}
-                                        </button>
                                     </div>
                                 </div>
                             </div>

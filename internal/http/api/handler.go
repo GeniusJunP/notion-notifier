@@ -148,18 +148,16 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 // --- GET /api/events/upcoming ---
 
 type eventResponse struct {
-	NotionPageID   string `json:"notion_page_id"`
-	Title          string `json:"title"`
-	StartDate      string `json:"start_date"`
-	StartTime      string `json:"start_time"`
-	EndDate        string `json:"end_date,omitempty"`
-	EndTime        string `json:"end_time,omitempty"`
-	IsAllDay       bool   `json:"is_all_day"`
-	Location       string `json:"location,omitempty"`
-	URL            string `json:"url,omitempty"`
-	SyncStatus     string `json:"sync_status"`
-	CacheStatus    string `json:"cache_status"`
-	CalendarStatus string `json:"calendar_status"`
+	NotionPageID string `json:"notion_page_id"`
+	Title        string `json:"title"`
+	StartDate    string `json:"start_date"`
+	StartTime    string `json:"start_time"`
+	EndDate      string `json:"end_date,omitempty"`
+	EndTime      string `json:"end_time,omitempty"`
+	IsAllDay     bool   `json:"is_all_day"`
+	Location     string `json:"location,omitempty"`
+	URL          string `json:"url,omitempty"`
+	CacheStatus  string `json:"cache_status"`
 }
 
 func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
@@ -187,12 +185,6 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 			syncMap = m
 		}
 	}
-	calendarMap := map[string]string{}
-	if len(ids) > 0 {
-		if m, err := h.sched.CalendarStatusMap(r.Context(), now, now.AddDate(0, 0, 14), ids); err == nil {
-			calendarMap = m
-		}
-	}
 
 	out := make([]eventResponse, 0, len(events))
 	for _, ev := range events {
@@ -200,23 +192,17 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 		if v, ok := syncMap[ev.NotionPageID]; ok && v != "" {
 			cacheStatus = v
 		}
-		calendarStatus := "unknown"
-		if v, ok := calendarMap[ev.NotionPageID]; ok && v != "" {
-			calendarStatus = v
-		}
 		out = append(out, eventResponse{
-			NotionPageID:   ev.NotionPageID,
-			Title:          ev.Title,
-			StartDate:      ev.StartDate,
-			StartTime:      ev.StartTime,
-			EndDate:        ev.EndDate,
-			EndTime:        ev.EndTime,
-			IsAllDay:       ev.IsAllDay,
-			Location:       ev.Location,
-			URL:            ev.URL,
-			SyncStatus:     cacheStatus,
-			CacheStatus:    cacheStatus,
-			CalendarStatus: calendarStatus,
+			NotionPageID: ev.NotionPageID,
+			Title:        ev.Title,
+			StartDate:    ev.StartDate,
+			StartTime:    ev.StartTime,
+			EndDate:      ev.EndDate,
+			EndTime:      ev.EndTime,
+			IsAllDay:     ev.IsAllDay,
+			Location:     ev.Location,
+			URL:          ev.URL,
+			CacheStatus:  cacheStatus,
 		})
 	}
 	respondJSON(w, http.StatusOK, out)

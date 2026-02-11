@@ -31,7 +31,13 @@ func (r *Renderer) RenderSingle(tmpl string, event models.TemplateEvent, minutes
 		return "", err
 	}
 	var buf bytes.Buffer
-	ctx := models.TemplateContext{
+	event.MinutesBefore = minutesBefore
+	ctx := struct {
+		models.TemplateEvent
+		Events        []models.TemplateEvent
+		MinutesBefore int
+	}{
+		TemplateEvent: event,
 		Events:        []models.TemplateEvent{event},
 		MinutesBefore: minutesBefore,
 	}

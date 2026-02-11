@@ -14,22 +14,7 @@
         "types": [
             "svelte",
             "vite/client"
-        ],
-        "baseUrl": ".",
-        "paths": {
-            "$lib": [
-                "src/lib"
-            ],
-            "$lib/*": [
-                "src/lib/*"
-            ],
-            "$components": [
-                "src/components"
-            ],
-            "$components/*": [
-                "src/components/*"
-            ]
-        }
+        ]
     },
     "include": [
         "src/**/*.d.ts",
