@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2/google"
 	calendarapi "google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 
@@ -64,10 +63,6 @@ func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID st
 		return "", "", err
 	}
 	return created.Id, created.Updated, nil
-}
-
-func (c *Client) GetEvent(ctx context.Context, eventID string) (*calendarapi.Event, error) {
-	return c.srv.Events.Get(c.calendarID, eventID).Context(ctx).Do()
 }
 
 func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
@@ -282,13 +277,4 @@ func buildStartEnd(ev models.Event, tz *time.Location) (*calendarapi.EventDateTi
 	}
 	return &calendarapi.EventDateTime{DateTime: startTime.Format(time.RFC3339), TimeZone: loc.String()},
 		&calendarapi.EventDateTime{DateTime: endTime.Format(time.RFC3339), TimeZone: loc.String()}
-}
-
-func ValidateServiceAccountKey(value string) error {
-	creds, err := loadCredentials(value)
-	if err != nil {
-		return err
-	}
-	_, err = google.JWTConfigFromJSON(creds, calendarapi.CalendarScope)
-	return err
 }

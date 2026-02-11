@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -152,7 +153,7 @@ func (s *Scheduler) periodicLoop() {
 				if now.Format("15:04") != rule.Time {
 					continue
 				}
-				if !containsDay(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
+				if !slices.Contains(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
 					continue
 				}
 				key := now.Format("2006-01-02")
@@ -626,9 +627,9 @@ func pickPrimaryCalendarEvent(events []calendar.CalendarEvent, record models.Syn
 			}
 		}
 	} else {
-		latest := parseCalendarUpdated(events[0].Updated)
+		latest, _ := time.Parse(time.RFC3339, events[0].Updated)
 		for i := 1; i < len(events); i++ {
-			updated := parseCalendarUpdated(events[i].Updated)
+			updated, _ := time.Parse(time.RFC3339, events[i].Updated)
 			if updated.After(latest) {
 				latest = updated
 				primaryIndex = i
@@ -644,14 +645,6 @@ func pickPrimaryCalendarEvent(events []calendar.CalendarEvent, record models.Syn
 		duplicates = append(duplicates, ev)
 	}
 	return primary, duplicates
-}
-
-func parseCalendarUpdated(value string) time.Time {
-	t, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		return time.Time{}
-	}
-	return t
 }
 
 func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, events []calendar.CalendarEvent) int {
@@ -772,7 +765,7 @@ func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cf
 	}
 	if len(rule.Conditions.DaysOfWeek) > 0 {
 		start := parseEventStart(ev, nil)
-		if !containsDay(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
+		if !slices.Contains(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
 			return false
 		}
 	}
@@ -856,15 +849,6 @@ func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateE
 
 func scheduleKey(notionPageID string, ruleIndex int) string {
 	return notionPageID + ":" + strconv.Itoa(ruleIndex)
-}
-
-func containsDay(days []int, day int) bool {
-	for _, d := range days {
-		if d == day {
-			return true
-		}
-	}
-	return false
 }
 
 func weekdayToConfig(day time.Weekday) int {
