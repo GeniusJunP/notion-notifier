@@ -42,20 +42,19 @@ type Scheduler struct {
 	calendar *calendar.Client
 	renderer *tpl.Renderer
 
-	mu               sync.Mutex
-	advanceTimers    map[string]*time.Timer
-	periodicLastSent map[int]string
-	notionKey        string
-	calendarKey      string
-	calendarID       string
-	statusMu         sync.RWMutex
-	notionStatus     SyncStatus
-	periodicMu       sync.Mutex
-	opsMu            sync.Mutex
-	runtimeMu        sync.RWMutex
-	runtimeCtx       context.Context
-	runtimeCancel    context.CancelFunc
-	wg               sync.WaitGroup
+	mu                  sync.Mutex
+	advanceTimers       map[string]*time.Timer
+	periodicLastSent    map[int]string
+	notionKey           string
+	calendarFingerprint string
+	statusMu            sync.RWMutex
+	notionStatus        SyncStatus
+	periodicMu          sync.Mutex
+	opsMu               sync.Mutex
+	runtimeMu           sync.RWMutex
+	runtimeCtx          context.Context
+	runtimeCancel       context.CancelFunc
+	wg                  sync.WaitGroup
 }
 
 type SyncStatus struct {
@@ -448,21 +447,34 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Info("CALENDAR", "calendar sync skipped (disabled)")
 		return 0, nil
 	}
-	if env.Google.CalendarID != "" && env.Google.ServiceAccountKey != "" {
-		s.mu.Lock()
-		if s.calendar == nil || s.calendarKey != env.Google.ServiceAccountKey || s.calendarID != env.Google.CalendarID {
-			client, err := calendar.NewClient(ctx, env.Google.CalendarID, env.Google.ServiceAccountKey)
-			if err != nil {
-				s.mu.Unlock()
-				logging.Error("CALENDAR", "calendar client init failed: %v", err)
-				return 0, err
-			}
-			s.calendar = client
-			s.calendarKey = env.Google.ServiceAccountKey
-			s.calendarID = env.Google.CalendarID
-		}
-		s.mu.Unlock()
+	calendarOpts := calendar.ClientOptions{
+		CalendarID:        env.Google.CalendarID,
+		OAuthClientID:     env.Google.OAuthClientID,
+		OAuthClientSecret: env.Google.OAuthClientSecret,
+		OAuthRefreshToken: env.Google.OAuthRefreshToken,
 	}
+	if err := calendarOpts.Validate(); err != nil {
+		s.mu.Lock()
+		s.calendar = nil
+		s.calendarFingerprint = ""
+		s.mu.Unlock()
+		logging.Error("CALENDAR", "calendar oauth config invalid: %v", err)
+		return 0, err
+	}
+	fingerprint := calendarOpts.Fingerprint()
+
+	s.mu.Lock()
+	if s.calendar == nil || s.calendarFingerprint != fingerprint {
+		client, err := calendar.NewClient(ctx, calendarOpts)
+		if err != nil {
+			s.mu.Unlock()
+			logging.Error("CALENDAR", "calendar client init failed: %v", err)
+			return 0, err
+		}
+		s.calendar = client
+		s.calendarFingerprint = fingerprint
+	}
+	s.mu.Unlock()
 	if s.calendar == nil {
 		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")

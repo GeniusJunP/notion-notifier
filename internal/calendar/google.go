@@ -2,13 +2,16 @@ package calendar
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+	googleoauth "golang.org/x/oauth2/google"
 	calendarapi "google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 
@@ -20,33 +23,64 @@ type Client struct {
 	calendarID string
 }
 
-func NewClient(ctx context.Context, calendarID string, serviceAccountKey string) (*Client, error) {
-	if calendarID == "" {
-		return nil, errors.New("google calendar id is empty")
-	}
-	creds, err := loadCredentials(serviceAccountKey)
-	if err != nil {
-		return nil, err
-	}
-	srv, err := calendarapi.NewService(ctx, option.WithCredentialsJSON(creds), option.WithScopes(calendarapi.CalendarScope))
-	if err != nil {
-		return nil, err
-	}
-	return &Client{srv: srv, calendarID: calendarID}, nil
+type ClientOptions struct {
+	CalendarID        string
+	OAuthClientID     string
+	OAuthClientSecret string
+	OAuthRefreshToken string
 }
 
-func loadCredentials(value string) ([]byte, error) {
-	if value == "" {
-		return nil, errors.New("google service account key is empty")
+func (o ClientOptions) normalize() ClientOptions {
+	o.CalendarID = strings.TrimSpace(o.CalendarID)
+	o.OAuthClientID = strings.TrimSpace(o.OAuthClientID)
+	o.OAuthClientSecret = strings.TrimSpace(o.OAuthClientSecret)
+	o.OAuthRefreshToken = strings.TrimSpace(o.OAuthRefreshToken)
+	return o
+}
+
+func (o ClientOptions) Validate() error {
+	o = o.normalize()
+	if o.CalendarID == "" {
+		return errors.New("google calendar id is empty")
 	}
-	if strings.HasPrefix(strings.TrimSpace(value), "{") {
-		return []byte(value), nil
+	if o.OAuthClientID == "" || o.OAuthClientSecret == "" || o.OAuthRefreshToken == "" {
+		return errors.New("google oauth credentials are incomplete")
 	}
-	data, err := os.ReadFile(value)
+	return nil
+}
+
+func (o ClientOptions) IsConfigured() bool {
+	return o.Validate() == nil
+}
+
+func (o ClientOptions) Fingerprint() string {
+	o = o.normalize()
+	sum := sha256.Sum256([]byte(strings.Join([]string{
+		o.CalendarID,
+		o.OAuthClientID,
+		o.OAuthClientSecret,
+		o.OAuthRefreshToken,
+	}, "\n")))
+	return hex.EncodeToString(sum[:])
+}
+
+func NewClient(ctx context.Context, opts ClientOptions) (*Client, error) {
+	opts = opts.normalize()
+	if err := opts.Validate(); err != nil {
+		return nil, err
+	}
+	oauthCfg := &oauth2.Config{
+		ClientID:     opts.OAuthClientID,
+		ClientSecret: opts.OAuthClientSecret,
+		Endpoint:     googleoauth.Endpoint,
+		Scopes:       []string{calendarapi.CalendarScope},
+	}
+	tokenSource := oauthCfg.TokenSource(ctx, &oauth2.Token{RefreshToken: opts.OAuthRefreshToken})
+	srv, err := calendarapi.NewService(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
-		return nil, fmt.Errorf("read service account key: %w", err)
+		return nil, err
 	}
-	return data, nil
+	return &Client{srv: srv, calendarID: opts.CalendarID}, nil
 }
 
 func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID string, tz *time.Location) (string, string, error) {

@@ -59,8 +59,14 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 	webhookClient := webhook.New(httpClient, retryCfg)
 
 	var calendarClient *calendar.Client
-	if cfg.CalendarSync.Enabled && env.Google.CalendarID != "" && env.Google.ServiceAccountKey != "" {
-		calendarClient, err = calendar.NewClient(context.Background(), env.Google.CalendarID, env.Google.ServiceAccountKey)
+	calendarOpts := calendar.ClientOptions{
+		CalendarID:        env.Google.CalendarID,
+		OAuthClientID:     env.Google.OAuthClientID,
+		OAuthClientSecret: env.Google.OAuthClientSecret,
+		OAuthRefreshToken: env.Google.OAuthRefreshToken,
+	}
+	if cfg.CalendarSync.Enabled && calendarOpts.IsConfigured() {
+		calendarClient, err = calendar.NewClient(context.Background(), calendarOpts)
 		if err != nil {
 			return nil, fmt.Errorf("calendar client: %w", err)
 		}

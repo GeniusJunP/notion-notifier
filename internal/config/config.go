@@ -131,7 +131,9 @@ type WebhookEnv struct {
 
 type GoogleEnv struct {
 	CalendarID        string `yaml:"calendar_id" json:"calendar_id"`
-	ServiceAccountKey string `yaml:"service_account_key" json:"service_account_key"`
+	OAuthClientID     string `yaml:"oauth_client_id" json:"oauth_client_id"`
+	OAuthClientSecret string `yaml:"oauth_client_secret" json:"oauth_client_secret"`
+	OAuthRefreshToken string `yaml:"oauth_refresh_token" json:"oauth_refresh_token"`
 }
 
 type SecurityEnv struct {
@@ -180,7 +182,9 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Webhook.ScheduleURL = pickEnv("SCHEDULE_WEBHOOK_URL", env.Webhook.ScheduleURL)
 	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
-	env.Google.ServiceAccountKey = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY", env.Google.ServiceAccountKey)
+	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
+	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
+	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
 	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
 	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
 	return env
