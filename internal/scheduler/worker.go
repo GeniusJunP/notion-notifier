@@ -478,7 +478,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 	}
 	loc, _ := time.LoadLocation(cfg.Timezone)
 
-	// 1. Get Notion events from DB cache
+	// 1. Fetch Notion cache from DB (source of truth data).
 	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
 		logging.Error("CALENDAR", "list db events failed: %v", err)
@@ -489,7 +489,18 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		dbMap[ev.NotionPageID] = ev
 	}
 
-	// 2. Get Calendar events from Google Calendar API
+	// 2. Load sync_records once and index by Notion page ID.
+	syncRecords, err := s.repo.ListSyncRecords(ctx)
+	if err != nil {
+		logging.Error("CALENDAR", "list sync records failed: %v", err)
+		return 0, err
+	}
+	syncMap := make(map[string]models.SyncRecord, len(syncRecords))
+	for _, rec := range syncRecords {
+		syncMap[rec.NotionPageID] = rec
+	}
+
+	// 3. Fetch tracked Calendar events in range.
 	logging.Info("CALENDAR", "fetching calendar events from Google API (range: %s ~ %s)", from.Format("2006-01-02"), to.Format("2006-01-02"))
 	calEvents, err := s.calendar.ListEvents(ctx, from, to)
 	if err != nil {
@@ -497,38 +508,71 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		return 0, err
 	}
 	logging.Info("CALENDAR", "fetched %d calendar events from Google API", len(calEvents))
-	calMap := make(map[string]calendar.CalendarEvent, len(calEvents))
-	for _, ce := range calEvents {
-		calMap[ce.NotionPageID] = ce
-	}
+	calGrouped := groupCalendarEvents(calEvents)
 
 	count := 0
 
-	// 3. Create or update Calendar events for DB events
-	for _, ev := range dbEvents {
-		record, hasRecord, err := s.repo.GetSyncRecord(ctx, ev.NotionPageID)
-		if err != nil {
-			return count, err
-		}
-
-		existingCalID := ""
-		if hasRecord {
-			existingCalID = record.CalendarEventID
-		} else if ce, inCal := calMap[ev.NotionPageID]; inCal {
-			// Calendar has the event but no sync_record — adopt it
-			existingCalID = ce.ID
-		}
-
-		// Skip if already synced, Notion hasn't changed, AND the calendar event still exists
-		if hasRecord && record.Synced && record.NotionUpdatedAt == ev.NotionUpdatedAt {
-			if _, stillExists := calMap[ev.NotionPageID]; stillExists {
-				continue
+	// 4. Calendar-first pass: reverse lookup each tracked Calendar event into DB.
+	for notionID, grouped := range calGrouped {
+		ev, existsInDB := dbMap[notionID]
+		if !existsInDB {
+			// No Notion event in cache: this tracked Calendar event must be removed.
+			count += s.deleteCalendarEvents(ctx, notionID, grouped)
+			if err := s.repo.DeleteSyncRecord(ctx, notionID); err != nil {
+				logging.Error("CALENDAR", "sync record delete failed for %s: %v", notionID, err)
 			}
-			// Calendar event was deleted externally — re-create it
-			logging.Info("CALENDAR", "calendar event missing for %s, re-creating", ev.NotionPageID)
-			existingCalID = ""
+			delete(syncMap, notionID)
+			continue
 		}
 
+		record, hasRecord := syncMap[notionID]
+		primary, duplicates := pickPrimaryCalendarEvent(grouped, record, hasRecord)
+		if len(duplicates) > 0 {
+			count += s.deleteCalendarEvents(ctx, notionID, duplicates)
+		}
+
+		needsUpsert := !hasRecord ||
+			!record.Synced ||
+			record.CalendarEventID != primary.ID ||
+			record.NotionUpdatedAt != ev.NotionUpdatedAt ||
+			!calendar.EventMatchesNotion(primary, ev, loc)
+
+		if !needsUpsert {
+			continue
+		}
+
+		newID, _, err := s.calendar.UpsertEvent(ctx, ev, primary.ID, loc)
+		if err != nil {
+			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", notionID, err)
+			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
+				NotionPageID:    notionID,
+				CalendarEventID: primary.ID,
+				NotionUpdatedAt: ev.NotionUpdatedAt,
+				Synced:          false,
+			})
+			continue
+		}
+
+		record = models.SyncRecord{
+			NotionPageID:    notionID,
+			CalendarEventID: newID,
+			NotionUpdatedAt: ev.NotionUpdatedAt,
+			Synced:          true,
+		}
+		_ = s.repo.UpsertSyncRecord(ctx, record)
+		syncMap[notionID] = record
+		count++
+	}
+
+	// 5. DB-first pass: create/fix events missing from fetched Calendar list.
+	for _, ev := range dbEvents {
+		if _, exists := calGrouped[ev.NotionPageID]; exists {
+			continue
+		}
+		existingCalID := ""
+		if rec, ok := syncMap[ev.NotionPageID]; ok {
+			existingCalID = rec.CalendarEventID
+		}
 		newID, _, err := s.calendar.UpsertEvent(ctx, ev, existingCalID, loc)
 		if err != nil {
 			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", ev.NotionPageID, err)
@@ -540,33 +584,22 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			})
 			continue
 		}
-		_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
+		record := models.SyncRecord{
 			NotionPageID:    ev.NotionPageID,
 			CalendarEventID: newID,
 			NotionUpdatedAt: ev.NotionUpdatedAt,
 			Synced:          true,
-		})
+		}
+		_ = s.repo.UpsertSyncRecord(ctx, record)
+		syncMap[ev.NotionPageID] = record
 		count++
 	}
 
-	// 4. Delete Calendar events that no longer exist in Notion DB
-	for notionID, ce := range calMap {
-		if _, exists := dbMap[notionID]; !exists {
-			if err := s.calendar.DeleteEvent(ctx, ce.ID); err != nil {
-				logging.Error("CALENDAR", "calendar delete failed for %s: %v", ce.ID, err)
-				continue
-			}
-			_ = s.repo.DeleteSyncRecord(ctx, notionID)
-			logging.Info("CALENDAR", "deleted orphaned calendar event %s (notion: %s)", ce.ID, notionID)
-			count++
-		}
-	}
-
-	// 5. Clean up orphaned sync_records (no DB event and no Calendar event)
+	// 6. Clean up orphaned sync_records (no DB event and no fetched Calendar event).
 	orphans, err := s.repo.ListOrphanedSyncRecords(ctx)
 	if err == nil {
 		for _, rec := range orphans {
-			if _, inCal := calMap[rec.NotionPageID]; !inCal {
+			if _, inCal := calGrouped[rec.NotionPageID]; !inCal {
 				// Calendar event already gone, just clean up the record
 				_ = s.repo.DeleteSyncRecord(ctx, rec.NotionPageID)
 			}
@@ -575,6 +608,68 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 
 	logging.Info("CALENDAR", "calendar sync finished (synced=%d, db_events=%d, cal_events=%d)", count, len(dbEvents), len(calEvents))
 	return count, nil
+}
+
+func groupCalendarEvents(events []calendar.CalendarEvent) map[string][]calendar.CalendarEvent {
+	grouped := make(map[string][]calendar.CalendarEvent, len(events))
+	for _, ev := range events {
+		grouped[ev.NotionPageID] = append(grouped[ev.NotionPageID], ev)
+	}
+	return grouped
+}
+
+func pickPrimaryCalendarEvent(events []calendar.CalendarEvent, record models.SyncRecord, hasRecord bool) (calendar.CalendarEvent, []calendar.CalendarEvent) {
+	if len(events) == 0 {
+		return calendar.CalendarEvent{}, nil
+	}
+	primaryIndex := 0
+	if hasRecord && record.CalendarEventID != "" {
+		for i, ev := range events {
+			if ev.ID == record.CalendarEventID {
+				primaryIndex = i
+				break
+			}
+		}
+	} else {
+		latest := parseCalendarUpdated(events[0].Updated)
+		for i := 1; i < len(events); i++ {
+			updated := parseCalendarUpdated(events[i].Updated)
+			if updated.After(latest) {
+				latest = updated
+				primaryIndex = i
+			}
+		}
+	}
+	primary := events[primaryIndex]
+	duplicates := make([]calendar.CalendarEvent, 0, len(events)-1)
+	for i, ev := range events {
+		if i == primaryIndex {
+			continue
+		}
+		duplicates = append(duplicates, ev)
+	}
+	return primary, duplicates
+}
+
+func parseCalendarUpdated(value string) time.Time {
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
+}
+
+func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, events []calendar.CalendarEvent) int {
+	deleted := 0
+	for _, ev := range events {
+		if err := s.calendar.DeleteEvent(ctx, ev.ID); err != nil {
+			logging.Error("CALENDAR", "calendar delete failed for %s: %v", ev.ID, err)
+			continue
+		}
+		logging.Info("CALENDAR", "deleted orphaned/duplicate calendar event %s (notion: %s)", ev.ID, notionID)
+		deleted++
+	}
+	return deleted
 }
 
 func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string, cfg config.Config, scheduled bool) error {

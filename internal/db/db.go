@@ -384,6 +384,27 @@ func (r *Repository) GetSyncRecord(ctx context.Context, notionPageID string) (mo
 	return record, true, nil
 }
 
+func (r *Repository) ListSyncRecords(ctx context.Context) ([]models.SyncRecord, error) {
+	query := `SELECT notion_page_id, calendar_event_id, notion_updated_at, synced FROM sync_records;`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var records []models.SyncRecord
+	for rows.Next() {
+		var rec models.SyncRecord
+		var synced int
+		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &rec.NotionUpdatedAt, &synced); err != nil {
+			return nil, err
+		}
+		rec.Synced = synced == 1
+		records = append(records, rec)
+	}
+	return records, rows.Err()
+}
+
 func (r *Repository) GetSyncStatusMap(ctx context.Context, notionPageIDs []string) (map[string]string, error) {
 	statuses := make(map[string]string)
 	if len(notionPageIDs) == 0 {

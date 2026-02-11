@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -75,10 +76,17 @@ func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
 
 // CalendarEvent is a simplified representation of a Google Calendar event with Notion metadata.
 type CalendarEvent struct {
-	ID           string
-	NotionPageID string // from extendedProperties.private.notion_page_id
-	Summary      string
-	Updated      string
+	ID            string
+	NotionPageID  string // from extendedProperties.private.notion_page_id
+	Summary       string
+	Location      string
+	Description   string
+	StartDate     string
+	StartDateTime string
+	EndDate       string
+	EndDateTime   string
+	Attendees     []string
+	Updated       string
 }
 
 // ListEvents fetches all events from Google Calendar in the given time range
@@ -93,7 +101,7 @@ func (c *Client) ListEvents(ctx context.Context, from, to time.Time) ([]Calendar
 			TimeMax(to.Format(time.RFC3339)).
 			SingleEvents(true).
 			MaxResults(250).
-			Fields("items(id,summary,updated,extendedProperties),nextPageToken")
+			Fields("items(id,summary,location,description,start(date,dateTime),end(date,dateTime),attendees(email),updated,extendedProperties),nextPageToken")
 		if pageToken != "" {
 			call = call.PageToken(pageToken)
 		}
@@ -103,10 +111,21 @@ func (c *Client) ListEvents(ctx context.Context, from, to time.Time) ([]Calendar
 		}
 		for _, item := range resp.Items {
 			ce := CalendarEvent{
-				ID:      item.Id,
-				Summary: item.Summary,
-				Updated: item.Updated,
+				ID:          item.Id,
+				Summary:     item.Summary,
+				Location:    item.Location,
+				Description: item.Description,
+				Updated:     item.Updated,
 			}
+			if item.Start != nil {
+				ce.StartDate = item.Start.Date
+				ce.StartDateTime = item.Start.DateTime
+			}
+			if item.End != nil {
+				ce.EndDate = item.End.Date
+				ce.EndDateTime = item.End.DateTime
+			}
+			ce.Attendees = extractEmails(item.Attendees)
 			if item.ExtendedProperties != nil && item.ExtendedProperties.Private != nil {
 				ce.NotionPageID = item.ExtendedProperties.Private["notion_page_id"]
 			}
@@ -121,6 +140,92 @@ func (c *Client) ListEvents(ctx context.Context, from, to time.Time) ([]Calendar
 		pageToken = resp.NextPageToken
 	}
 	return result, nil
+}
+
+// EventMatchesNotion returns true when the Calendar event already matches
+// the canonical event generated from Notion data.
+func EventMatchesNotion(calEvent CalendarEvent, ev models.Event, tz *time.Location) bool {
+	want := mapEvent(ev, tz)
+	if want == nil || want.Start == nil || want.End == nil {
+		return false
+	}
+	if calEvent.Summary != want.Summary {
+		return false
+	}
+	if calEvent.Location != want.Location {
+		return false
+	}
+	if calEvent.Description != want.Description {
+		return false
+	}
+	if !sameDateOrDateTime(calEvent.StartDate, calEvent.StartDateTime, want.Start.Date, want.Start.DateTime) {
+		return false
+	}
+	if !sameDateOrDateTime(calEvent.EndDate, calEvent.EndDateTime, want.End.Date, want.End.DateTime) {
+		return false
+	}
+	return equalEmails(calEvent.Attendees, extractEmails(want.Attendees))
+}
+
+func sameDateOrDateTime(currentDate, currentDateTime, desiredDate, desiredDateTime string) bool {
+	curDate := strings.TrimSpace(currentDate)
+	desDate := strings.TrimSpace(desiredDate)
+	curDateTime := normalizeDateTime(currentDateTime)
+	desDateTime := normalizeDateTime(desiredDateTime)
+	if curDate != "" || desDate != "" {
+		return curDate == desDate && curDateTime == "" && desDateTime == ""
+	}
+	return curDateTime == desDateTime
+}
+
+func normalizeDateTime(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return strings.TrimSpace(value)
+	}
+	return t.UTC().Format(time.RFC3339)
+}
+
+func equalEmails(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func extractEmails(attendees []*calendarapi.EventAttendee) []string {
+	if len(attendees) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(attendees))
+	emails := make([]string, 0, len(attendees))
+	for _, attendee := range attendees {
+		if attendee == nil {
+			continue
+		}
+		email := strings.ToLower(strings.TrimSpace(attendee.Email))
+		if email == "" {
+			continue
+		}
+		if _, ok := seen[email]; ok {
+			continue
+		}
+		seen[email] = struct{}{}
+		emails = append(emails, email)
+	}
+	sort.Strings(emails)
+	if len(emails) == 0 {
+		return nil
+	}
+	return emails
 }
 
 func mapEvent(ev models.Event, tz *time.Location) *calendarapi.Event {
