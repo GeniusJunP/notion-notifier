@@ -58,7 +58,9 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `SCHEDULE_WEBHOOK_URL`         | `webhook.schedule_url`         |
 | `NOTIFICATION_WEBHOOK_URL`     | `webhook.notification_url`     |
 | `GOOGLE_CALENDAR_ID`           | `google.calendar_id`           |
-| `GOOGLE_SERVICE_ACCOUNT_KEY`   | `google.service_account_key`   |
+| `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
+| `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
+| `GOOGLE_OAUTH_REFRESH_TOKEN`   | `google.oauth_refresh_token`   |
 | `BASIC_AUTH_USERNAME`          | `security.basic_auth.username` |
 | `BASIC_AUTH_PASSWORD`          | `security.basic_auth.password` |
 
@@ -124,6 +126,8 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | ミュート | 全通知を停止（休暇用）                                         |
 
 ### 3. Google Calendar連携
+
+Google Calendar APIはOAuth 2.0（ユーザー認可）で接続する。
 
 | 機能         | 説明                   |
 | ------------ | ---------------------- |
@@ -261,7 +265,9 @@ webhook:
 
 google:
   calendar_id: ""
-  service_account_key: ""
+  oauth_client_id: ""
+  oauth_client_secret: ""
+  oauth_refresh_token: ""
 ```
 
 ## テンプレート

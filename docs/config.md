@@ -131,7 +131,9 @@ webhook:
   notification_url: ""
 google:
   calendar_id: ""
-  service_account_key: ""
+  oauth_client_id: ""
+  oauth_client_secret: ""
+  oauth_refresh_token: ""
 security:
   basic_auth:
     username: ""
