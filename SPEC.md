@@ -375,6 +375,7 @@ CREATE TABLE events (
     location TEXT,
     url TEXT,
     content TEXT,
+    attendees_json TEXT,          -- 参加者メール配列(JSON)
     raw_properties TEXT,           -- JSONで保存
     notion_updated_at TEXT,        -- Notion側の最終更新日時
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP

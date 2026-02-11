@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -45,6 +46,7 @@ func initSchema(db *sql.DB) error {
 			location TEXT,
 			url TEXT,
 			content TEXT,
+			attendees_json TEXT,
 			raw_properties TEXT,
 			notion_updated_at TEXT,
 			fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -80,6 +82,7 @@ func initSchema(db *sql.DB) error {
 	// Migrations for existing databases
 	migrations := []string{
 		`ALTER TABLE events ADD COLUMN content TEXT;`,
+		`ALTER TABLE events ADD COLUMN attendees_json TEXT;`,
 		`ALTER TABLE events ADD COLUMN notion_updated_at TEXT;`,
 	}
 	for _, m := range migrations {
@@ -183,8 +186,8 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		return nil
 	}
 	query := `INSERT INTO events (
-		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, attendees_json, raw_properties, notion_updated_at, fetched_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
 		title=excluded.title,
 		start_date=excluded.start_date,
@@ -195,6 +198,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 		location=excluded.location,
 		url=excluded.url,
 		content=excluded.content,
+		attendees_json=excluded.attendees_json,
 		raw_properties=excluded.raw_properties,
 		notion_updated_at=excluded.notion_updated_at,
 		fetched_at=excluded.fetched_at;`
@@ -225,6 +229,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 			ev.Location,
 			ev.URL,
 			ev.Content,
+			encodeStringSlice(ev.Attendees),
 			ev.RawPropsJSON,
 			ev.NotionUpdatedAt,
 			ev.FetchedAt.Format(time.RFC3339),
@@ -238,7 +243,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 }
 
 func (r *Repository) ListEventsBetween(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, attendees_json, raw_properties, notion_updated_at, fetched_at
 	FROM events
 	WHERE start_date <= ? AND (end_date IS NULL OR end_date = '' OR end_date >= ?)
 	ORDER BY start_date ASC, start_time ASC;`
@@ -256,19 +261,21 @@ func (r *Repository) ListUpcomingEvents(ctx context.Context, days int, now time.
 }
 
 func (r *Repository) GetEvent(ctx context.Context, notionPageID string) (models.Event, bool, error) {
-	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, raw_properties, notion_updated_at, fetched_at
+	query := `SELECT notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, attendees_json, raw_properties, notion_updated_at, fetched_at
 	FROM events WHERE notion_page_id = ?;`
 	row := r.db.QueryRowContext(ctx, query, notionPageID)
 	var ev models.Event
 	var isAllDay int
+	var attendeesJSON string
 	var fetchedAt string
-	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
+	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &attendeesJSON, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return ev, false, nil
 		}
 		return ev, false, err
 	}
 	ev.IsAllDay = isAllDay == 1
+	ev.Attendees = decodeStringSlice(attendeesJSON)
 	if fetchedAt != "" {
 		if t, err := time.Parse(time.RFC3339, fetchedAt); err == nil {
 			ev.FetchedAt = t
@@ -282,11 +289,13 @@ func scanEvents(rows *sql.Rows) ([]models.Event, error) {
 	for rows.Next() {
 		var ev models.Event
 		var isAllDay int
+		var attendeesJSON string
 		var fetchedAt string
-		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
+		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &attendeesJSON, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
 			return nil, err
 		}
 		ev.IsAllDay = isAllDay == 1
+		ev.Attendees = decodeStringSlice(attendeesJSON)
 		if fetchedAt != "" {
 			if t, err := time.Parse(time.RFC3339, fetchedAt); err == nil {
 				ev.FetchedAt = t
@@ -295,6 +304,31 @@ func scanEvents(rows *sql.Rows) ([]models.Event, error) {
 		events = append(events, ev)
 	}
 	return events, rows.Err()
+}
+
+func encodeStringSlice(values []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+	data, err := json.Marshal(values)
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
+
+func decodeStringSlice(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	var values []string
+	if err := json.Unmarshal([]byte(raw), &values); err != nil {
+		return nil
+	}
+	if len(values) == 0 {
+		return nil
+	}
+	return values
 }
 
 func (r *Repository) InsertNotificationHistory(ctx context.Context, h models.NotificationHistory) error {
