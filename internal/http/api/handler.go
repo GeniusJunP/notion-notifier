@@ -254,8 +254,6 @@ func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "sync failed: "+err.Error())
 		return
 	}
-
-	logging.Info("SYNC", "notion sync complete (count=%d)", count)
 	respondJSON(w, http.StatusOK, map[string]int{"count": count})
 }
 

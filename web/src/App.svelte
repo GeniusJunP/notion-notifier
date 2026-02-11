@@ -6,6 +6,8 @@
     toastStore,
     configStore,
     addToast,
+    darkMode,
+    setDarkMode,
   } from "./lib/store";
   import { api } from "./lib/api";
   import {
@@ -20,6 +22,8 @@
     AlertCircle,
     CheckCircle2,
     Info,
+    Sun,
+    Moon,
   } from "lucide-svelte";
 
   // Routes
@@ -42,6 +46,14 @@
     }
   }
 
+  function toggleDarkMode() {
+    darkMode.update((current) => {
+      const newValue = !current;
+      setDarkMode(newValue);
+      return newValue;
+    });
+  }
+
   onMount(async () => {
     try {
       const cfg = await api.getConfig();
@@ -52,6 +64,27 @@
       isServiceActive = false;
     }
     healthInterval = setInterval(checkHealth, 30000);
+
+    // Initialize dark mode
+    const saved = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialDark = saved !== null ? saved === 'true' : prefersDark;
+    setDarkMode(initialDark);
+
+    // Listen for system dark mode changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      // Only auto-switch if no manual preference is saved
+      if (localStorage.getItem('darkMode') === null) {
+        setDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Cleanup on destroy
+    onDestroy(() => {
+      mediaQuery.removeEventListener('change', handleChange);
+    });
   });
 
   onDestroy(() => {
@@ -84,19 +117,19 @@
   })();
 </script>
 
-<div class="flex h-screen bg-gray-50 text-gray-900 overflow-hidden font-sans">
+<div class="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden font-sans">
   <!-- Sidebar -->
   <aside
-    class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:relative lg:translate-x-0 {isSidebarOpen
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 lg:relative lg:translate-x-0 {isSidebarOpen
       ? 'translate-x-0'
       : '-translate-x-full'}"
   >
     <div
-      class="flex items-center justify-between h-16 px-6 border-b border-gray-100"
+      class="flex items-center justify-between h-16 px-6 border-b border-gray-100 dark:border-gray-700"
     >
       <div class="flex items-center gap-2">
         <div
-          class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-brand-200"
+          class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-brand-900"
         >
           <Bell size={18} />
         </div>
@@ -119,8 +152,8 @@
           }}
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {$activeRoute ===
           item.path
-            ? 'bg-brand-50 text-brand-700 font-semibold'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
+            ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-semibold'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}"
         >
           <div class="transition-transform duration-200 group-hover:scale-110">
             <svelte:component
@@ -141,25 +174,36 @@
   <!-- Main Content -->
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <header
-      class="h-16 bg-white border-b border-gray-200 flex items-center px-4 md:px-8 justify-between sticky top-0 z-40"
+      class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 md:px-8 justify-between sticky top-0 z-40"
     >
       <div class="flex items-center gap-4">
         <button
-          class="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+          class="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
           on:click={() => (isSidebarOpen = true)}
         >
           <Menu size={20} />
         </button>
-        <h1 class="text-xl font-bold text-gray-800">
+        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">
           {navItems.find((n) => n.path === $activeRoute)?.label || "Dashboard"}
         </h1>
       </div>
 
       <div class="flex items-center gap-4">
+        <button
+          on:click={toggleDarkMode}
+          class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          {#if $darkMode}
+            <Sun size={20} />
+          {:else}
+            <Moon size={20} />
+          {/if}
+        </button>
         <div
           class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border {isServiceActive
-            ? 'bg-green-50 text-green-700 border-green-100'
-            : 'bg-red-50 text-red-700 border-red-100'}"
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-100 dark:border-green-700'
+            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-100 dark:border-red-700'}"
         >
           <div
             class="w-2 h-2 rounded-full {isServiceActive
@@ -184,7 +228,7 @@
   >
     {#each $toastStore as toast (toast.id)}
       <div
-        class="pointer-events-auto flex items-start gap-3 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-in slide-in-from-right fade-in duration-300"
+        class="pointer-events-auto flex items-start gap-3 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 animate-in slide-in-from-right fade-in duration-300"
       >
         <div class="mt-0.5">
           {#if toast.type === "error"}
@@ -196,7 +240,7 @@
           {/if}
         </div>
         <div class="flex-1">
-          <p class="text-sm font-medium text-gray-900 leading-tight">
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">
             {toast.message}
           </p>
         </div>
@@ -205,7 +249,7 @@
             toastStore.update((toasts) =>
               toasts.filter((t) => t.id !== toast.id),
             )}
-          class="text-gray-400 hover:text-gray-600 transition-colors"
+          class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           <X size={16} />
         </button>

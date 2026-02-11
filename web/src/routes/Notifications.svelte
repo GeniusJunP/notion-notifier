@@ -168,13 +168,13 @@
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <div class="flex gap-1 bg-gray-100 p-1 rounded-xl">
+    <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
             <button
                 on:click={() => (activeTab = "advance")}
                 class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
                 'advance'
-                    ? 'bg-white text-brand-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'}"
+                    ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
             >
                 事前通知
             </button>
@@ -182,8 +182,8 @@
                 on:click={() => (activeTab = "periodic")}
                 class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
                 'periodic'
-                    ? 'bg-white text-brand-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'}"
+                    ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
             >
                 定期通知
             </button>
@@ -192,7 +192,7 @@
         <button
             on:click={saveConfig}
             disabled={isSaving}
-            class="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-brand-100"
+            class="px-6 py-2.5 bg-brand-600 dark:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-brand-100 dark:shadow-brand-900"
         >
             {#if isSaving}
                 <div
@@ -209,19 +209,19 @@
         <!-- Snooze/Mute Controls -->
         <div class="flex flex-col sm:flex-row gap-4">
             <div
-                class="flex-1 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+                class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between gap-3"
             >
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"
+                        class="w-9 h-9 bg-amber-50 dark:bg-amber-900 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400"
                     >
                         <BellOff size={18} />
                     </div>
                     <div>
-                        <span class="text-sm font-bold text-gray-900"
+                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100"
                             >スヌーズ</span
                         >
-                        <p class="text-[10px] text-gray-400">
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
                             指定日時まで通知を一時停止
                         </p>
                     </div>
@@ -230,12 +230,12 @@
                     <input
                         type="datetime-local"
                         bind:value={config.snooze_until}
-                        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 transition-all"
+                        class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                     />
                     {#if config.snooze_until}
                         <button
                             on:click={clearSnooze}
-                            class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
                         >
                             <X size={14} />
                         </button>
@@ -243,19 +243,19 @@
                 </div>
             </div>
             <div
-                class="flex-1 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+                class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between gap-3"
             >
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center text-red-600"
+                        class="w-9 h-9 bg-red-50 dark:bg-red-900 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400"
                     >
                         <Bell size={18} />
                     </div>
                     <div>
-                        <span class="text-sm font-bold text-gray-900"
+                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100"
                             >ミュート</span
                         >
-                        <p class="text-[10px] text-gray-400">
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
                             指定日時まで全通知を無効化
                         </p>
                     </div>
@@ -264,12 +264,12 @@
                     <input
                         type="datetime-local"
                         bind:value={config.mute_until}
-                        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 transition-all"
+                        class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                     />
                     {#if config.mute_until}
                         <button
                             on:click={clearMute}
-                            class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
                         >
                             <X size={14} />
                         </button>
@@ -284,12 +284,12 @@
             {#if activeTab === "advance"}
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-gray-800">
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">
                             事前通知ルール
                         </h2>
                         <button
                             on:click={addAdvanceRule}
-                            class="text-brand-600 flex items-center gap-1 text-sm font-bold hover:underline"
+                            class="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-bold hover:underline"
                         >
                             <Plus size={16} /> ルールを追加
                         </button>
@@ -297,14 +297,14 @@
 
                     {#each config.notifications.advance as rule, i}
                         <div
-                            class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:border-brand-200"
+                            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-300"
                         >
                             <div
-                                class="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50"
+                                class="p-5 border-b border-gray-50 dark:border-gray-600 flex items-center justify-between bg-gray-50/50 dark:bg-gray-700/50"
                             >
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400"
+                                        class="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center font-bold text-gray-400 dark:text-gray-500"
                                     >
                                         {i + 1}
                                     </div>
@@ -313,13 +313,13 @@
                                         bind:checked={rule.enabled}
                                         class="w-5 h-5 accent-brand-600 rounded"
                                     />
-                                    <span class="font-bold text-gray-900"
+                                    <span class="font-bold text-gray-900 dark:text-gray-100"
                                         >事前通知 {i + 1}</span
                                     >
                                 </div>
                                 <button
                                     on:click={() => removeAdvanceRule(i)}
-                                    class="text-gray-400 hover:text-red-500 transition-colors"
+                                    class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -332,7 +332,7 @@
                                     <div>
                                         <label
                                             for="adv-minutes-{i}"
-                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                             >通知タイミング (分前)</label
                                         >
                                         <div class="relative">
@@ -344,7 +344,7 @@
                                                 id="adv-minutes-{i}"
                                                 type="number"
                                                 bind:value={rule.minutes_before}
-                                                class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                                                class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 focus:border-brand-500 dark:focus:border-brand-400 transition-all"
                                             />
                                         </div>
                                     </div>
@@ -352,14 +352,14 @@
                                     <div>
                                         <label
                                             for="adv-message-{i}"
-                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                             >メッセージテンプレート</label
                                         >
                                         <textarea
                                             id="adv-message-{i}"
                                             bind:value={rule.message}
                                             placeholder="空欄の場合はデフォルトが使用されます"
-                                            class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono text-sm min-h-[120px]"
+                                            class="w-full p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 focus:border-brand-500 dark:focus:border-brand-400 transition-all font-mono text-sm min-h-[120px]"
                                         ></textarea>
                                         <div
                                             class="mt-2 flex items-center gap-3"
@@ -370,14 +370,14 @@
                                                         rule.message,
                                                         rule.minutes_before,
                                                     )}
-                                                class="text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline"
+                                                class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:underline"
                                             >
                                                 <Play size={12} /> プレビューを実行
                                             </button>
                                             <button
                                                 on:click={() =>
                                                     resetAdvanceTemplate(i)}
-                                                class="text-xs font-bold text-gray-400 flex items-center gap-1 hover:text-gray-600"
+                                                class="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-400"
                                             >
                                                 <RotateCcw size={12} /> デフォルトに戻す
                                             </button>
@@ -387,7 +387,7 @@
 
                                 <div class="space-y-4">
                                     <div
-                                        class="p-4 bg-brand-50 rounded-2xl border border-brand-100"
+                                        class="p-4 bg-brand-50 dark:bg-brand-900 rounded-2xl border border-brand-100 dark:border-brand-700"
                                     >
                                         <div
                                             class="flex items-center justify-between mb-3"
@@ -397,10 +397,10 @@
                                             >
                                                 <Settings2
                                                     size={16}
-                                                    class="text-brand-600"
+                                                    class="text-brand-600 dark:text-brand-400"
                                                 />
                                                 <span
-                                                    class="text-sm font-bold text-brand-800"
+                                                    class="text-sm font-bold text-brand-800 dark:text-brand-200"
                                                     >配信フィルタ</span
                                                 >
                                             </div>
@@ -424,7 +424,7 @@
                                         >
                                             <label
                                                 for="adv-days-{i}"
-                                                class="block text-xs font-bold text-brand-700 uppercase tracking-wider"
+                                                class="block text-xs font-bold text-brand-700 dark:text-brand-300 uppercase tracking-wider"
                                                 >実行する曜日</label
                                             >
                                             <div
@@ -444,8 +444,8 @@
                                                         class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all {rule.conditions.days_of_week.includes(
                                                             day,
                                                         )
-                                                            ? 'bg-brand-600 text-white shadow-md'
-                                                            : 'bg-white text-gray-400 border border-gray-200'}"
+                                                            ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-md'
+                                                            : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600'}"
                                                     >
                                                         {daysLabels[idx]}
                                                     </button>
@@ -459,7 +459,7 @@
                                             class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative group animate-in zoom-in-95 duration-200"
                                         >
                                             <div
-                                                class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500"
+                                                class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
                                             >
                                                 <MessageSquare size={10} /> Preview
                                             </div>
@@ -474,12 +474,12 @@
             {:else}
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-gray-800">
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">
                             定期通知ルール
                         </h2>
                         <button
                             on:click={addPeriodicRule}
-                            class="text-brand-600 flex items-center gap-1 text-sm font-bold hover:underline"
+                            class="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-bold hover:underline"
                         >
                             <Plus size={16} /> ルールを追加
                         </button>
@@ -487,14 +487,14 @@
 
                     {#each config.notifications.periodic as rule, i}
                         <div
-                            class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:border-brand-200"
+                            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-300"
                         >
                             <div
-                                class="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50"
+                                class="p-5 border-b border-gray-50 dark:border-gray-600 flex items-center justify-between bg-gray-50/50 dark:bg-gray-700/50"
                             >
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400"
+                                        class="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center font-bold text-gray-400 dark:text-gray-500"
                                     >
                                         {i + 1}
                                     </div>
@@ -503,13 +503,13 @@
                                         bind:checked={rule.enabled}
                                         class="w-5 h-5 accent-brand-600 rounded"
                                     />
-                                    <span class="font-bold text-gray-900"
+                                    <span class="font-bold text-gray-900 dark:text-gray-100"
                                         >定期通知 {i + 1}</span
                                     >
                                 </div>
                                 <button
                                     on:click={() => removePeriodicRule(i)}
-                                    class="text-gray-400 hover:text-red-500 transition-colors"
+                                    class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -523,27 +523,27 @@
                                         <div>
                                             <label
                                                 for="per-time-{i}"
-                                                class="block text-sm font-bold text-gray-700 mb-2"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                                 >通知時刻</label
                                             >
                                             <input
                                                 id="per-time-{i}"
                                                 type="time"
                                                 bind:value={rule.time}
-                                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all font-medium"
                                             />
                                         </div>
                                         <div>
                                             <label
                                                 for="per-days-ahead-{i}"
-                                                class="block text-sm font-bold text-gray-700 mb-2"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                                 >参照範囲 (何日分)</label
                                             >
                                             <input
                                                 id="per-days-ahead-{i}"
                                                 type="number"
                                                 bind:value={rule.days_ahead}
-                                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all font-medium"
                                             />
                                         </div>
                                     </div>
@@ -551,7 +551,7 @@
                                     <div>
                                         <label
                                             for="per-weekdays-{i}"
-                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                             >実行する曜日</label
                                         >
                                         <div
@@ -569,8 +569,8 @@
                                                     class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all {rule.days_of_week.includes(
                                                         day,
                                                     )
-                                                        ? 'bg-brand-600 text-white shadow-lg shadow-brand-100 scale-105'
-                                                        : 'bg-gray-50 text-gray-400 border border-gray-100 hover:bg-gray-100'}"
+                                                        ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-lg shadow-brand-100 dark:shadow-brand-900 scale-105'
+                                                        : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
                                                 >
                                                     {daysLabels[idx]}
                                                 </button>
@@ -583,14 +583,14 @@
                                     <div>
                                         <label
                                             for="per-message-{i}"
-                                            class="block text-sm font-bold text-gray-700 mb-2"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                             >メッセージテンプレート</label
                                         >
                                         <textarea
                                             id="per-message-{i}"
                                             bind:value={rule.message}
                                             placeholder="空欄の場合はデフォルトが使用されます"
-                                            class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono text-sm min-h-[150px]"
+                                            class="w-full p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 focus:border-brand-500 dark:focus:border-brand-400 transition-all font-mono text-sm min-h-[150px]"
                                         ></textarea>
                                         <div
                                             class="mt-2 flex items-center gap-3"
@@ -600,14 +600,14 @@
                                                     previewTemplate(
                                                         rule.message,
                                                     )}
-                                                class="text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline"
+                                                class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:underline"
                                             >
                                                 <Play size={12} /> プレビューを実行
                                             </button>
                                             <button
                                                 on:click={() =>
                                                     resetPeriodicTemplate(i)}
-                                                class="text-xs font-bold text-gray-400 flex items-center gap-1 hover:text-gray-600"
+                                                class="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-400"
                                             >
                                                 <RotateCcw size={12} /> デフォルトに戻す
                                             </button>

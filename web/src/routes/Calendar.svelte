@@ -72,24 +72,24 @@
 <div class="space-y-8 max-w-4xl">
     <!-- Status Header -->
     <div
-        class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center gap-8"
+        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col md:flex-row items-center gap-8"
     >
         <div
-            class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"
+            class="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400"
         >
             <Calendar size={32} />
         </div>
         <div class="flex-1 text-center md:text-left">
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 Google カレンダー同期
             </h2>
-            <p class="text-gray-500">
+            <p class="text-gray-500 dark:text-gray-400">
                 Notionを正としてGoogle
                 カレンダーを同期します。カレンダー側の意図しない編集は次回同期でNotion内容に戻されます。
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-gray-400">同期有効化</span>
+            <span class="text-sm font-bold text-gray-400 dark:text-gray-500">同期有効化</span>
             {#if config}
                 <button
                     on:click={() => {
@@ -119,19 +119,19 @@
             <!-- Sync Configuration -->
             <div class="space-y-6">
                 <h3
-                    class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                    class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                 >
-                    <Settings size={20} class="text-gray-400" />
+                    <Settings size={20} class="text-gray-400 dark:text-gray-500" />
                     同期設定
                 </h3>
 
                 <div
-                    class="bg-white p-6 rounded-2xl border border-gray-100 space-y-4"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-4"
                 >
                     <div>
                         <label
                             for="cal-interval-hours"
-                            class="block text-sm font-bold text-gray-700 mb-2"
+                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                             >実行間隔 (時間)</label
                         >
                         <input
@@ -139,13 +139,13 @@
                             type="number"
                             bind:value={config.calendar_sync.interval_hours}
                             on:change={handleConfigUpdate}
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                         />
                     </div>
                     <div>
                         <label
                             for="cal-lookahead-days"
-                            class="block text-sm font-bold text-gray-700 mb-2"
+                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                             >同期先読み日数</label
                         >
                         <input
@@ -153,11 +153,11 @@
                             type="number"
                             bind:value={config.calendar_sync.lookahead_days}
                             on:change={handleConfigUpdate}
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                         />
                     </div>
                     <div
-                        class="pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400"
+                        class="pt-4 border-t border-gray-50 dark:border-gray-600 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500"
                     >
                         <span
                             >同期を無効にすると、スケジューラによる自動実行が停止します。</span
@@ -169,40 +169,40 @@
             <!-- Manual Sync -->
             <div class="space-y-6">
                 <h3
-                    class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                    class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                 >
-                    <RefreshCw size={20} class="text-gray-400" />
+                    <RefreshCw size={20} class="text-gray-400 dark:text-gray-500" />
                     手動同期・管理
                 </h3>
 
                 <div
-                    class="bg-white p-6 rounded-2xl border border-gray-100 space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-6"
                 >
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label
                                 for="cal-sync-from"
-                                class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                                class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
                                 >開始日</label
                             >
                             <input
                                 id="cal-sync-from"
                                 type="date"
                                 bind:value={syncRange.from}
-                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
                             />
                         </div>
                         <div>
                             <label
                                 for="cal-sync-to"
-                                class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                                class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
                                 >終了日</label
                             >
                             <input
                                 id="cal-sync-to"
                                 type="date"
                                 bind:value={syncRange.to}
-                                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
                             />
                         </div>
                     </div>
@@ -210,7 +210,7 @@
                     <button
                         on:click={handleSync}
                         disabled={isSyncing}
-                        class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50"
+                        class="w-full py-4 bg-brand-600 dark:bg-brand-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 transition-all active:scale-95 disabled:opacity-50"
                     >
                         {#if isSyncing}
                             <RefreshCw size={20} class="animate-spin" />
@@ -221,16 +221,16 @@
                         {/if}
                     </button>
 
-                    <div class="pt-6 border-t border-gray-100">
+                    <div class="pt-6 border-t border-gray-100 dark:border-gray-600">
                         <button
                             on:click={handleClear}
                             disabled={isClearing}
-                            class="w-full py-3 border border-red-100 text-red-600 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition-all"
+                            class="w-full py-3 border border-red-100 dark:border-red-700 text-red-600 dark:text-red-400 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900 transition-all"
                         >
                             <Trash2 size={16} />
                             同期記録をリセット
                         </button>
-                        <p class="mt-2 text-[11px] text-gray-400 text-center">
+                        <p class="mt-2 text-[11px] text-gray-400 dark:text-gray-500 text-center">
                             カレンダーで重複が発生する場合や、再同期したい場合に実行してください。
                         </p>
                     </div>
@@ -240,15 +240,15 @@
     {/if}
 
     <!-- Help Section -->
-    <div class="bg-gray-100 p-6 rounded-2xl flex items-start gap-4">
+    <div class="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl flex items-start gap-4">
         <div
-            class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-gray-400"
+            class="w-10 h-10 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500"
         >
             <CalendarDays size={20} />
         </div>
         <div>
-            <h4 class="font-bold text-gray-900 mb-1">同期の仕組み</h4>
-            <p class="text-sm text-gray-600 leading-relaxed">
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">同期の仕組み</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 Calendar APIの追跡イベント（notion_page_id付き）を起点にDBへ逆引きし、差分があれば統一ロジックで更新します。
                 Notionにない追跡イベントは削除し、重複イベントは1件に整理します。設定の「Notion
                 プロパティマッピング」で、タイトル・日付・場所・参加者（メールアドレス）を紐付けてください。

@@ -127,41 +127,41 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+            class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm dark:shadow-md border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
         >
             <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-gray-500">本日の予定</span
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">本日の予定</span
                 >
                 <div
-                    class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600"
+                    class="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center text-brand-600 dark:text-brand-300"
                 >
                     <CalendarDays size={20} />
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">
+                <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.today_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 mt-1">Found in Notion</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Found in Notion</p>
             </div>
         </div>
 
         <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+            class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm dark:shadow-md border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
         >
             <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-gray-500">次回同期</span>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">次回同期</span>
                 <div
-                    class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600"
+                    class="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-300"
                 >
                     <RefreshCw size={20} />
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">
+                <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.next_sync_in ?? "--"}
                 </h3>
-                <p class="text-xs text-gray-400 mt-1">
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     {dashboard?.next_sync
                         ? new Date(dashboard.next_sync).toLocaleTimeString()
                         : "Scheduled"}
@@ -170,36 +170,36 @@
         </div>
 
         <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+            class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm dark:shadow-md border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
         >
             <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-gray-500"
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400"
                     >最終同期件数</span
                 >
                 <div
-                    class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600"
+                    class="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center text-green-600 dark:text-green-300"
                 >
                     <CheckCircle size={20} />
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">
+                <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.last_sync_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 mt-1">Synchronized Items</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Synchronized Items</p>
             </div>
         </div>
 
         <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+            class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm dark:shadow-md border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
         >
             <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-gray-500">ステータス</span
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">ステータス</span
                 >
                 <div
                     class="w-10 h-10 {dashboard?.last_sync_error
-                        ? 'bg-red-50 text-red-600'
-                        : 'bg-green-50 text-green-600'} rounded-xl flex items-center justify-center"
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300'
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'} rounded-xl flex items-center justify-center"
                 >
                     {#if dashboard?.last_sync_error}
                         <AlertTriangle size={20} />
@@ -209,10 +209,10 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-gray-900">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.last_sync_error ? "Error" : "Healthy"}
                 </h3>
-                <p class="text-xs text-gray-500 mt-1 truncate">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                     {dashboard?.last_sync_error || "No issues detected"}
                 </p>
             </div>
@@ -221,7 +221,7 @@
 
     <!-- Actions -->
     <div
-        class="bg-brand-600 p-8 rounded-3xl shadow-xl shadow-brand-100 text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
+        class="bg-brand-600 p-8 rounded-3xl shadow-xl shadow-brand-100 dark:shadow-brand-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
     >
         <div class="relative z-10">
             <h2 class="text-2xl font-bold mb-2">手動同期を実行</h2>
@@ -233,7 +233,7 @@
         <button
             on:click={handleSync}
             disabled={isSyncing}
-            class="relative z-10 px-8 py-4 bg-white text-brand-600 rounded-2xl font-bold shadow-lg hover:bg-brand-50 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+            class="relative z-10 px-8 py-4 bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-300 rounded-2xl font-bold shadow-lg dark:shadow-xl hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
         >
             {#if isSyncing}
                 <RefreshCw size={20} class="animate-spin" />
@@ -246,28 +246,28 @@
 
         <!-- Abstract pattern -->
         <div
-            class="absolute right-0 top-0 w-64 h-64 bg-white opacity-[0.05] rounded-full translate-x-1/2 -translate-y-1/2"
+            class="absolute right-0 top-0 w-64 h-64 bg-white dark:bg-gray-800 opacity-[0.05] rounded-full translate-x-1/2 -translate-y-1/2"
         ></div>
         <div
-            class="absolute left-0 bottom-0 w-32 h-32 bg-white opacity-[0.05] rounded-full -translate-x-1/2 translate-y-1/2"
+            class="absolute left-0 bottom-0 w-32 h-32 bg-white dark:bg-gray-800 opacity-[0.05] rounded-full -translate-x-1/2 translate-y-1/2"
         ></div>
     </div>
 
     <!-- Manual Notification -->
     <div
-        class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden"
+        class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-md overflow-hidden"
     >
         <div
-            class="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50"
+            class="p-6 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between bg-gray-50/50 dark:bg-gray-700/50"
         >
             <div class="flex items-center gap-3">
                 <div
-                    class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600"
+                    class="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-300"
                 >
                     <Send size={20} />
                 </div>
                 <div>
-                    <h2 class="text-lg font-bold text-gray-900">手動通知</h2>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">手動通知</h2>
                     <p class="text-xs text-gray-400">
                         テンプレートを使用して即座にWebhook通知を送信
                     </p>
@@ -275,7 +275,7 @@
             </div>
             <button
                 on:click={loadDefaultTemplate}
-                class="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-brand-600 transition-colors"
+                class="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
             >
                 <RotateCcw size={12} />
                 デフォルトに戻す
@@ -287,27 +287,27 @@
                 <div>
                     <label
                         for="manual-from-date"
-                        class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                        class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
                         >開始日</label
                     >
                     <input
                         id="manual-from-date"
                         type="date"
                         bind:value={manualFromDate}
-                        class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                     />
                 </div>
                 <div>
                     <label
                         for="manual-to-date"
-                        class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                        class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
                         >終了日</label
                     >
                     <input
                         id="manual-to-date"
                         type="date"
                         bind:value={manualToDate}
-                        class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                     />
                 </div>
             </div>
@@ -315,14 +315,14 @@
             <div>
                 <label
                     for="manual-template"
-                    class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
                     >メッセージテンプレート</label
                 >
                 <textarea
                     id="manual-template"
                     bind:value={manualTemplate}
                     placeholder="Go テンプレート形式で入力..."
-                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-mono text-sm min-h-[120px]"
+                    class="w-full p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all font-mono text-sm min-h-[120px]"
                 ></textarea>
             </div>
 
@@ -344,7 +344,7 @@
                 <button
                     on:click={handleManualSend}
                     disabled={isSending}
-                    class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-100"
+                    class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50 shadow-lg dark:shadow-xl shadow-brand-100 dark:shadow-brand-900"
                 >
                     {#if isSending}
                         <div
@@ -359,10 +359,10 @@
 
             {#if manualPreview}
                 <div
-                    class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
+                    class="p-4 bg-gray-900 dark:bg-gray-800 rounded-2xl text-white dark:text-gray-100 font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
                 >
                     <div
-                        class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500"
+                        class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
                     >
                         <MessageSquare size={10} /> Preview
                     </div>
@@ -375,7 +375,7 @@
     <!-- Upcoming Events -->
     <div class="space-y-4">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-800">直近の予定 (14日間)</h2>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">直近の予定 (14日間)</h2>
             <button
                 on:click={loadData}
                 class="text-sm text-brand-600 font-medium hover:underline flex items-center gap-1"
@@ -389,23 +389,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {#each Array(4) as _}
                     <div
-                        class="bg-white p-6 rounded-2xl border border-gray-100 animate-pulse h-32"
+                        class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse h-32"
                     ></div>
                 {/each}
             </div>
         {:else if upcoming.length === 0}
             <div
-                class="bg-white p-12 rounded-3xl border border-dashed border-gray-200 text-center"
+                class="bg-white dark:bg-gray-800 p-12 rounded-3xl border border-dashed border-gray-200 dark:border-gray-600 text-center"
             >
                 <div
-                    class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4"
+                    class="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-300 dark:text-gray-500 mx-auto mb-4"
                 >
                     <CalendarDays size={32} />
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
                     予定が見つかりません
                 </h3>
-                <p class="text-gray-500 max-w-sm mx-auto">
+                <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                     同期された直近の予定はありません。Notion
                     データベースを確認してください。
                 </p>
@@ -414,14 +414,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {#each upcoming as event}
                     <div
-                        class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between min-h-[140px]"
+                        class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-md hover:shadow-md dark:hover:shadow-lg transition-shadow group flex flex-col justify-between min-h-[140px]"
                     >
                         <div>
                             <div
                                 class="flex items-start justify-between gap-3 mb-2"
                             >
                                 <h3
-                                    class="font-bold text-gray-900 line-clamp-2 leading-tight group-hover:text-brand-600 transition-colors"
+                                    class="font-bold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors"
                                 >
                                     {event.title}
                                 </h3>
@@ -434,25 +434,15 @@
                                               ? 'bg-amber-100 text-amber-700'
                                               : 'bg-gray-100 text-gray-600'}"
                                     >
-                                        cache: {event.cache_status}
-                                    </span>
-                                    <span
-                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {event.calendar_status ===
-                                        'present'
-                                            ? 'bg-green-100 text-green-700'
-                                            : event.calendar_status === 'missing'
-                                              ? 'bg-red-100 text-red-700'
-                                              : 'bg-gray-100 text-gray-600'}"
-                                    >
-                                        cal: {event.calendar_status}
+                                        Calender: {event.cache_status}
                                     </span>
                                 </div>
                             </div>
                             <div class="space-y-1.5">
                                 <div
-                                    class="flex items-center gap-2 text-sm text-gray-500"
+                                    class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    <Clock size={14} class="text-gray-400" />
+                                    <Clock size={14} class="text-gray-400 dark:text-gray-500" />
                                     <span
                                         >{event.start_date}
                                         {event.is_all_day
@@ -462,13 +452,13 @@
                                 </div>
                                 {#if event.location}
                                     <div
-                                        class="flex items-center gap-2 text-sm text-gray-500"
+                                        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                                     >
                                         <div
                                             class="w-3.5 flex items-center justify-center"
                                         >
                                             <div
-                                                class="w-1 h-3.5 bg-brand-400 rounded-full"
+                                                class="w-1 h-3.5 bg-brand-400 dark:bg-brand-500 rounded-full"
                                             ></div>
                                         </div>
                                         <span class="truncate"

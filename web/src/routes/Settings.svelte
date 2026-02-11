@@ -52,14 +52,14 @@
 
 <div class="space-y-8 max-w-5xl">
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Settings size={28} class="text-brand-600" />
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+            <Settings size={28} class="text-brand-600 dark:text-brand-400" />
             システム設定
         </h2>
         <button
             on:click={saveConfig}
             disabled={isSaving}
-            class="px-8 py-3 bg-brand-600 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-brand-700 active:scale-95 disabled:opacity-50 shadow-xl shadow-brand-100 transition-all"
+            class="px-8 py-3 bg-brand-600 dark:bg-brand-500 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 shadow-xl shadow-brand-100 dark:shadow-brand-900 transition-all"
         >
             {#if isSaving}
                 <div
@@ -77,60 +77,60 @@
             <!-- General & Notion Mapping -->
             <div class="space-y-8">
                 <section
-                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
                 >
                     <h3
-                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                        class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                     >
-                        <Globe size={20} class="text-blue-500" />
+                        <Globe size={20} class="text-blue-500 dark:text-blue-400" />
                         基本設定
                     </h3>
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label
                                 for="settings-timezone"
-                                class="block text-sm font-bold text-gray-700 mb-2"
+                                class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                 >タイムゾーン</label
                             >
                             <input
                                 id="settings-timezone"
                                 type="text"
                                 bind:value={config.timezone}
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             />
-                            <p class="mt-1 text-[11px] text-gray-400">
+                            <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                                 IANA形式 (例: Asia/Tokyo)
                             </p>
                         </div>
                         <div>
                             <label
                                 for="settings-sync-interval"
-                                class="block text-sm font-bold text-gray-700 mb-2"
+                                class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                 >Notion 同期間隔 (分)</label
                             >
                             <input
                                 id="settings-sync-interval"
                                 type="number"
                                 bind:value={config.sync.check_interval}
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             />
                         </div>
                     </div>
                 </section>
 
                 <section
-                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
                 >
                     <div class="flex items-center justify-between">
                         <h3
-                            class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                            class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                         >
-                            <Database size={20} class="text-indigo-500" />
+                            <Database size={20} class="text-indigo-500 dark:text-indigo-400" />
                             Notion プロパティマッピング
                         </h3>
                         <button
                             on:click={addCustomMapping}
-                            class="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                            class="p-1 px-2 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
                         >
                             <Plus size={14} /> カスタム
                         </button>
@@ -141,7 +141,7 @@
                             <div>
                                 <label
                                     for="settings-mapping-usage"
-                                    class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center"
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 text-center"
                                     >用途</label
                                 >
                                 <div
@@ -149,22 +149,22 @@
                                     class="space-y-3"
                                 >
                                     <div
-                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                        class="h-10 flex items-center px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
                                         タイトル
                                     </div>
                                     <div
-                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                        class="h-10 flex items-center px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
                                         日付 (Date)
                                     </div>
                                     <div
-                                        class="h-10 flex items-center px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                        class="h-10 flex items-center px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
                                         場所
                                     </div>
                                     <div
-                                        class="h-10 flex items-center justify-between px-4 bg-gray-100 rounded-xl text-sm font-bold text-gray-600"
+                                        class="h-10 flex items-center justify-between px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
                                         参加者 (People)
                                             
@@ -175,11 +175,11 @@
                                                     !config.property_mapping
                                                         .attendees_enabled;
                                             }}
-                                            class="h-8 px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
+                                            class="h-8 px-3 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-bold transition-all {config
                                                 .property_mapping
                                                 .attendees_enabled
-                                                ? 'bg-green-500 text-white border-green-500'
-                                                : 'bg-white text-gray-400'}"
+                                                ? 'bg-green-500 dark:bg-green-600 text-white border-green-500 dark:border-green-600'
+                                                : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500'}"
                                         >
 
                                             {config.property_mapping
@@ -194,7 +194,7 @@
                             <div>
                                 <label
                                     for="settings-mapping-properties"
-                                    class="block text-xs font-bold text-gray-500 uppercase mb-2 text-center"
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 text-center"
                                     >Notion プロパティ名</label
                                 >
                                 <div
@@ -206,21 +206,21 @@
                                         bind:value={
                                             config.property_mapping.title
                                         }
-                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                        class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                     />
                                     <input
                                         type="text"
                                         bind:value={
                                             config.property_mapping.date
                                         }
-                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                        class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                     />
                                     <input
                                         type="text"
                                         bind:value={
                                             config.property_mapping.location
                                         }
-                                        class="w-full h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                        class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                     />
                                     <div class="flex gap-2">
                                         <input
@@ -229,7 +229,7 @@
                                                 config.property_mapping
                                                     .attendees
                                             }
-                                            class="flex-1 h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500"
+                                            class="flex-1 h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                         />
                                     </div>
                                 </div>
@@ -238,11 +238,11 @@
 
                         {#if config.property_mapping.custom.length > 0}
                             <div
-                                class="pt-4 border-t border-gray-100 space-y-3"
+                                class="pt-4 border-t border-gray-100 dark:border-gray-600 space-y-3"
                             >
                                 <label
                                     for="settings-custom-mappings"
-                                    class="block text-xs font-bold text-gray-400 uppercase tracking-widest"
+                                    class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest"
                                     >カスタムマッピング</label
                                 >
                                 {#each config.property_mapping.custom as custom, idx}
@@ -257,19 +257,19 @@
                                                 type="text"
                                                 bind:value={custom.variable}
                                                 placeholder="変数名"
-                                                class="h-9 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono"
+                                                class="h-9 px-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-mono"
                                             />
                                             <input
                                                 type="text"
                                                 bind:value={custom.property}
                                                 placeholder="Notion属性"
-                                                class="h-9 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                                                class="h-9 px-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm"
                                             />
                                         </div>
                                         <button
                                             on:click={() =>
                                                 removeCustomMapping(idx)}
-                                            class="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                            class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -284,19 +284,19 @@
             <!-- Content Rules & Advanced -->
             <div class="space-y-8">
                 <section
-                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
                 >
                     <h3
-                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                        class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                     >
-                        <FileText size={20} class="text-orange-500" />
+                        <FileText size={20} class="text-orange-500 dark:text-orange-400" />
                         コンテンツ抽出ルール
                     </h3>
                     <div class="space-y-4">
                         <div>
                             <label
                                 for="settings-start-heading"
-                                class="block text-sm font-bold text-gray-700 mb-2"
+                                class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                                 >開始見出し</label
                             >
                             <div class="flex gap-2">
@@ -307,7 +307,7 @@
                                         config.content_rules.start_heading
                                     }
                                     placeholder="例: メモ"
-                                    class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                    class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all font-medium"
                                 />
                                 <button
                                     on:click={() => {
@@ -316,10 +316,10 @@
                                             !config.content_rules
                                                 .include_start_heading;
                                     }}
-                                    class="px-3 rounded-xl border border-gray-200 text-xs font-bold transition-all {config
+                                    class="px-3 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-bold transition-all {config
                                         .content_rules.include_start_heading
-                                        ? 'bg-orange-500 text-white border-orange-500'
-                                        : 'bg-white text-gray-400'}"
+                                        ? 'bg-orange-500 dark:bg-orange-600 text-white border-orange-500 dark:border-orange-600'
+                                        : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500'}"
                                 >
                                     見出し含む
                                 </button>
@@ -331,9 +331,9 @@
                                 class="flex items-center gap-3 cursor-pointer group"
                             >
                                 <div
-                                    class="w-10 h-6 bg-gray-200 rounded-full relative transition-colors {config
+                                    class="w-10 h-6 bg-gray-200 dark:bg-gray-600 rounded-full relative transition-colors {config
                                         .content_rules.stop_at_next_heading
-                                        ? 'bg-orange-500'
+                                        ? 'bg-orange-500 dark:bg-orange-600'
                                         : ''}"
                                 >
                                     <div
@@ -351,7 +351,7 @@
                                         class="sr-only"
                                     />
                                 </div>
-                                <span class="text-sm font-medium text-gray-700"
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
                                     >次の見出しで停止する</span
                                 >
                             </label>
@@ -360,9 +360,9 @@
                                 class="flex items-center gap-3 cursor-pointer group"
                             >
                                 <div
-                                    class="w-10 h-6 bg-gray-200 rounded-full relative transition-colors {config
+                                    class="w-10 h-6 bg-gray-200 dark:bg-gray-600 rounded-full relative transition-colors {config
                                         .content_rules.stop_at_delimiter
-                                        ? 'bg-orange-500'
+                                        ? 'bg-orange-500 dark:bg-orange-600'
                                         : ''}"
                                 >
                                     <div
@@ -380,7 +380,7 @@
                                         class="sr-only"
                                     />
                                 </div>
-                                <span class="text-sm font-medium text-gray-700"
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
                                     >区切り文字で停止する</span
                                 >
                             </label>
@@ -392,7 +392,7 @@
                             >
                                 <label
                                     for="settings-delimiter-text"
-                                    class="block text-xs font-bold text-gray-400 uppercase mb-2"
+                                    class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-2"
                                     >区切り文字</label
                                 >
                                 <input
@@ -402,7 +402,7 @@
                                         config.content_rules.delimiter_text
                                     }
                                     placeholder="---"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 transition-all"
+                                    class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                                 />
                             </div>
                         {/if}
@@ -410,24 +410,24 @@
                 </section>
 
                 <section
-                    class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
                 >
                     <h3
-                        class="text-lg font-bold text-gray-800 flex items-center gap-2"
+                        class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                     >
-                        <ShieldCheck size={20} class="text-green-500" />
+                        <ShieldCheck size={20} class="text-green-500 dark:text-green-400" />
                         セキュリティ・その他
                     </h3>
                     <div class="space-y-4">
                         <div
-                            class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl"
+                            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-2xl"
                         >
                             <div>
                                 <span
-                                    class="block text-sm font-bold text-gray-800"
+                                    class="block text-sm font-bold text-gray-800 dark:text-gray-200"
                                     >Basic 認証</span
                                 >
-                                <span class="text-[11px] text-gray-400"
+                                <span class="text-[11px] text-gray-400 dark:text-gray-500"
                                     >認証情報は env.yaml で設定してください</span
                                 >
                             </div>
@@ -435,10 +435,16 @@
                                 class="px-3 py-1 bg-{config.security.basic_auth
                                     .enabled
                                     ? 'green'
-                                    : 'gray'}-100 text-{config.security
+                                    : 'gray'}-100 dark:bg-{config.security.basic_auth
+                                    .enabled
+                                    ? 'green'
+                                    : 'gray'}-900 text-{config.security
                                     .basic_auth.enabled
                                     ? 'green'
-                                    : 'gray'}-700 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                    : 'gray'}-700 dark:text-{config.security
+                                    .basic_auth.enabled
+                                    ? 'green'
+                                    : 'gray'}-300 rounded-full text-[10px] font-bold uppercase tracking-wider"
                             >
                                 {config.security.basic_auth.enabled
                                     ? "Enabled"
@@ -450,27 +456,27 @@
                             <div>
                                 <label
                                     for="settings-snooze"
-                                    class="block text-xs font-bold text-gray-500 mb-2"
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2"
                                     >スヌーズ (Snooze)</label
                                 >
                                 <input
                                     id="settings-snooze"
                                     type="datetime-local"
                                     bind:value={config.snooze_until}
-                                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
                                 />
                             </div>
                             <div>
                                 <label
                                     for="settings-mute"
-                                    class="block text-xs font-bold text-gray-500 mb-2"
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2"
                                     >ミュート (Mute)</label
                                 >
                                 <input
                                     id="settings-mute"
                                     type="datetime-local"
                                     bind:value={config.mute_until}
-                                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
                                 />
                             </div>
                         </div>
@@ -478,19 +484,19 @@
                 </section>
 
                 <div
-                    class="p-6 bg-brand-50 rounded-3xl border border-brand-100 space-y-5"
+                    class="p-6 bg-brand-50 dark:bg-brand-900 rounded-3xl border border-brand-100 dark:border-brand-700 space-y-5"
                 >
                     <h4
-                        class="font-bold text-brand-900 flex items-center gap-2"
+                        class="font-bold text-brand-900 dark:text-brand-100 flex items-center gap-2"
                     >
-                        <Globe size={18} class="text-brand-600" />
+                        <Globe size={18} class="text-brand-600 dark:text-brand-400" />
                         Webhook 設定
                     </h4>
                     <p
-                        class="text-xs text-brand-700 leading-relaxed opacity-80"
+                        class="text-xs text-brand-700 dark:text-brand-300 leading-relaxed opacity-80"
                     >
                         Webhook で送信される JSON ペイロードのテンプレートです。<code
-                            class="font-mono bg-white/50 px-1 rounded"
+                            class="font-mono bg-white/50 dark:bg-gray-800/50 px-1 rounded"
                             >{"{{"}.Message{"}}"}</code
                         >
                         変数が通知内容に置き換わります。
@@ -498,17 +504,17 @@
 
                     <!-- Schedule Webhook -->
                     <div
-                        class="space-y-3 p-4 bg-white rounded-2xl border border-brand-100"
+                        class="space-y-3 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-700"
                     >
                         <h5
-                            class="text-xs font-bold text-gray-500 uppercase tracking-wider"
+                            class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                         >
                             Schedule Webhook
                         </h5>
                         <div>
                             <label
                                 for="wh-schedule-ct"
-                                class="block text-xs font-bold text-gray-600 mb-1"
+                                class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
                                 >Content-Type</label
                             >
                             <input
@@ -517,13 +523,13 @@
                                 bind:value={
                                     config.webhook.schedule.content_type
                                 }
-                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             />
                         </div>
                         <div>
                             <label
                                 for="wh-schedule-pt"
-                                class="block text-xs font-bold text-gray-600 mb-1"
+                                class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
                                 >Payload Template</label
                             >
                             <textarea
@@ -531,24 +537,24 @@
                                 bind:value={
                                     config.webhook.schedule.payload_template
                                 }
-                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             ></textarea>
                         </div>
                     </div>
 
                     <!-- Notification Webhook -->
                     <div
-                        class="space-y-3 p-4 bg-white rounded-2xl border border-brand-100"
+                        class="space-y-3 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-700"
                     >
                         <h5
-                            class="text-xs font-bold text-gray-500 uppercase tracking-wider"
+                            class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                         >
                             Notification Webhook
                         </h5>
                         <div>
                             <label
                                 for="wh-notif-ct"
-                                class="block text-xs font-bold text-gray-600 mb-1"
+                                class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
                                 >Content-Type</label
                             >
                             <input
@@ -557,13 +563,13 @@
                                 bind:value={
                                     config.webhook.notification.content_type
                                 }
-                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             />
                         </div>
                         <div>
                             <label
                                 for="wh-notif-pt"
-                                class="block text-xs font-bold text-gray-600 mb-1"
+                                class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
                                 >Payload Template</label
                             >
                             <textarea
@@ -571,7 +577,7 @@
                                 bind:value={
                                     config.webhook.notification.payload_template
                                 }
-                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 transition-all"
+                                class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                             ></textarea>
                         </div>
                     </div>
