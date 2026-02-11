@@ -25,7 +25,13 @@ const (
 	notificationTypeAdvance  = "advance"
 	notificationTypePeriodic = "periodic"
 	notificationTypeManual   = "manual"
+	syncOpTimeout            = 2 * time.Minute
+	calendarOpTimeout        = 3 * time.Minute
+	rebuildOpTimeout         = 30 * time.Second
+	advanceFireTimeout       = 30 * time.Second
 )
+
+var errSchedulerNotRunning = errors.New("scheduler runtime is not running")
 
 type Scheduler struct {
 	cfg      *config.Manager
@@ -43,7 +49,11 @@ type Scheduler struct {
 	calendarID       string
 	statusMu         sync.RWMutex
 	notionStatus     SyncStatus
-	stopCh           chan struct{}
+	periodicMu       sync.Mutex
+	opsMu            sync.Mutex
+	runtimeMu        sync.RWMutex
+	runtimeCtx       context.Context
+	runtimeCancel    context.CancelFunc
 	wg               sync.WaitGroup
 }
 
@@ -63,66 +73,73 @@ func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, 
 		renderer:         renderer,
 		advanceTimers:    map[string]*time.Timer{},
 		periodicLastSent: map[int]string{},
-		stopCh:           make(chan struct{}),
 	}
 }
 
 func (s *Scheduler) Start(ctx context.Context) {
-	s.wg.Add(1)
-	go s.syncLoop(ctx)
+	s.setRuntimeContext(ctx)
 
 	s.wg.Add(1)
-	go s.periodicLoop(ctx)
+	go s.syncLoop()
 
 	s.wg.Add(1)
-	go s.calendarLoop(ctx)
+	go s.periodicLoop()
 
-	if err := s.SchedulePendingFromDB(ctx); err != nil {
+	s.wg.Add(1)
+	go s.calendarLoop()
+
+	if err := s.SchedulePendingFromDB(context.Background()); err != nil {
 		log.Printf("schedule pending failed: %v", err)
 	}
 }
 
 func (s *Scheduler) Stop() {
-	close(s.stopCh)
+	s.cancelRuntime()
 	s.wg.Wait()
 	s.clearAdvanceTimers()
 }
 
-func (s *Scheduler) Reload(ctx context.Context) error {
+func (s *Scheduler) Reload(_ context.Context) error {
+	s.periodicMu.Lock()
 	s.periodicLastSent = map[int]string{}
-	return s.RebuildAdvanceSchedules(ctx)
+	s.periodicMu.Unlock()
+	return s.RebuildAdvanceSchedules(context.Background())
 }
 
-func (s *Scheduler) syncLoop(ctx context.Context) {
+func (s *Scheduler) syncLoop() {
 	defer s.wg.Done()
-	_, _ = s.SyncNotion(ctx)
+	runtimeCtx, err := s.runtimeContext()
+	if err != nil {
+		return
+	}
+	_, _ = s.SyncNotion(context.Background())
 	for {
 		cfg, _ := s.cfg.Get()
 		interval := time.Duration(cfg.Sync.CheckInterval) * time.Minute
 		ticker := time.NewTicker(interval)
 		select {
-		case <-s.stopCh:
-			ticker.Stop()
-			return
-		case <-ctx.Done():
+		case <-runtimeCtx.Done():
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			_, _ = s.SyncNotion(ctx)
+			_, _ = s.SyncNotion(context.Background())
 		}
 		ticker.Stop()
 	}
 }
 
-func (s *Scheduler) periodicLoop(ctx context.Context) {
+func (s *Scheduler) periodicLoop() {
 	defer s.wg.Done()
+	runtimeCtx, err := s.runtimeContext()
+	if err != nil {
+		return
+	}
+
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 	for {
 		select {
-		case <-s.stopCh:
-			return
-		case <-ctx.Done():
+		case <-runtimeCtx.Done():
 			return
 		case <-ticker.C:
 			cfg, _ := s.cfg.Get()
@@ -139,28 +156,36 @@ func (s *Scheduler) periodicLoop(ctx context.Context) {
 					continue
 				}
 				key := now.Format("2006-01-02")
-				if s.periodicLastSent[i] == key {
+				if s.periodicSent(i, key) {
 					continue
 				}
-				err := s.sendPeriodic(ctx, now, i, rule)
+				opCtx, cancel, err := s.newRuntimeOpContext(advanceFireTimeout)
+				if err != nil {
+					return
+				}
+				err = s.sendPeriodic(opCtx, now, i, rule)
+				cancel()
 				if err != nil {
 					log.Printf("periodic notification failed: %v", err)
 				}
-				s.periodicLastSent[i] = key
+				s.markPeriodicSent(i, key)
 			}
 		}
 	}
 }
 
-func (s *Scheduler) calendarLoop(ctx context.Context) {
+func (s *Scheduler) calendarLoop() {
 	defer s.wg.Done()
+	runtimeCtx, err := s.runtimeContext()
+	if err != nil {
+		return
+	}
+
 	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
 	for {
 		select {
-		case <-s.stopCh:
-			return
-		case <-ctx.Done():
+		case <-runtimeCtx.Done():
 			return
 		case <-ticker.C:
 			cfg, _ := s.cfg.Get()
@@ -173,14 +198,18 @@ func (s *Scheduler) calendarLoop(ctx context.Context) {
 			if lookahead <= 0 {
 				lookahead = 30
 			}
-			if _, err := s.SyncCalendar(ctx, time.Now(), time.Now().AddDate(0, 0, lookahead)); err != nil {
+			if _, err := s.SyncCalendar(context.Background(), time.Now(), time.Now().AddDate(0, 0, lookahead)); err != nil {
 				log.Printf("calendar sync failed: %v", err)
 			}
 		}
 	}
 }
 
-func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
+func (s *Scheduler) SyncNotion(_ context.Context) (int, error) {
+	return s.withRuntimeIntOp(syncOpTimeout, s.syncNotion)
+}
+
+func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 	cfg, env := s.cfg.Get()
 	logging.Info("SYNC", "notion sync started")
 	loc, _ := time.LoadLocation(cfg.Timezone)
@@ -229,15 +258,24 @@ func (s *Scheduler) SyncNotion(ctx context.Context) (int, error) {
 		logging.Error("SYNC", "cleanup stale events failed: %v", err)
 		return len(events), err
 	}
-	if err := s.RebuildAdvanceSchedules(ctx); err != nil {
-		log.Printf("rebuild advance schedules failed: %v", err)
+	if err := s.rebuildAdvanceSchedules(ctx); err != nil {
+		s.setNotionStatus(len(events), err)
+		logging.Error("SYNC", "rebuild advance schedules failed: %v", err)
+		return len(events), err
 	}
 	s.setNotionStatus(len(events), nil)
 	logging.Info("SYNC", "notion sync finished (count=%d)", len(events))
 	return len(events), nil
 }
 
-func (s *Scheduler) RebuildAdvanceSchedules(ctx context.Context) error {
+func (s *Scheduler) RebuildAdvanceSchedules(_ context.Context) error {
+	err := s.withRuntimeErrOp(rebuildOpTimeout, func(ctx context.Context) error {
+		return s.rebuildAdvanceSchedules(ctx)
+	})
+	return err
+}
+
+func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	now := time.Now().In(loc)
@@ -249,10 +287,17 @@ func (s *Scheduler) RebuildAdvanceSchedules(ctx context.Context) error {
 	if err := s.repo.ReplaceAdvanceSchedules(ctx, schedules); err != nil {
 		return err
 	}
-	return s.SchedulePendingFromDB(ctx)
+	return s.schedulePendingFromDB(ctx)
 }
 
-func (s *Scheduler) SchedulePendingFromDB(ctx context.Context) error {
+func (s *Scheduler) SchedulePendingFromDB(_ context.Context) error {
+	err := s.withRuntimeErrOp(rebuildOpTimeout, func(ctx context.Context) error {
+		return s.schedulePendingFromDB(ctx)
+	})
+	return err
+}
+
+func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
 	s.clearAdvanceTimers()
 	loc, _ := time.LoadLocation(s.currentTimezone())
 	now := time.Now().In(loc)
@@ -266,8 +311,18 @@ func (s *Scheduler) SchedulePendingFromDB(ctx context.Context) error {
 			delay = 1 * time.Second
 		}
 		key := scheduleKey(sched.NotionPageID, sched.RuleIndex)
+		sched := sched
 		timer := time.AfterFunc(delay, func() {
-			if err := s.fireAdvance(ctx, sched); err != nil {
+			fireCtx, cancel, err := s.newRuntimeOpContext(advanceFireTimeout)
+			if err != nil {
+				return
+			}
+			defer cancel()
+			if err := s.fireAdvance(fireCtx, sched); err != nil {
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					logging.Info("SCHED", "advance notification skipped: %v", err)
+					return
+				}
 				log.Printf("advance notification failed: %v", err)
 			}
 		})
@@ -389,7 +444,13 @@ func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, f
 	return message, payload, nil
 }
 
-func (s *Scheduler) SyncCalendar(ctx context.Context, from, to time.Time) (int, error) {
+func (s *Scheduler) SyncCalendar(_ context.Context, from, to time.Time) (int, error) {
+	return s.withRuntimeIntOp(calendarOpTimeout, func(ctx context.Context) (int, error) {
+		return s.syncCalendar(ctx, from, to)
+	})
+}
+
+func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 	cfg, env := s.cfg.Get()
 	logging.Info("CALENDAR", "calendar sync started")
 	if !cfg.CalendarSync.Enabled {
@@ -723,6 +784,81 @@ func weekdayToConfig(day time.Weekday) int {
 	return int(day)
 }
 
+func (s *Scheduler) setRuntimeContext(parent context.Context) {
+	s.runtimeMu.Lock()
+	defer s.runtimeMu.Unlock()
+	if s.runtimeCancel != nil {
+		s.runtimeCancel()
+	}
+	s.runtimeCtx, s.runtimeCancel = context.WithCancel(parent)
+}
+
+func (s *Scheduler) cancelRuntime() {
+	s.runtimeMu.Lock()
+	defer s.runtimeMu.Unlock()
+	if s.runtimeCancel != nil {
+		s.runtimeCancel()
+	}
+	s.runtimeCtx = nil
+	s.runtimeCancel = nil
+}
+
+func (s *Scheduler) runtimeContext() (context.Context, error) {
+	s.runtimeMu.RLock()
+	defer s.runtimeMu.RUnlock()
+	if s.runtimeCtx == nil {
+		return nil, errSchedulerNotRunning
+	}
+	return s.runtimeCtx, nil
+}
+
+func (s *Scheduler) newRuntimeOpContext(timeout time.Duration) (context.Context, context.CancelFunc, error) {
+	runtimeCtx, err := s.runtimeContext()
+	if err != nil {
+		return nil, nil, err
+	}
+	if timeout <= 0 {
+		ctx, cancel := context.WithCancel(runtimeCtx)
+		return ctx, cancel, nil
+	}
+	ctx, cancel := context.WithTimeout(runtimeCtx, timeout)
+	return ctx, cancel, nil
+}
+
+func (s *Scheduler) withRuntimeErrOp(timeout time.Duration, fn func(context.Context) error) error {
+	s.opsMu.Lock()
+	defer s.opsMu.Unlock()
+	opCtx, cancel, err := s.newRuntimeOpContext(timeout)
+	if err != nil {
+		return err
+	}
+	defer cancel()
+	return fn(opCtx)
+}
+
+func (s *Scheduler) withRuntimeIntOp(timeout time.Duration, fn func(context.Context) (int, error)) (int, error) {
+	s.opsMu.Lock()
+	defer s.opsMu.Unlock()
+	opCtx, cancel, err := s.newRuntimeOpContext(timeout)
+	if err != nil {
+		return 0, err
+	}
+	defer cancel()
+	return fn(opCtx)
+}
+
+func (s *Scheduler) periodicSent(idx int, key string) bool {
+	s.periodicMu.Lock()
+	defer s.periodicMu.Unlock()
+	return s.periodicLastSent[idx] == key
+}
+
+func (s *Scheduler) markPeriodicSent(idx int, key string) {
+	s.periodicMu.Lock()
+	defer s.periodicMu.Unlock()
+	s.periodicLastSent[idx] = key
+}
+
 func (s *Scheduler) clearAdvanceTimers() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -738,66 +874,6 @@ func (s *Scheduler) currentTimezone() string {
 		return time.Local.String()
 	}
 	return cfg.Timezone
-}
-
-// CalendarStatusMap returns calendar presence status for each Notion page ID.
-// Status values: present | missing | disabled | unavailable
-func (s *Scheduler) CalendarStatusMap(ctx context.Context, from, to time.Time, notionIDs []string) (map[string]string, error) {
-	statuses := make(map[string]string, len(notionIDs))
-	if len(notionIDs) == 0 {
-		return statuses, nil
-	}
-
-	cfg, env := s.cfg.Get()
-	if !cfg.CalendarSync.Enabled {
-		for _, id := range notionIDs {
-			statuses[id] = "disabled"
-		}
-		return statuses, nil
-	}
-	if env.Google.CalendarID == "" || env.Google.ServiceAccountKey == "" {
-		for _, id := range notionIDs {
-			statuses[id] = "unavailable"
-		}
-		return statuses, nil
-	}
-
-	s.mu.Lock()
-	if s.calendar == nil || s.calendarKey != env.Google.ServiceAccountKey || s.calendarID != env.Google.CalendarID {
-		client, err := calendar.NewClient(ctx, env.Google.CalendarID, env.Google.ServiceAccountKey)
-		if err != nil {
-			s.mu.Unlock()
-			return statuses, err
-		}
-		s.calendar = client
-		s.calendarKey = env.Google.ServiceAccountKey
-		s.calendarID = env.Google.CalendarID
-	}
-	s.mu.Unlock()
-
-	if s.calendar == nil {
-		return statuses, errors.New("calendar client not configured")
-	}
-
-	calEvents, err := s.calendar.ListEvents(ctx, from, to)
-	if err != nil {
-		return statuses, err
-	}
-	present := make(map[string]struct{}, len(calEvents))
-	for _, ce := range calEvents {
-		if ce.NotionPageID == "" {
-			continue
-		}
-		present[ce.NotionPageID] = struct{}{}
-	}
-	for _, id := range notionIDs {
-		if _, ok := present[id]; ok {
-			statuses[id] = "present"
-		} else {
-			statuses[id] = "missing"
-		}
-	}
-	return statuses, nil
 }
 
 func (s *Scheduler) NotionSyncStatus() SyncStatus {
