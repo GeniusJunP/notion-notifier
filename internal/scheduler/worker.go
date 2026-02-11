@@ -386,7 +386,7 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 	if err != nil {
 		return "", err
 	}
-	if err := s.sendWebhook(ctx, notificationTypeManual, message, templateEvents, 0, "", cfg, false); err != nil {
+	if err := s.sendWebhook(ctx, notificationTypeManual, message, templateEvents, 0, "", cfg, true); err != nil {
 		return message, err
 	}
 	return message, nil
@@ -437,7 +437,7 @@ func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, f
 	if len(templateEvents) > 0 {
 		payloadCtx.Event = templateEvents[0]
 	}
-	payload, err := s.renderer.RenderPayload(cfg.Webhook.Notification.PayloadTemplate, payloadCtx)
+	payload, err := s.renderer.RenderPayload(cfg.Webhook.Schedule.PayloadTemplate, payloadCtx)
 	if err != nil {
 		return message, "", err
 	}

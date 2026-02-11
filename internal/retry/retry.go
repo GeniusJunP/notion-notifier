@@ -60,7 +60,7 @@ func Sleep(ctx context.Context, d time.Duration) error {
 	}
 }
 
-func ParseRetryAfter(header string, now time.Time) (time.Duration, bool) {
+func ParseRetryAfter(header string) (time.Duration, bool) {
 	if header == "" {
 		return 0, false
 	}

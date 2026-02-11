@@ -113,7 +113,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 				return nil, fmt.Errorf("notion api error: status %d body=%s", resp.StatusCode, string(data))
 			}
 			lastErr = fmt.Errorf("notion api error: status %d", resp.StatusCode)
-			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
+			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"))
 			delay := retry.BackoffDelay(c.retryCfg, attempt, retryAfter)
 			if err := retry.Sleep(ctx, delay); err != nil {
 				return nil, err

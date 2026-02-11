@@ -53,7 +53,7 @@ func (c *Client) Send(ctx context.Context, webhookURL, contentType string, paylo
 				return fmt.Errorf("webhook failed: status %d, body: %s", resp.StatusCode, errMsg)
 			}
 			lastErr = fmt.Errorf("webhook failed: status %d, body: %s", resp.StatusCode, errMsg)
-			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
+			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"))
 			delay := retry.BackoffDelay(c.retry, attempt, retryAfter)
 			if err := retry.Sleep(ctx, delay); err != nil {
 				return err
