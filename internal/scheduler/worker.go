@@ -475,6 +475,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Error("CALENDAR", "list db events failed: %v", err)
 		return 0, err
 	}
+	hydrateEventAttendees(dbEvents, cfg.PropertyMap)
 	dbMap := make(map[string]models.Event, len(dbEvents))
 	for _, ev := range dbEvents {
 		dbMap[ev.NotionPageID] = ev
@@ -806,6 +807,23 @@ func buildTemplateEvents(events []models.Event, mapping config.PropertyMapping) 
 		out = append(out, toTemplateEvent(ev, custom))
 	}
 	return out
+}
+
+func hydrateEventAttendees(events []models.Event, mapping config.PropertyMapping) {
+	for i := range events {
+		events[i].Attendees = extractAttendees(events[i].RawPropsJSON, mapping)
+	}
+}
+
+func extractAttendees(raw string, mapping config.PropertyMapping) []string {
+	if !mapping.AttendeesEnabled || mapping.Attendees == "" || raw == "" {
+		return nil
+	}
+	var props map[string]any
+	if err := json.Unmarshal([]byte(raw), &props); err != nil {
+		return nil
+	}
+	return notion.ExtractEmails(props[mapping.Attendees])
 }
 
 func extractCustomValues(raw string, mapping config.PropertyMapping) map[string]string {
