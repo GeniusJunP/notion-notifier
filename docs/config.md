@@ -121,6 +121,7 @@ security:
 ## 認証情報 (`env.yaml`)
 
 認証情報は `env.yaml` に分離。WebUI/API では編集不可。
+Google Calendar連携は OAuth 2.0 のみをサポートし、`service_account_key` は使用しない。
 
 ```yaml
 notion:
