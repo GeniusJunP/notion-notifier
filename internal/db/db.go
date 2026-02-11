@@ -61,7 +61,6 @@ func initSchema(db *sql.DB) error {
 		`CREATE TABLE IF NOT EXISTS sync_records (
 			notion_page_id TEXT PRIMARY KEY,
 			calendar_event_id TEXT NOT NULL,
-			notion_updated_at TEXT NOT NULL,
 			synced INTEGER DEFAULT 0
 		);`,
 		`CREATE TABLE IF NOT EXISTS advance_schedules (
@@ -98,13 +97,16 @@ func initSchema(db *sql.DB) error {
 }
 
 func migrateSyncRecords(db *sql.DB) error {
-	// Check if old columns exist; if so, rebuild the table
+	// Rebuild sync_records only when legacy columns still remain.
 	rows, err := db.Query(`PRAGMA table_info(sync_records)`)
 	if err != nil {
 		return nil // table might not exist yet
 	}
 	defer rows.Close()
-	hasOldColumns := false
+
+	hasLegacyColumns := false
+	hasSyncStatus := false
+	hasSynced := false
 	for rows.Next() {
 		var cid int
 		var name, typ string
@@ -114,39 +116,65 @@ func migrateSyncRecords(db *sql.DB) error {
 		if err := rows.Scan(&cid, &name, &typ, &notNull, &dflt, &pk); err != nil {
 			return err
 		}
-		if name == "calendar_updated_at" || name == "last_synced_at" || name == "sync_status" {
-			hasOldColumns = true
-			break
+		switch name {
+		case "calendar_updated_at", "last_synced_at", "sync_status", "notion_updated_at":
+			hasLegacyColumns = true
+		}
+		if name == "sync_status" {
+			hasSyncStatus = true
+		}
+		if name == "synced" {
+			hasSynced = true
 		}
 	}
-	if !hasOldColumns {
+	if !hasLegacyColumns {
 		return nil
 	}
-	// Rebuild: copy data, drop old, create new, re-insert
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	stmts := []string{
-		`CREATE TABLE IF NOT EXISTS sync_records_new (
-			notion_page_id TEXT PRIMARY KEY,
-			calendar_event_id TEXT NOT NULL,
-			notion_updated_at TEXT NOT NULL,
-			synced INTEGER DEFAULT 0
-		);`,
-		`INSERT OR IGNORE INTO sync_records_new (notion_page_id, calendar_event_id, notion_updated_at, synced)
-		 SELECT notion_page_id, COALESCE(calendar_event_id, ''), COALESCE(notion_updated_at, ''),
-		        CASE WHEN sync_status = 'synced' THEN 1 ELSE 0 END
-		 FROM sync_records WHERE calendar_event_id IS NOT NULL AND calendar_event_id != '';`,
-		`DROP TABLE sync_records;`,
-		`ALTER TABLE sync_records_new RENAME TO sync_records;`,
+
+	if _, err := tx.Exec(`CREATE TABLE IF NOT EXISTS sync_records_new (
+		notion_page_id TEXT PRIMARY KEY,
+		calendar_event_id TEXT NOT NULL,
+		synced INTEGER DEFAULT 0
+	);`); err != nil {
+		_ = tx.Rollback()
+		return err
 	}
-	for _, s := range stmts {
-		if _, err := tx.Exec(s); err != nil {
-			_ = tx.Rollback()
-			return err
-		}
+
+	var insertSQL string
+	switch {
+	case hasSyncStatus:
+		insertSQL = `INSERT OR IGNORE INTO sync_records_new (notion_page_id, calendar_event_id, synced)
+		SELECT notion_page_id, COALESCE(calendar_event_id, ''),
+			CASE WHEN sync_status = 'synced' THEN 1 ELSE 0 END
+		FROM sync_records WHERE calendar_event_id IS NOT NULL AND calendar_event_id != '';`
+	case hasSynced:
+		insertSQL = `INSERT OR IGNORE INTO sync_records_new (notion_page_id, calendar_event_id, synced)
+		SELECT notion_page_id, COALESCE(calendar_event_id, ''), COALESCE(synced, 0)
+		FROM sync_records WHERE calendar_event_id IS NOT NULL AND calendar_event_id != '';`
+	default:
+		insertSQL = `INSERT OR IGNORE INTO sync_records_new (notion_page_id, calendar_event_id, synced)
+		SELECT notion_page_id, COALESCE(calendar_event_id, ''), 0
+		FROM sync_records WHERE calendar_event_id IS NOT NULL AND calendar_event_id != '';`
 	}
+	if _, err := tx.Exec(insertSQL); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DROP TABLE sync_records;`); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if _, err := tx.Exec(`ALTER TABLE sync_records_new RENAME TO sync_records;`); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
 	return tx.Commit()
 }
 
@@ -369,23 +397,8 @@ func (r *Repository) MarkAdvanceScheduleFired(ctx context.Context, id int64) err
 	return err
 }
 
-func (r *Repository) GetSyncRecord(ctx context.Context, notionPageID string) (models.SyncRecord, bool, error) {
-	var record models.SyncRecord
-	query := `SELECT notion_page_id, calendar_event_id, notion_updated_at, synced FROM sync_records WHERE notion_page_id = ?;`
-	row := r.db.QueryRowContext(ctx, query, notionPageID)
-	var synced int
-	if err := row.Scan(&record.NotionPageID, &record.CalendarEventID, &record.NotionUpdatedAt, &synced); err != nil {
-		if err == sql.ErrNoRows {
-			return record, false, nil
-		}
-		return record, false, err
-	}
-	record.Synced = synced == 1
-	return record, true, nil
-}
-
 func (r *Repository) ListSyncRecords(ctx context.Context) ([]models.SyncRecord, error) {
-	query := `SELECT notion_page_id, calendar_event_id, notion_updated_at, synced FROM sync_records;`
+	query := `SELECT notion_page_id, calendar_event_id, synced FROM sync_records;`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -396,7 +409,7 @@ func (r *Repository) ListSyncRecords(ctx context.Context) ([]models.SyncRecord, 
 	for rows.Next() {
 		var rec models.SyncRecord
 		var synced int
-		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &rec.NotionUpdatedAt, &synced); err != nil {
+		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &synced); err != nil {
 			return nil, err
 		}
 		rec.Synced = synced == 1
@@ -442,16 +455,14 @@ func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRec
 	if record.Synced {
 		synced = 1
 	}
-	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, notion_updated_at, synced)
-	VALUES (?, ?, ?, ?)
+	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, synced)
+	VALUES (?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
 		calendar_event_id=excluded.calendar_event_id,
-		notion_updated_at=excluded.notion_updated_at,
 		synced=excluded.synced;`
 	_, err := r.db.ExecContext(ctx, query,
 		record.NotionPageID,
 		record.CalendarEventID,
-		record.NotionUpdatedAt,
 		synced,
 	)
 	return err
@@ -464,7 +475,7 @@ func (r *Repository) ClearSyncRecords(ctx context.Context) error {
 
 // ListOrphanedSyncRecords returns sync_records whose notion_page_id no longer exists in the events table.
 func (r *Repository) ListOrphanedSyncRecords(ctx context.Context) ([]models.SyncRecord, error) {
-	query := `SELECT s.notion_page_id, s.calendar_event_id, s.notion_updated_at, s.synced
+	query := `SELECT s.notion_page_id, s.calendar_event_id, s.synced
 	FROM sync_records s LEFT JOIN events e ON s.notion_page_id = e.notion_page_id
 	WHERE e.notion_page_id IS NULL;`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -476,7 +487,7 @@ func (r *Repository) ListOrphanedSyncRecords(ctx context.Context) ([]models.Sync
 	for rows.Next() {
 		var rec models.SyncRecord
 		var synced int
-		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &rec.NotionUpdatedAt, &synced); err != nil {
+		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &synced); err != nil {
 			return nil, err
 		}
 		rec.Synced = synced == 1

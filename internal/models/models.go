@@ -41,7 +41,6 @@ type AdvanceSchedule struct {
 type SyncRecord struct {
 	NotionPageID    string
 	CalendarEventID string
-	NotionUpdatedAt string
 	Synced          bool
 }
 

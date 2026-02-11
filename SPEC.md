@@ -376,6 +376,7 @@ CREATE TABLE events (
     url TEXT,
     content TEXT,
     raw_properties TEXT,           -- JSONで保存
+    notion_updated_at TEXT,        -- Notion側の最終更新日時
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -393,11 +394,8 @@ CREATE TABLE notification_history (
 -- 同期レコードテーブル
 CREATE TABLE sync_records (
     notion_page_id TEXT PRIMARY KEY,
-    calendar_event_id TEXT,
-    notion_updated_at TEXT,     -- Notion側の最終更新日時
-    calendar_updated_at TEXT,   -- Calendar側の最終更新日時
-    last_synced_at TEXT,
-    sync_status TEXT DEFAULT 'synced'  -- synced/pending/error
+    calendar_event_id TEXT NOT NULL,
+    synced INTEGER DEFAULT 0    -- 1=synced, 0=pending
 );
 
 -- 事前通知スケジュール（精密スケジューリング用）

@@ -534,7 +534,6 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		needsUpsert := !hasRecord ||
 			!record.Synced ||
 			record.CalendarEventID != primary.ID ||
-			record.NotionUpdatedAt != ev.NotionUpdatedAt ||
 			!calendar.EventMatchesNotion(primary, ev, loc)
 
 		if !needsUpsert {
@@ -547,7 +546,6 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    notionID,
 				CalendarEventID: primary.ID,
-				NotionUpdatedAt: ev.NotionUpdatedAt,
 				Synced:          false,
 			})
 			continue
@@ -556,7 +554,6 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record = models.SyncRecord{
 			NotionPageID:    notionID,
 			CalendarEventID: newID,
-			NotionUpdatedAt: ev.NotionUpdatedAt,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
@@ -579,7 +576,6 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    ev.NotionPageID,
 				CalendarEventID: existingCalID,
-				NotionUpdatedAt: ev.NotionUpdatedAt,
 				Synced:          false,
 			})
 			continue
@@ -587,7 +583,6 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record := models.SyncRecord{
 			NotionPageID:    ev.NotionPageID,
 			CalendarEventID: newID,
-			NotionUpdatedAt: ev.NotionUpdatedAt,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
