@@ -18,10 +18,12 @@
 - 手動同期 (`POST /api/calendar/sync`)
 - 同期レコード削除 (`POST /api/calendar/clear`)
 - 同期ステータス表示
-- Calendar API読み込みによる双方向比較同期
-  - 予定の作成/更新/削除反映
-  - `extendedProperties.private.notion_page_id` による重複防止・同期済み予定の識別
-  - Notion側で削除された予定のCalendar側自動削除
+- Calendar API起点の逆引き同期（Notionを正とする）
+  - `extendedProperties.private.notion_page_id` を持つ追跡予定のみ処理
+  - Calendar側の手動変更を検知し、Notion内容で自動上書き
+  - 同一 `notion_page_id` の重複予定を自動で1件に整理
+  - Notion側に存在しない追跡予定はCalendarから削除
+  - DBに存在してCalendarに見つからない予定はUpsertで再作成/復元
   - 孤立sync_recordsの自動クリーンアップ
 - 招待ユーザーのメールアドレスをNotionプロパティのユーザー（people）欄から抽出
   - `property_mapping.attendees` にNotionプロパティ名を設定

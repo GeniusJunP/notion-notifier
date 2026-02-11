@@ -153,7 +153,12 @@ Notion同期を手動実行。
 
 ### POST /api/calendar/sync
 
-カレンダー同期を手動実行。
+カレンダー同期を手動実行。Notionを正として、Calendar APIで取得した追跡イベント（`notion_page_id`付き）を逆引き照合する。
+
+- Notionにない追跡イベントは削除
+- Notionとの差分（Calendar側の編集含む）はUpsertで上書き
+- DBに存在してCalendarにない予定はUpsertで作成/復元
+- 同一 `notion_page_id` の重複イベントは1件に整理
 
 **Request Body:**
 ```json

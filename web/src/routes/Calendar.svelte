@@ -84,8 +84,8 @@
                 Google カレンダー同期
             </h2>
             <p class="text-gray-500">
-                Notion の予定を自動的に Google
-                カレンダーに反映します。参加者のメールアドレスも同期可能です。
+                Notionを正としてGoogle
+                カレンダーを同期します。カレンダー側の意図しない編集は次回同期でNotion内容に戻されます。
             </p>
         </div>
         <div class="flex items-center gap-3">
@@ -249,8 +249,8 @@
         <div>
             <h4 class="font-bold text-gray-900 mb-1">同期の仕組み</h4>
             <p class="text-sm text-gray-600 leading-relaxed">
-                Notion の日付プロパティが変更されると、次回の同期実行時に Google
-                カレンダーのイベントも更新されます。 設定の「Notion
+                Calendar APIの追跡イベント（notion_page_id付き）を起点にDBへ逆引きし、差分があれば統一ロジックで更新します。
+                Notionにない追跡イベントは削除し、重複イベントは1件に整理します。設定の「Notion
                 プロパティマッピング」で、タイトル・日付・場所・参加者（メールアドレス）を紐付けてください。
             </p>
         </div>
