@@ -74,12 +74,12 @@ func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.cfg.UpdateConfig(incoming); err != nil {
-		logging.Error("CONFIG", "update failed: %v", err)
+		logging.Error("CONF", "update failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "failed to save config")
 		return
 	}
 
-	logging.Info("CONFIG", "config updated from %s", r.RemoteAddr)
+	logging.Info("CONF", "config updated from %s", r.RemoteAddr)
 	// Return the normalized config
 	saved, _ := h.cfg.Get()
 	respondJSON(w, http.StatusOK, saved)

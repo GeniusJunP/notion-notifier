@@ -374,15 +374,20 @@ func (r *Repository) ReplaceAdvanceSchedules(ctx context.Context, schedules []mo
 	if err != nil {
 		return err
 	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM advance_schedules;`); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
 	if len(schedules) == 0 {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM advance_schedules;`); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
 		return tx.Commit()
 	}
 	stmt, err := tx.PrepareContext(ctx, `INSERT INTO advance_schedules (notion_page_id, rule_index, fire_at, fired) VALUES (?, ?, ?, ?)
-	ON CONFLICT(notion_page_id, rule_index) DO UPDATE SET fire_at=excluded.fire_at, fired=excluded.fired;`)
+	ON CONFLICT(notion_page_id, rule_index) DO UPDATE SET
+		fire_at=excluded.fire_at,
+		fired=CASE
+			WHEN advance_schedules.fire_at = excluded.fire_at THEN advance_schedules.fired
+			ELSE excluded.fired
+		END;`)
 	if err != nil {
 		_ = tx.Rollback()
 		return err
@@ -398,6 +403,17 @@ func (r *Repository) ReplaceAdvanceSchedules(ctx context.Context, schedules []mo
 			_ = tx.Rollback()
 			return err
 		}
+	}
+	conditions := make([]string, 0, len(schedules))
+	args := make([]any, 0, len(schedules)*2)
+	for _, sched := range schedules {
+		conditions = append(conditions, "(notion_page_id = ? AND rule_index = ?)")
+		args = append(args, sched.NotionPageID, sched.RuleIndex)
+	}
+	query := `DELETE FROM advance_schedules WHERE NOT (` + strings.Join(conditions, " OR ") + `);`
+	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+		_ = tx.Rollback()
+		return err
 	}
 	return tx.Commit()
 }

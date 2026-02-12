@@ -669,6 +669,7 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	if scheduled && config.IsSnoozed(cfg, time.Now()) {
 		return nil
 	}
+	logging.Info("WBHK", "sending (%s)", typ)
 	envCfg, env := s.cfg.Get()
 	target := envCfg.Webhook.Notification
 	url := env.Webhook.NotificationURL
@@ -705,10 +706,10 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	}
 	_ = s.repo.InsertNotificationHistory(ctx, history)
 	if status == "failed" {
-		logging.Error("WEBHOOK", "send failed (%s): %s", typ, errStr)
+		logging.Error("WBHK", "send failed (%s): %s", typ, errStr)
 		return errors.New(errStr)
 	}
-	logging.Info("WEBHOOK", "send ok (%s)", typ)
+	logging.Info("WBHK", "send ok (%s)", typ)
 	return nil
 }
 

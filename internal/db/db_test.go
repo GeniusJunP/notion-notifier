@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -43,5 +44,146 @@ func TestUpsertEventsPersistsAttendees(t *testing.T) {
 	}
 	if !reflect.DeepEqual(events[0].Attendees, ev.Attendees) {
 		t.Fatalf("unexpected attendees: got=%v want=%v", events[0].Attendees, ev.Attendees)
+	}
+}
+
+func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
+	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer repo.Close()
+
+	ctx := context.Background()
+	fireAt := time.Date(2026, 2, 12, 13, 59, 0, 0, time.UTC)
+	sched := models.AdvanceSchedule{
+		NotionPageID: "page-1",
+		RuleIndex:    0,
+		FireAt:       fireAt,
+	}
+
+	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{sched}); err != nil {
+		t.Fatalf("replace schedules (initial): %v", err)
+	}
+	pending, err := repo.ListPendingAdvanceSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list pending (initial): %v", err)
+	}
+	if len(pending) != 1 {
+		t.Fatalf("unexpected pending len (initial): got=%d want=1", len(pending))
+	}
+	if err := repo.MarkAdvanceScheduleFired(ctx, pending[0].ID); err != nil {
+		t.Fatalf("mark fired: %v", err)
+	}
+
+	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{sched}); err != nil {
+		t.Fatalf("replace schedules (same fire_at): %v", err)
+	}
+	pending, err = repo.ListPendingAdvanceSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list pending (same fire_at): %v", err)
+	}
+	if len(pending) != 0 {
+		t.Fatalf("unexpected pending len after preserving fired: got=%d want=0", len(pending))
+	}
+}
+
+func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *testing.T) {
+	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer repo.Close()
+
+	ctx := context.Background()
+	fireAtA := time.Date(2026, 2, 12, 13, 59, 0, 0, time.UTC)
+	fireAtB := time.Date(2026, 2, 12, 14, 30, 0, 0, time.UTC)
+	schedules := []models.AdvanceSchedule{
+		{NotionPageID: "page-a", RuleIndex: 0, FireAt: fireAtA},
+		{NotionPageID: "page-b", RuleIndex: 1, FireAt: fireAtB},
+	}
+	if err := repo.ReplaceAdvanceSchedules(ctx, schedules); err != nil {
+		t.Fatalf("replace schedules (initial): %v", err)
+	}
+	pending, err := repo.ListPendingAdvanceSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list pending (initial): %v", err)
+	}
+	if len(pending) != 2 {
+		t.Fatalf("unexpected pending len (initial): got=%d want=2", len(pending))
+	}
+
+	var pageAID int64
+	for _, p := range pending {
+		if p.NotionPageID == "page-a" {
+			pageAID = p.ID
+			break
+		}
+	}
+	if pageAID == 0 {
+		t.Fatalf("page-a schedule id not found")
+	}
+	if err := repo.MarkAdvanceScheduleFired(ctx, pageAID); err != nil {
+		t.Fatalf("mark fired (page-a): %v", err)
+	}
+
+	updatedA := models.AdvanceSchedule{
+		NotionPageID: "page-a",
+		RuleIndex:    0,
+		FireAt:       fireAtA.Add(1 * time.Minute),
+	}
+	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{updatedA}); err != nil {
+		t.Fatalf("replace schedules (updated): %v", err)
+	}
+
+	pending, err = repo.ListPendingAdvanceSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list pending (updated): %v", err)
+	}
+	if len(pending) != 1 {
+		t.Fatalf("unexpected pending len (updated): got=%d want=1", len(pending))
+	}
+	if pending[0].NotionPageID != "page-a" {
+		t.Fatalf("unexpected pending schedule notion_page_id: got=%s want=page-a", pending[0].NotionPageID)
+	}
+	if !pending[0].FireAt.Equal(updatedA.FireAt) {
+		t.Fatalf("unexpected fire_at: got=%s want=%s", pending[0].FireAt.Format(time.RFC3339), updatedA.FireAt.Format(time.RFC3339))
+	}
+
+	var count int
+	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM advance_schedules WHERE notion_page_id = ?;`, "page-b")
+	if err := row.Scan(&count); err != nil {
+		t.Fatalf("count stale schedules: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("stale schedule was not deleted: count=%d", count)
+	}
+}
+
+func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
+	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer repo.Close()
+
+	ctx := context.Background()
+	fireAt := time.Date(2026, 2, 12, 10, 0, 0, 0, time.UTC)
+	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{
+		{NotionPageID: "page-1", RuleIndex: 0, FireAt: fireAt},
+	}); err != nil {
+		t.Fatalf("replace schedules (initial): %v", err)
+	}
+	if err := repo.ReplaceAdvanceSchedules(ctx, nil); err != nil {
+		t.Fatalf("replace schedules (empty): %v", err)
+	}
+
+	var count int
+	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM advance_schedules;`)
+	if err := row.Scan(&count); err != nil && err != sql.ErrNoRows {
+		t.Fatalf("count schedules: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("schedules were not cleared: count=%d", count)
 	}
 }
