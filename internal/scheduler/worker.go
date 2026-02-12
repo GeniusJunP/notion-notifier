@@ -163,7 +163,7 @@ func (s *Scheduler) periodicLoop() {
 				if err != nil {
 					return
 				}
-				err = s.sendPeriodic(opCtx, now, i, rule)
+				err = s.sendPeriodic(opCtx, now, rule)
 				cancel()
 				if err != nil {
 					log.Printf("periodic notification failed: %v", err)
@@ -227,7 +227,8 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 		logging.Error("SYNC", "notion client not configured")
 		return 0, err
 	}
-	pages, err := s.notion.QueryDatabase(ctx, env.Notion.DatabaseID)
+	fromDate := time.Now().In(loc).Format("2006-01-02")
+	pages, err := s.notion.QueryDatabaseOnOrAfter(ctx, env.Notion.DatabaseID, cfg.PropertyMap.Date, fromDate)
 	if err != nil {
 		s.setNotionStatus(0, err)
 		logging.Error("SYNC", "notion query failed: %v", err)
@@ -358,7 +359,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 	return nil
 }
 
-func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, idx int, rule config.PeriodicNotification) error {
+func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
