@@ -57,7 +57,6 @@
             location: "",
             url: "",
             conditions: {
-                enabled: false,
                 days_of_week: [1, 2, 3, 4, 5],
                 property_filters: [],
             },
@@ -167,37 +166,14 @@
 </script>
 
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
-    <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
-            <button
-                on:click={() => (activeTab = "advance")}
-                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
-                'advance'
-                    ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
-            >
-                事前通知
-            </button>
-            <button
-                on:click={() => (activeTab = "periodic")}
-                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
-                'periodic'
-                    ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
-            >
-                定期通知
-            </button>
-        </div>
-
+    <div class="flex items-center justify-end">
         <button
             on:click={saveConfig}
             disabled={isSaving}
             class="px-6 py-2.5 bg-brand-600 dark:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-brand-100 dark:shadow-brand-900"
         >
             {#if isSaving}
-                <div
-                    class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                ></div>
+                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             {:else}
                 <Save size={18} />
             {/if}
@@ -276,6 +252,30 @@
                     {/if}
                 </div>
             </div>
+        </div>
+        <div class="flex items-center justify-between">
+            <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+                <button
+                    on:click={() => (activeTab = "advance")}
+                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
+                    'advance'
+                        ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                >
+                    事前通知
+                </button>
+                <button
+                    on:click={() => (activeTab = "periodic")}
+                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all {activeTab ===
+                    'periodic'
+                        ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                >
+                    定期通知
+                </button>
+            </div>
+
+
         </div>
 
         <div
@@ -386,42 +386,7 @@
                                 </div>
 
                                 <div class="space-y-4">
-                                    <div
-                                        class="p-4 bg-brand-50 dark:bg-brand-900 rounded-2xl border border-brand-100 dark:border-brand-700"
-                                    >
-                                        <div
-                                            class="flex items-center justify-between mb-3"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2"
-                                            >
-                                                <Settings2
-                                                    size={16}
-                                                    class="text-brand-600 dark:text-brand-400"
-                                                />
-                                                <span
-                                                    class="text-sm font-bold text-brand-800 dark:text-brand-200"
-                                                    >配信フィルタ</span
-                                                >
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                bind:checked={
-                                                    rule.conditions.enabled
-                                                }
-                                                class="w-4 h-4 accent-brand-600"
-                                            />
-                                        </div>
-
-                                        <div
-                                            class="space-y-3 opacity-{rule
-                                                .conditions.enabled
-                                                ? '100'
-                                                : '50'} pointer-events-{rule
-                                                .conditions.enabled
-                                                ? 'auto'
-                                                : 'none'}"
-                                        >
+                                        <div class="space-y-3">
                                             <label
                                                 for="adv-days-{i}"
                                                 class="block text-xs font-bold text-brand-700 dark:text-brand-300 uppercase tracking-wider"
@@ -441,18 +406,17 @@
                                                                         .days_of_week,
                                                                     day,
                                                                 ))}
-                                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all {rule.conditions.days_of_week.includes(
+                                                        class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all {rule.conditions.days_of_week.includes(
                                                             day,
                                                         )
-                                                            ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-md'
-                                                            : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600'}"
+                                                            ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-lg shadow-brand-100 dark:shadow-brand-900 scale-105'
+                                                            : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
                                                     >
                                                         {daysLabels[idx]}
                                                     </button>
                                                 {/each}
                                             </div>
                                         </div>
-                                    </div>
 
                                     {#if previewResult && activeTab === "advance"}
                                         <div

@@ -241,11 +241,7 @@
 
     <!-- Help Section -->
     <div class="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl flex items-start gap-4">
-        <div
-            class="w-10 h-10 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500"
-        >
-            <CalendarDays size={20} />
-        </div>
+        <CalendarDays size={70} class="h-8 items-center justify-center" />
         <div>
             <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">同期の仕組み</h4>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
