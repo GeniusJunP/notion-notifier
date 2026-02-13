@@ -14,6 +14,7 @@
     LayoutDashboard,
     Bell,
     Calendar,
+    Clock,
     Settings,
     History,
     Menu,
@@ -274,37 +275,63 @@
         </button>
       {/each}
 
-      <div class="px-4 py-4 mt-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
-        <h3 class="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-2">Quick Actions</h3>
-        
-        <button
-          on:click={handleSync}
-          disabled={isSyncing}
-          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-brand-900/10 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-50 disabled:cursor-not-wait group"
-        >
-          <div class={isSyncing ? "animate-spin" : "transition-transform duration-200 group-hover:rotate-180"}>
-            <RefreshCcw size={18} />
+      <div class="px-4 py-6 mt-auto border-t border-gray-100 dark:border-gray-700 space-y-4">
+        <div class="px-3 flex items-center justify-between">
+          <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">System Status</span>
+          <div
+            class="flex items-center gap-1.5"
+            title={isServiceActive ? "稼働中" : "オフライン"}
+          >
+            <div
+              class="w-2 h-2 rounded-full {isServiceActive
+                ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
+            ></div>
+            <span class="text-[10px] font-bold {isServiceActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+              {isServiceActive ? "ONLINE" : "OFFLINE"}
+            </span>
           </div>
-          <span class="text-sm font-medium">{isSyncing ? "同期中..." : "今すぐ同期"}</span>
-        </button>
+        </div>
 
-        <button
-          on:click={handleToggleSnooze}
-          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 {dashboardData?.snooze_active 
-            ? 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-300' 
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
-        >
-          <div class="transition-transform duration-200 group-hover:scale-110">
-            {#if dashboardData?.snooze_active}
-              <BellOff size={18} />
-            {:else}
-              <Bell size={18} />
+        <div class="space-y-1">
+          <button
+            on:click={handleSync}
+            disabled={isSyncing}
+            class="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-brand-900/10 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-50 group"
+          >
+            <div class="flex items-center gap-3">
+              <div class={isSyncing ? "animate-spin" : "transition-transform duration-200 group-hover:rotate-180"}>
+                <RefreshCcw size={16} />
+              </div>
+              <span class="text-sm font-medium">Notion Sync</span>
+            </div>
+            {#if dashboardData}
+              <span class="text-[10px] tabular-nums font-medium opacity-60">
+                {dashboardData.last_sync ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+              </span>
             {/if}
-          </div>
-          <span class="text-sm font-medium">
-            {dashboardData?.snooze_active ? "スヌーズ解除" : "1時間スヌーズ"}
-          </span>
-        </button>
+          </button>
+
+          <button
+            on:click={handleToggleSnooze}
+            class="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 {dashboardData?.snooze_active 
+              ? 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-300' 
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+          >
+            <div class="flex items-center gap-3">
+              {#if dashboardData?.snooze_active}
+                <BellOff size={16} />
+              {:else}
+                <Bell size={16} />
+              {/if}
+              <span class="text-sm font-medium">Snooze (1h)</span>
+            </div>
+            {#if dashboardData?.snooze_active}
+              <span class="text-[10px] font-bold">ON</span>
+            {/if}
+          </button>
+        </div>
+
       </div>
     </nav>
   </aside>
@@ -339,56 +366,20 @@
 
       <div class="flex items-center gap-2 md:gap-4">
         <div
-          class="hidden lg:flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 tabular-nums"
+          class="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 tabular-nums"
           aria-label="現在日時"
         >
           <div class="flex items-center gap-1.5">
-            <span class="text-gray-700 dark:text-gray-200 font-semibold">
-              {currentDate}({currentWeekday})
-            </span>
+            <Calendar size={14} />
+            <span>{currentDate} <span class="text-xs opacity-70">({currentWeekday})</span></span>
+          </div>
+          <div class="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-4">
+            <Clock size={14} />
             <span class="text-gray-700 dark:text-gray-200 font-semibold">{currentTime}</span>
           </div>
         </div>
 
-        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"></div>
-        
-        {#if dashboardData}
-          <div class="hidden xl:flex items-center gap-4">
-            <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
-              <Database size={14} class={dashboardData.last_sync_error ? "text-red-500" : ""} />
-              <span class="tabular-nums">
-                {dashboardData.last_sync ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-              </span>
-            </div>
-            
-            {#if dashboardData.snooze_active}
-              <div class="flex items-center gap-2">
-                {#if dashboardData.snooze_active}
-                  <div class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400" title="スヌーズ中">
-                    <BellOff size={14} />
-                    <span>SNOOZE</span>
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-          <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden xl:block"></div>
-        {/if}
-
-        <div
-          class="hidden sm:flex items-center gap-2 px-2 py-1"
-        >
-          <div
-            class="w-2 h-2 rounded-full {isServiceActive
-              ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]'
-              : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
-          ></div>
-          <span class="text-[10px] font-bold tracking-wider {isServiceActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-            {isServiceActive ? "SYSTEM ACTIVE" : "SYSTEM OFFLINE"}
-          </span>
-        </div>
-
-        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
 
         <button
           on:click={toggleDarkMode}
