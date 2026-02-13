@@ -56,7 +56,6 @@ type AdvanceNotification struct {
 }
 
 type AdvanceConditions struct {
-	Enabled         bool             `yaml:"enabled" json:"enabled"`
 	DaysOfWeek      []int            `yaml:"days_of_week" json:"days_of_week"`
 	PropertyFilters []PropertyFilter `yaml:"property_filters" json:"property_filters"`
 }

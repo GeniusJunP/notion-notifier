@@ -10,6 +10,7 @@ import (
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/db"
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/models"
 	"notion-notifier/internal/scheduler"
 )
 
@@ -153,7 +154,7 @@ type eventResponse struct {
 	IsAllDay     bool   `json:"is_all_day"`
 	Location     string `json:"location,omitempty"`
 	URL          string `json:"url,omitempty"`
-	CacheStatus  string `json:"cache_status"`
+	CalendarState string `json:"calendar_state"`
 }
 
 func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
@@ -168,25 +169,33 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 
 	events, _ := h.repo.ListUpcomingEvents(r.Context(), 14, now)
 
-	// Build sync status map
+	// Build sync record map
 	ids := make([]string, 0, len(events))
 	for _, ev := range events {
 		if ev.NotionPageID != "" {
 			ids = append(ids, ev.NotionPageID)
 		}
 	}
-	syncMap := map[string]string{}
+	syncMap := map[string]models.SyncRecord{}
 	if len(ids) > 0 {
-		if m, err := h.repo.GetSyncStatusMap(r.Context(), ids); err == nil {
+		if m, err := h.repo.GetSyncRecordMap(r.Context(), ids); err == nil {
 			syncMap = m
 		}
 	}
 
 	out := make([]eventResponse, 0, len(events))
 	for _, ev := range events {
-		cacheStatus := "unsynced"
-		if v, ok := syncMap[ev.NotionPageID]; ok && v != "" {
-			cacheStatus = v
+		calendarState := "disabled"
+		if cfg.CalendarSync.Enabled {
+			record, ok := syncMap[ev.NotionPageID]
+			switch {
+			case !ok || !record.Attempted:
+				calendarState = "needs_sync"
+			case record.Synced:
+				calendarState = "synced"
+			default:
+				calendarState = "error"
+			}
 		}
 		out = append(out, eventResponse{
 			NotionPageID: ev.NotionPageID,
@@ -198,7 +207,7 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 			IsAllDay:     ev.IsAllDay,
 			Location:     ev.Location,
 			URL:          ev.URL,
-			CacheStatus:  cacheStatus,
+			CalendarState: calendarState,
 		})
 	}
 	respondJSON(w, http.StatusOK, out)
@@ -336,7 +345,6 @@ type notificationRequest struct {
 
 type previewResponse struct {
 	Message string `json:"message"`
-	Payload string `json:"payload,omitempty"`
 }
 
 func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
@@ -368,13 +376,13 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	message, payload, err := h.sched.PreviewManualPayload(r.Context(), req.Template, from, to)
+	message, err := h.sched.PreviewManualTemplate(r.Context(), req.Template, from, to)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "preview failed: "+err.Error())
 		return
 	}
 
-	respondJSON(w, http.StatusOK, previewResponse{Message: message, Payload: payload})
+	respondJSON(w, http.StatusOK, previewResponse{Message: message})
 }
 
 // --- POST /api/notifications/manual ---

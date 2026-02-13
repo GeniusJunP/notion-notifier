@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -152,7 +151,7 @@ func (s *Scheduler) periodicLoop() {
 				if now.Format("15:04") != rule.Time {
 					continue
 				}
-				if !slices.Contains(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
+				if !matchesDays(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
 					continue
 				}
 				key := now.Format("2006-01-02")
@@ -409,30 +408,18 @@ func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string,
 	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
 }
 
-func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, from, to time.Time) (string, string, error) {
+func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
 	cfg, _ := s.cfg.Get()
 	events, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
 	message, err := s.renderer.RenderList(template, templateEvents)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-	payloadCtx := models.WebhookPayloadContext{
-		Type:    notificationTypeManual,
-		Message: message,
-		Events:  templateEvents,
-	}
-	if len(templateEvents) > 0 {
-		payloadCtx.Event = templateEvents[0]
-	}
-	payload, err := s.renderer.RenderPayload(cfg.Webhook.Schedule.PayloadTemplate, payloadCtx)
-	if err != nil {
-		return message, "", err
-	}
-	return message, payload, nil
+	return message, nil
 }
 
 func (s *Scheduler) SyncCalendar(_ context.Context, from, to time.Time) (int, error) {
@@ -536,6 +523,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		}
 
 		needsUpsert := !hasRecord ||
+			!record.Attempted ||
 			!record.Synced ||
 			record.CalendarEventID != primary.ID ||
 			!calendar.EventMatchesNotion(primary, ev, loc)
@@ -550,6 +538,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    notionID,
 				CalendarEventID: primary.ID,
+				Attempted:       true,
 				Synced:          false,
 			})
 			continue
@@ -558,6 +547,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record = models.SyncRecord{
 			NotionPageID:    notionID,
 			CalendarEventID: newID,
+			Attempted:       true,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
@@ -580,6 +570,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    ev.NotionPageID,
 				CalendarEventID: existingCalID,
+				Attempted:       true,
 				Synced:          false,
 			})
 			continue
@@ -587,6 +578,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record := models.SyncRecord{
 			NotionPageID:    ev.NotionPageID,
 			CalendarEventID: newID,
+			Attempted:       true,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
@@ -761,14 +753,9 @@ func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 }
 
 func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
-	if !rule.Conditions.Enabled {
-		return true
-	}
-	if len(rule.Conditions.DaysOfWeek) > 0 {
-		start := parseEventStart(ev, nil)
-		if !slices.Contains(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
-			return false
-		}
+	start := parseEventStart(ev, nil)
+	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
+		return false
 	}
 	if len(rule.Conditions.PropertyFilters) == 0 {
 		return true
@@ -857,6 +844,18 @@ func weekdayToConfig(day time.Weekday) int {
 		return 7
 	}
 	return int(day)
+}
+
+func matchesDays(days []int, weekday int) bool {
+	if len(days) == 0 {
+		return true
+	}
+	for _, day := range days {
+		if day == weekday {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scheduler) setRuntimeContext(parent context.Context) {
