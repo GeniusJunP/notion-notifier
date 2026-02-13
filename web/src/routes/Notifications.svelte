@@ -18,8 +18,6 @@
         Settings2,
         Check,
         RotateCcw,
-        BellOff,
-        X,
     } from "lucide-svelte";
 
     let config: Config | null = null;
@@ -138,12 +136,6 @@
         } catch {
             addToast("デフォルトテンプレートの取得に失敗しました", "error");
         }
-    }
-
-    function clearSnooze() {
-        if (!config) return;
-        config.snooze_until = "";
-        configStore.set(config);
     }
 
     const daysLabels = ["月", "火", "水", "木", "金", "土", "日"];

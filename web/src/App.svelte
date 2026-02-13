@@ -9,7 +9,7 @@
     darkMode,
     setDarkMode,
   } from "./lib/store";
-  import { api } from "./lib/api";
+  import { api, type Config, type DashboardData } from "./lib/api";
   import {
     LayoutDashboard,
     Bell,
@@ -24,11 +24,9 @@
     Info,
     Sun,
     Moon,
-    Activity,
     RefreshCcw,
     Database,
     BellOff,
-    Loader2,
   } from "lucide-svelte";
 
   // Routes
@@ -37,11 +35,11 @@
   import CalendarSync from "./routes/Calendar.svelte";
   import SystemSettings from "./routes/Settings.svelte";
   import NotificationHistory from "./routes/History.svelte";
-  import type { DashboardData } from "./lib/api";
-
+  import SidebarButton from "./components/SidebarButton.svelte";
   let isSidebarOpen = true;
   let isServiceActive = true;
   let isSyncing = false;
+  let config: Config | null = null;
   let dashboardData: DashboardData | null = null;
   let healthInterval: ReturnType<typeof setInterval>;
   let clockInterval: ReturnType<typeof setInterval>;
@@ -49,6 +47,8 @@
   let mediaQuery: MediaQueryList | null = null;
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
   const mainNavId = "main-navigation";
+
+  configStore.subscribe((v) => (config = v));
 
   const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
@@ -107,66 +107,22 @@
     }
   }
 
-  async function handleToggleSnooze() {
-    configStore.update(cfg => {
-      if (!cfg) return cfg;
-      const isSnoozed = dashboardData?.snooze_active;
-      
-      const updatedCfg = { ...cfg };
-      if (isSnoozed) {
-        updatedCfg.snooze_until = "";
-      } else {
-        const snoozeDate = new Date(Date.now() + 60 * 60 * 1000);
-        updatedCfg.snooze_until = snoozeDate.toISOString();
-      }
-      
-      api.updateConfig(updatedCfg).then(saved => {
-        configStore.set(saved);
-        addToast(isSnoozed ? "スヌーズを解除しました" : "1時間スヌーズします", "success");
-        checkHealth();
-      }).catch(() => {
-        addToast("設定の更新に失敗しました", "error");
-      });
-      
-      return updatedCfg;
-    });
+  async function saveSnooze() {
+    if (!config) return;
+    try {
+      const saved = await api.updateConfig(config);
+      configStore.set(saved);
+      await checkHealth();
+    } catch {
+      addToast("スヌーズ設定の保存に失敗しました", "error");
+    }
   }
 
-  function handleSnoozeChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const value = target.value;
-    
-    configStore.update(cfg => {
-      if (!cfg) return cfg;
-      const updatedCfg = { ...cfg, snooze_until: value };
-      
-      api.updateConfig(updatedCfg).then(saved => {
-        configStore.set(saved);
-        addToast("スヌーズ設定を更新しました", "success");
-        checkHealth();
-      }).catch(() => {
-        addToast("スヌーズ設定の更新に失敗しました", "error");
-      });
-      
-      return updatedCfg;
-    });
-  }
-
-  function clearSnooze() {
-    configStore.update(cfg => {
-      if (!cfg) return cfg;
-      const updatedCfg = { ...cfg, snooze_until: "" };
-      
-      api.updateConfig(updatedCfg).then(saved => {
-        configStore.set(saved);
-        addToast("スヌーズを解除しました", "success");
-        checkHealth();
-      }).catch(() => {
-        addToast("スヌーズ解除に失敗しました", "error");
-      });
-      
-      return updatedCfg;
-    });
+  async function clearSnooze() {
+    if (!config) return;
+    config.snooze_until = "";
+    configStore.set(config);
+    await saveSnooze();
   }
 
   function toggleDarkMode() {
@@ -288,16 +244,13 @@
 
     <nav id={mainNavId} class="p-4 space-y-1 overflow-y-auto h-[calc(100%-3.5rem)]" aria-label="メインナビゲーション">
       {#each navItems as item}
-        <button
+        <SidebarButton
+          active={$activeRoute === item.path}
+          ariaCurrent={$activeRoute === item.path ? "page" : undefined}
           on:click={() => {
             navigate(item.path);
             if (window.innerWidth < 1024) closeSidebar();
           }}
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {$activeRoute ===
-          item.path
-            ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-semibold'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}"
-          aria-current={$activeRoute === item.path ? "page" : undefined}
         >
           <div class="transition-transform duration-200 group-hover:scale-110">
             <svelte:component
@@ -310,78 +263,71 @@
           {#if $activeRoute === item.path}
             <div class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-600"></div>
           {/if}
-        </button>
+        </SidebarButton>
       {/each}
 
-      <div class="px-4 py-6 mt-auto border-t border-gray-100 dark:border-gray-700 space-y-4">
-        <div class="px-3 flex items-center justify-between">
-          <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">System Status</span>
-          <div
-            class="flex items-center gap-1.5"
-            title={isServiceActive ? "稼働中" : "オフライン"}
-          >
-            <div
-              class="w-2 h-2 rounded-full {isServiceActive
-                ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]'
-                : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
-            ></div>
-            <span class="text-[10px] font-bold {isServiceActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-              {isServiceActive ? "ONLINE" : "OFFLINE"}
+      <div class="border-t border-gray-100 dark:border-gray-700 mt-6 pt-5 space-y-5">
+        <SidebarButton
+          justifyBetween
+          on:click={handleSync}
+          disabled={isSyncing}
+        >
+          <div class="flex items-center gap-3">
+            <div class={isSyncing ? "animate-spin" : "transition-transform duration-200 group-hover:scale-110"}>
+              <RefreshCcw size={20} />
+            </div>
+            <span>Notion同期</span>
+          </div>
+          {#if dashboardData}
+            <span class="text-[10px] tabular-nums font-medium opacity-60">
+              {dashboardData.last_sync
+                ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+                : '--:--'}
             </span>
-          </div>
-        </div>
-
-        <div class="space-y-1">
-          <button
-            on:click={handleSync}
-            disabled={isSyncing}
-            class="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-brand-900/10 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-50 group"
-          >
-            <div class="flex items-center gap-3">
-              <div class={isSyncing ? "animate-spin" : "transition-transform duration-200 group-hover:rotate-180"}>
-                <RefreshCcw size={16} />
-              </div>
-              <span class="text-sm font-medium">Notion Sync</span>
-            </div>
-            {#if dashboardData}
-              <span class="text-[10px] tabular-nums font-medium opacity-60">
-                {dashboardData.last_sync ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-              </span>
-            {/if}
-          </button>
-
-          <div class="px-3 py-2 space-y-2">
-            <div class="flex items-center justify-between text-gray-600 dark:text-gray-400">
-              <div class="flex items-center gap-3">
-                <BellOff size={16} class={dashboardData?.snooze_active ? "text-amber-500" : ""} />
-                <span class="text-sm font-medium">Snooze</span>
-              </div>
-              {#if $configStore?.snooze_until}
-                <button
-                  on:click={clearSnooze}
-                  class="text-gray-400 hover:text-red-500 transition-colors"
-                  aria-label="スヌーズ解除"
+          {/if}
+        </SidebarButton>
+        {#if config}
+          <div class="flex flex-col gap-4">
+            <div
+              class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-start gap-3"
+            >
+              <div class="flex items-center gap-3 mb-2">
+                <div
+                  class="w-9 h-9 bg-amber-50 dark:bg-amber-900 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400"
                 >
-                  <X size={14} />
-                </button>
-              {/if}
+                  <BellOff size={18} />
+                </div>
+                <div>
+                  <span class="text-sm font-bold text-gray-900 dark:text-gray-100"
+                    >スヌーズ</span
+                  >
+                  <p class="text-[10px] text-gray-400 dark:text-gray-500">
+                    指定日時まで通知を一時停止
+                  </p>
+                </div>
+              </div>
+              <div class="flex flex-col w-full gap-2">
+                <div class="flex items-center gap-2 w-full">
+                  <input
+                    type="datetime-local"
+                    bind:value={config.snooze_until}
+                    on:change={saveSnooze}
+                    class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all w-full"
+                  />
+                  {#if config.snooze_until}
+                    <button
+                      on:click={clearSnooze}
+                      class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                      aria-label="スヌーズ設定をクリア"
+                    >
+                      <X size={14} />
+                    </button>
+                  {/if}
+                </div>
+              </div>
             </div>
-            <input
-              type="datetime-local"
-              value={$configStore?.snooze_until ? new Date($configStore.snooze_until).toISOString().slice(0, 16) : ""}
-              on:change={handleSnoozeChange}
-              class="w-full px-2 py-1 text-[10px] bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all text-gray-700 dark:text-gray-200"
-            />
-          </div>
-        </div>
-
-        {#if dashboardData?.snooze_active}
-          <div class="mx-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg flex items-center gap-2 text-amber-700 dark:text-amber-400">
-            <BellOff size={14} />
-            <span class="text-[10px] font-bold uppercase tracking-wider">SNOOZE ACTIVE</span>
           </div>
         {/if}
-
       </div>
     </nav>
   </aside>
@@ -419,33 +365,26 @@
           class="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 tabular-nums"
           aria-label="現在日時"
         >
-          <div class="flex items-center gap-1.5">
-            <Calendar size={14} />
-            <span>{currentDate} <span class="text-xs opacity-70">({currentWeekday})</span></span>
-          </div>
-          <div class="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <Clock size={14} />
-            <span class="text-gray-700 dark:text-gray-200 font-semibold">{currentTime}</span>
-          </div>
+          <span class="text-gray-700 dark:text-gray-200 font-semibold">{currentDate}（{currentWeekday}）{currentTime}</span>
         </div>
 
         <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"></div>
-        
+
         {#if dashboardData}
           <div class="hidden xl:flex items-center gap-4">
             <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
               <Database size={14} class={dashboardData.last_sync_error ? "text-red-500" : ""} />
               <span class="tabular-nums">
-                {dashboardData.last_sync ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                {dashboardData.last_sync
+                  ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+                  : '--:--'}
               </span>
             </div>
-            
+
             {#if dashboardData.snooze_active}
-              <div class="flex items-center gap-2">
-                <div class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400" title="スヌーズ中">
-                  <BellOff size={14} />
-                  <span>SNOOZE</span>
-                </div>
+              <div class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400" title="スヌーズ中">
+                <BellOff size={14} />
+                <span>SNOOZE</span>
               </div>
             {/if}
           </div>
