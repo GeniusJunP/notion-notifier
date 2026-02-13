@@ -101,7 +101,9 @@
                     class="w-14 h-8 rounded-full transition-all duration-300 flex items-center p-1 {config
                         .calendar_sync.enabled
                         ? 'bg-green-500'
-                        : 'bg-gray-200'}"
+                        : 'bg-gray-200 dark:bg-gray-600'}"
+                    aria-label="カレンダー同期の有効化を切り替え"
+                    aria-pressed={config.calendar_sync.enabled}
                 >
                     <div
                         class="w-6 h-6 bg-white rounded-full shadow-sm transform transition-transform duration-300 {config
@@ -178,7 +180,7 @@
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-6"
                 >
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label
                                 for="cal-sync-from"

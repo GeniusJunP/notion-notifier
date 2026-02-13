@@ -212,6 +212,7 @@
                         <button
                             on:click={clearSnooze}
                             class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                            aria-label="スヌーズ設定をクリア"
                         >
                             <X size={14} />
                         </button>
@@ -246,6 +247,7 @@
                         <button
                             on:click={clearMute}
                             class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                            aria-label="ミュート設定をクリア"
                         >
                             <X size={14} />
                         </button>
@@ -253,7 +255,7 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
                 <button
                     on:click={() => (activeTab = "advance")}
@@ -261,6 +263,7 @@
                     'advance'
                         ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                    aria-pressed={activeTab === "advance"}
                 >
                     事前通知
                 </button>
@@ -270,6 +273,7 @@
                     'periodic'
                         ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                    aria-pressed={activeTab === "periodic"}
                 >
                     定期通知
                 </button>
@@ -320,6 +324,7 @@
                                 <button
                                     on:click={() => removeAdvanceRule(i)}
                                     class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                    aria-label={`事前通知 ${i + 1} を削除`}
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -411,6 +416,8 @@
                                                         )
                                                             ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-lg shadow-brand-100 dark:shadow-brand-900 scale-105'
                                                             : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+                                                        aria-label={`事前通知 ${i + 1} の実行曜日 ${daysLabels[idx]}`}
+                                                        aria-pressed={rule.conditions.days_of_week.includes(day)}
                                                     >
                                                         {daysLabels[idx]}
                                                     </button>
@@ -474,6 +481,7 @@
                                 <button
                                     on:click={() => removePeriodicRule(i)}
                                     class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                    aria-label={`定期通知 ${i + 1} を削除`}
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -483,7 +491,7 @@
                                 class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8"
                             >
                                 <div class="space-y-6">
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label
                                                 for="per-time-{i}"
@@ -535,6 +543,8 @@
                                                     )
                                                         ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-lg shadow-brand-100 dark:shadow-brand-900 scale-105'
                                                         : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+                                                    aria-label={`定期通知 ${i + 1} の実行曜日 ${daysLabels[idx]}`}
+                                                    aria-pressed={rule.days_of_week.includes(day)}
                                                 >
                                                     {daysLabels[idx]}
                                                 </button>

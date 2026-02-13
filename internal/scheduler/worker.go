@@ -664,9 +664,6 @@ func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, e
 }
 
 func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string, cfg config.Config, scheduled bool) error {
-	if config.IsMuted(cfg, time.Now()) {
-		return nil
-	}
 	if scheduled && config.IsSnoozed(cfg, time.Now()) {
 		return nil
 	}

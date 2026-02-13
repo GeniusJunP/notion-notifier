@@ -80,6 +80,7 @@
             <button
                 on:click={loadHistory}
                 class="p-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                aria-label="履歴を更新"
             >
                 <RefreshCcw size={20} class={isLoading ? "animate-spin" : ""} />
             </button>
@@ -105,7 +106,7 @@
                 <Filter size={14} class="text-gray-400 dark:text-gray-500" />
                 <select
                     bind:value={filterType}
-                    class="text-xs font-bold bg-transparent border-none focus:ring-0 cursor-pointer text-gray-900 dark:text-gray-100"
+                    class="text-xs font-bold bg-transparent border-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 focus:outline-none rounded-md cursor-pointer text-gray-900 dark:text-gray-100"
                 >
                     <option value="all">全ての履歴</option>
                     <option value="advance">事前通知</option>
@@ -115,7 +116,7 @@
             </div>
 
             <div class="text-xs text-gray-400 dark:text-gray-500 ml-auto">
-                Showing {filteredItems.length} items
+                {filteredItems.length} 件を表示中
             </div>
         </div>
 

@@ -142,7 +142,7 @@
                 <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.today_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Found in Notion</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notion 内予定数</p>
             </div>
         </div>
 
@@ -186,7 +186,7 @@
                 <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.last_sync_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Synchronized Items</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">同期済み件数</p>
             </div>
         </div>
 
@@ -210,10 +210,10 @@
             </div>
             <div>
                 <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {dashboard?.last_sync_error ? "Error" : "Healthy"}
+                    {dashboard?.last_sync_error ? "エラー" : "正常"}
                 </h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                    {dashboard?.last_sync_error || "No issues detected"}
+                    {dashboard?.last_sync_error || "問題は検出されていません"}
                 </p>
             </div>
         </div>
@@ -283,7 +283,7 @@
         </div>
 
         <div class="p-6 space-y-5">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label
                         for="manual-from-date"
@@ -434,7 +434,7 @@
                                               ? 'bg-amber-100 text-amber-700'
                                               : 'bg-gray-100 text-gray-600'}"
                                     >
-                                        Calender: {event.cache_status}
+                                        Calendar: {event.cache_status}
                                     </span>
                                 </div>
                             </div>
@@ -475,6 +475,7 @@
                             <a
                                 href={event.url}
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 class="text-xs text-brand-600 font-bold flex items-center gap-1 hover:underline"
                             >
                                 Notion で開く
