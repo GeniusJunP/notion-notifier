@@ -19,7 +19,6 @@
         Check,
         RotateCcw,
         BellOff,
-        Bell,
         X,
     } from "lucide-svelte";
 
@@ -147,12 +146,6 @@
         configStore.set(config);
     }
 
-    function clearMute() {
-        if (!config) return;
-        config.mute_until = "";
-        configStore.set(config);
-    }
-
     const daysLabels = ["月", "火", "水", "木", "金", "土", "日"];
     const dayValues = [1, 2, 3, 4, 5, 6, 7];
 
@@ -182,8 +175,8 @@
     </div>
 
     {#if config}
-        <!-- Snooze/Mute Controls -->
-        <div class="flex flex-col sm:flex-row gap-4">
+        <!-- Snooze Control -->
+        <div class="flex flex-col gap-4">
             <div
                 class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between gap-3"
             >
@@ -213,41 +206,6 @@
                             on:click={clearSnooze}
                             class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
                             aria-label="スヌーズ設定をクリア"
-                        >
-                            <X size={14} />
-                        </button>
-                    {/if}
-                </div>
-            </div>
-            <div
-                class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between gap-3"
-            >
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-9 h-9 bg-red-50 dark:bg-red-900 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400"
-                    >
-                        <Bell size={18} />
-                    </div>
-                    <div>
-                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100"
-                            >ミュート</span
-                        >
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
-                            指定日時まで全通知を無効化
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input
-                        type="datetime-local"
-                        bind:value={config.mute_until}
-                        class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
-                    />
-                    {#if config.mute_until}
-                        <button
-                            on:click={clearMute}
-                            class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
-                            aria-label="ミュート設定をクリア"
                         >
                             <X size={14} />
                         </button>

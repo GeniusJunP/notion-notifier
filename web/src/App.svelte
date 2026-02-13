@@ -27,8 +27,6 @@
     RefreshCcw,
     Database,
     BellOff,
-    VolumeX,
-    Loader2,
   } from "lucide-svelte";
 
   // Routes
@@ -105,6 +103,31 @@
     } finally {
       isSyncing = false;
     }
+  }
+
+  async function handleToggleSnooze() {
+    configStore.update(cfg => {
+      if (!cfg) return cfg;
+      const isSnoozed = dashboardData?.snooze_active;
+      
+      const updatedCfg = { ...cfg };
+      if (isSnoozed) {
+        updatedCfg.snooze_until = "";
+      } else {
+        const snoozeDate = new Date(Date.now() + 60 * 60 * 1000);
+        updatedCfg.snooze_until = snoozeDate.toISOString();
+      }
+      
+      api.updateConfig(updatedCfg).then(saved => {
+        configStore.set(saved);
+        addToast(isSnoozed ? "スヌーズを解除しました" : "1時間スヌーズします", "success");
+        checkHealth();
+      }).catch(() => {
+        addToast("設定の更新に失敗しました", "error");
+      });
+      
+      return updatedCfg;
+    });
   }
 
   function toggleDarkMode() {
@@ -251,16 +274,36 @@
         </button>
       {/each}
 
-      <div class="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700">
+      <div class="px-4 py-4 mt-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
+        <h3 class="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-2">Quick Actions</h3>
+        
         <button
           on:click={handleSync}
           disabled={isSyncing}
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-brand-900/10 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-50 disabled:cursor-not-wait group"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-brand-900/10 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-50 disabled:cursor-not-wait group"
         >
           <div class={isSyncing ? "animate-spin" : "transition-transform duration-200 group-hover:rotate-180"}>
-            <RefreshCcw size={20} />
+            <RefreshCcw size={18} />
           </div>
-          <span class="font-medium">{isSyncing ? "同期中..." : "今すぐ同期"}</span>
+          <span class="text-sm font-medium">{isSyncing ? "同期中..." : "今すぐ同期"}</span>
+        </button>
+
+        <button
+          on:click={handleToggleSnooze}
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 {dashboardData?.snooze_active 
+            ? 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-300' 
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+        >
+          <div class="transition-transform duration-200 group-hover:scale-110">
+            {#if dashboardData?.snooze_active}
+              <BellOff size={18} />
+            {:else}
+              <Bell size={18} />
+            {/if}
+          </div>
+          <span class="text-sm font-medium">
+            {dashboardData?.snooze_active ? "スヌーズ解除" : "1時間スヌーズ"}
+          </span>
         </button>
       </div>
     </nav>
@@ -300,7 +343,9 @@
           aria-label="現在日時"
         >
           <div class="flex items-center gap-1.5">
-            <span class="text-gray-700 dark:text-gray-200 font-semibold">{currentDate}({currentWeekday})
+            <span class="text-gray-700 dark:text-gray-200 font-semibold">
+              {currentDate}({currentWeekday})
+            </span>
             <span class="text-gray-700 dark:text-gray-200 font-semibold">{currentTime}</span>
           </div>
         </div>
@@ -316,18 +361,12 @@
               </span>
             </div>
             
-            {#if dashboardData.snooze_active || dashboardData.mute_active}
+            {#if dashboardData.snooze_active}
               <div class="flex items-center gap-2">
                 {#if dashboardData.snooze_active}
                   <div class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400" title="スヌーズ中">
                     <BellOff size={14} />
                     <span>SNOOZE</span>
-                  </div>
-                {/if}
-                {#if dashboardData.mute_active}
-                  <div class="flex items-center gap-1 text-xs font-medium text-gray-400 dark:text-gray-500" title="ミュート中">
-                    <VolumeX size={14} />
-                    <span>MUTE</span>
                   </div>
                 {/if}
               </div>

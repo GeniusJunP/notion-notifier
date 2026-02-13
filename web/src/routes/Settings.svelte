@@ -446,7 +446,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label
                                     for="settings-snooze"
@@ -457,19 +457,6 @@
                                     id="settings-snooze"
                                     type="datetime-local"
                                     bind:value={config.snooze_until}
-                                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    for="settings-mute"
-                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2"
-                                    >ミュート (Mute)</label
-                                >
-                                <input
-                                    id="settings-mute"
-                                    type="datetime-local"
-                                    bind:value={config.mute_until}
                                     class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
                                 />
                             </div>
