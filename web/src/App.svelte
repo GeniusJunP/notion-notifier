@@ -28,7 +28,6 @@
     RefreshCcw,
     Database,
     BellOff,
-    VolumeX,
     Loader2,
   } from "lucide-svelte";
 
@@ -127,6 +126,43 @@
         checkHealth();
       }).catch(() => {
         addToast("設定の更新に失敗しました", "error");
+      });
+      
+      return updatedCfg;
+    });
+  }
+
+  function handleSnoozeChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = target.value;
+    
+    configStore.update(cfg => {
+      if (!cfg) return cfg;
+      const updatedCfg = { ...cfg, snooze_until: value };
+      
+      api.updateConfig(updatedCfg).then(saved => {
+        configStore.set(saved);
+        addToast("スヌーズ設定を更新しました", "success");
+        checkHealth();
+      }).catch(() => {
+        addToast("スヌーズ設定の更新に失敗しました", "error");
+      });
+      
+      return updatedCfg;
+    });
+  }
+
+  function clearSnooze() {
+    configStore.update(cfg => {
+      if (!cfg) return cfg;
+      const updatedCfg = { ...cfg, snooze_until: "" };
+      
+      api.updateConfig(updatedCfg).then(saved => {
+        configStore.set(saved);
+        addToast("スヌーズを解除しました", "success");
+        checkHealth();
+      }).catch(() => {
+        addToast("スヌーズ解除に失敗しました", "error");
       });
       
       return updatedCfg;
@@ -314,28 +350,33 @@
             {/if}
           </button>
 
-          <button
-            on:click={handleToggleSnooze}
-            class="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 {dashboardData?.snooze_active 
-              ? 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-300' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
-          >
-            <div class="flex items-center gap-3">
-              {#if dashboardData?.snooze_active}
-                <BellOff size={16} />
-              {:else}
-                <Bell size={16} />
+          <div class="px-3 py-2 space-y-2">
+            <div class="flex items-center justify-between text-gray-600 dark:text-gray-400">
+              <div class="flex items-center gap-3">
+                <BellOff size={16} class={dashboardData?.snooze_active ? "text-amber-500" : ""} />
+                <span class="text-sm font-medium">Snooze</span>
+              </div>
+              {#if $configStore?.snooze_until}
+                <button
+                  on:click={clearSnooze}
+                  class="text-gray-400 hover:text-red-500 transition-colors"
+                  aria-label="スヌーズ解除"
+                >
+                  <X size={14} />
+                </button>
               {/if}
-              <span class="text-sm font-medium">Snooze (1h)</span>
             </div>
-            {#if dashboardData?.snooze_active}
-              <span class="text-[10px] font-bold">ON</span>
-            {/if}
-          </button>
+            <input
+              type="datetime-local"
+              value={$configStore?.snooze_until ? new Date($configStore.snooze_until).toISOString().slice(0, 16) : ""}
+              on:change={handleSnoozeChange}
+              class="w-full px-2 py-1 text-[10px] bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all text-gray-700 dark:text-gray-200"
+            />
+          </div>
         </div>
 
         {#if dashboardData?.snooze_active}
-          <div class="mx-3 px-3 py-2 bg-gray-100 dark:bg-gray-700/50 rounded-lg flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          <div class="mx-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <BellOff size={14} />
             <span class="text-[10px] font-bold uppercase tracking-wider">SNOOZE ACTIVE</span>
           </div>
@@ -388,7 +429,43 @@
           </div>
         </div>
 
-        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"></div>
+        
+        {#if dashboardData}
+          <div class="hidden xl:flex items-center gap-4">
+            <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <Database size={14} class={dashboardData.last_sync_error ? "text-red-500" : ""} />
+              <span class="tabular-nums">
+                {dashboardData.last_sync ? new Date(dashboardData.last_sync).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+              </span>
+            </div>
+            
+            {#if dashboardData.snooze_active}
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400" title="スヌーズ中">
+                  <BellOff size={14} />
+                  <span>SNOOZE</span>
+                </div>
+              </div>
+            {/if}
+          </div>
+          <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden xl:block"></div>
+        {/if}
+
+        <div
+          class="hidden sm:flex items-center gap-2 px-2 py-1"
+        >
+          <div
+            class="w-2 h-2 rounded-full {isServiceActive
+              ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+              : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
+          ></div>
+          <span class="text-[10px] font-bold tracking-wider {isServiceActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+            {isServiceActive ? "SYSTEM ACTIVE" : "SYSTEM OFFLINE"}
+          </span>
+        </div>
+
+        <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
 
         <button
           on:click={toggleDarkMode}

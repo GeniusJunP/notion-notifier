@@ -175,44 +175,6 @@
     </div>
 
     {#if config}
-        <!-- Snooze Control -->
-        <div class="flex flex-col gap-4">
-            <div
-                class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between gap-3"
-            >
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-9 h-9 bg-amber-50 dark:bg-amber-900 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400"
-                    >
-                        <BellOff size={18} />
-                    </div>
-                    <div>
-                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100"
-                            >スヌーズ</span
-                        >
-                        <p class="text-[10px] text-gray-400 dark:text-gray-500">
-                            指定日時まで通知を一時停止
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input
-                        type="datetime-local"
-                        bind:value={config.snooze_until}
-                        class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
-                    />
-                    {#if config.snooze_until}
-                        <button
-                            on:click={clearSnooze}
-                            class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
-                            aria-label="スヌーズ設定をクリア"
-                        >
-                            <X size={14} />
-                        </button>
-                    {/if}
-                </div>
-            </div>
-        </div>
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
                 <button
