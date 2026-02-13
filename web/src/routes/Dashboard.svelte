@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { api, type DashboardData, type UpcomingEvent } from "../lib/api";
     import { addToast } from "../lib/store";
+    import PreviewModal from "../components/PreviewModal.svelte";
     import {
         RefreshCw,
         CalendarDays,
@@ -11,7 +12,6 @@
         CheckCircle,
         Send,
         Play,
-        MessageSquare,
         RotateCcw,
     } from "lucide-svelte";
 
@@ -26,9 +26,27 @@
     let manualToDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0];
-    let manualPreview = "";
     let isPreviewLoading = false;
     let isSending = false;
+    let previewOpen = false;
+    let previewTitle = "";
+    let previewContent = "";
+
+    function openPreview(title: string, content: string) {
+        previewTitle = title;
+        previewContent = content;
+        previewOpen = true;
+    }
+
+    const calendarStateMeta: Record<
+        UpcomingEvent["calendar_state"],
+        { className: string; label: string }
+    > = {
+        disabled: { className: "bg-gray-100 text-gray-600", label: "連携オフ" },
+        needs_sync: { className: "bg-amber-100 text-amber-700", label: "要同期" },
+        synced: { className: "bg-green-100 text-green-700", label: "反映済み" },
+        error: { className: "bg-red-100 text-red-700", label: "連携エラー" },
+    };
 
     async function loadData() {
         isLoading = true;
@@ -82,7 +100,7 @@
                 from_date: manualFromDate,
                 to_date: manualToDate,
             });
-            manualPreview = res.message;
+            openPreview("手動通知プレビュー", res.message);
         } catch (e: any) {
             addToast(`プレビュー失敗: ${e.error || "不明なエラー"}`, "error");
         } finally {
@@ -104,7 +122,7 @@
                 to_date: manualToDate,
             });
             addToast("通知を送信しました", "success");
-            manualPreview = res.message;
+            openPreview("送信メッセージ", res.message);
         } catch (e: any) {
             addToast(`送信失敗: ${e.error || "不明なエラー"}`, "error");
         } finally {
@@ -121,6 +139,7 @@
             addToast("デフォルトテンプレートの取得に失敗しました", "error");
         }
     }
+
 </script>
 
 <div class="space-y-8">
@@ -357,18 +376,6 @@
                 </button>
             </div>
 
-            {#if manualPreview}
-                <div
-                    class="p-4 bg-gray-900 dark:bg-gray-800 rounded-2xl text-white dark:text-gray-100 font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
-                >
-                    <div
-                        class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
-                    >
-                        <MessageSquare size={10} /> Preview
-                    </div>
-                    {manualPreview}
-                </div>
-            {/if}
         </div>
     </div>
 
@@ -427,14 +434,9 @@
                                 </h3>
                                 <div class="flex flex-col items-end gap-1">
                                     <span
-                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {event.cache_status ===
-                                        'synced'
-                                            ? 'bg-green-100 text-green-700'
-                                            : event.cache_status === 'pending'
-                                              ? 'bg-amber-100 text-amber-700'
-                                              : 'bg-gray-100 text-gray-600'}"
+                                        class={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${calendarStateMeta[event.calendar_state].className}`}
                                     >
-                                        Calendar: {event.cache_status}
+                                        {calendarStateMeta[event.calendar_state].label}
                                     </span>
                                 </div>
                             </div>
@@ -488,3 +490,10 @@
         {/if}
     </div>
 </div>
+
+<PreviewModal
+    open={previewOpen}
+    title={previewTitle}
+    content={previewContent}
+    on:close={() => (previewOpen = false)}
+/>

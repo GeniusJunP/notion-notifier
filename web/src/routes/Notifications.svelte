@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import {
         api,
         type Config,
@@ -7,16 +6,13 @@
         type PeriodicNotification,
     } from "../lib/api";
     import { configStore, addToast } from "../lib/store";
+    import PreviewModal from "../components/PreviewModal.svelte";
     import {
         Plus,
         Trash2,
         Save,
         Play,
-        MessageSquare,
         Clock,
-        Calendar,
-        Settings2,
-        Check,
         RotateCcw,
     } from "lucide-svelte";
 
@@ -25,8 +21,15 @@
 
     let activeTab: "advance" | "periodic" = "advance";
     let isSaving = false;
-    let previewResult: string = "";
-    let isPreviewLoading = false;
+    let previewOpen = false;
+    let previewTitle = "";
+    let previewContent = "";
+
+    function openPreview(title: string, content: string) {
+        previewTitle = title;
+        previewContent = content;
+        previewOpen = true;
+    }
 
     async function saveConfig() {
         if (!config) return;
@@ -51,10 +54,8 @@
             enabled: true,
             minutes_before: 30,
             message: "",
-            location: "",
-            url: "",
             conditions: {
-                days_of_week: [1, 2, 3, 4, 5],
+                days_of_week: [],
                 property_filters: [],
             },
         };
@@ -69,7 +70,7 @@
         if (!config) return;
         const newRule: PeriodicNotification = {
             enabled: true,
-            days_of_week: [1],
+            days_of_week: [],
             time: "09:00",
             days_ahead: 7,
             message: "",
@@ -97,18 +98,19 @@
         configStore.set(config);
     }
 
-    async function previewTemplate(template: string, minutes_before?: number) {
-        isPreviewLoading = true;
+    async function previewTemplate(
+        template: string,
+        title: string,
+        minutes_before?: number,
+    ) {
         try {
             const res = await api.previewNotification({
                 template,
                 minutes_before,
             });
-            previewResult = res.message;
+            openPreview(title, res.message);
         } catch (e) {
             addToast("プレビューに失敗しました", "error");
-        } finally {
-            isPreviewLoading = false;
         }
     }
 
@@ -285,6 +287,7 @@
                                                 on:click={() =>
                                                     previewTemplate(
                                                         rule.message,
+                                                        "事前通知プレビュー",
                                                         rule.minutes_before,
                                                     )}
                                                 class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:underline"
@@ -337,18 +340,6 @@
                                             </div>
                                         </div>
 
-                                    {#if previewResult && activeTab === "advance"}
-                                        <div
-                                            class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative group animate-in zoom-in-95 duration-200"
-                                        >
-                                            <div
-                                                class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
-                                            >
-                                                <MessageSquare size={10} /> Preview
-                                            </div>
-                                            {previewResult}
-                                        </div>
-                                    {/if}
                                 </div>
                             </div>
                         </div>
@@ -485,6 +476,7 @@
                                                 on:click={() =>
                                                     previewTemplate(
                                                         rule.message,
+                                                        "定期通知プレビュー",
                                                     )}
                                                 class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:underline"
                                             >
@@ -500,13 +492,6 @@
                                         </div>
                                     </div>
 
-                                    {#if previewResult && activeTab === "periodic"}
-                                        <div
-                                            class="p-4 bg-gray-900 rounded-2xl text-white font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
-                                        >
-                                            {previewResult}
-                                        </div>
-                                    {/if}
                                 </div>
                             </div>
                         </div>
@@ -516,3 +501,10 @@
         </div>
     {/if}
 </div>
+
+<PreviewModal
+    open={previewOpen}
+    title={previewTitle}
+    content={previewContent}
+    on:close={() => (previewOpen = false)}
+/>
