@@ -29,6 +29,16 @@ type Client struct {
 type queryRequest struct {
 	StartCursor string `json:"start_cursor,omitempty"`
 	PageSize    int    `json:"page_size,omitempty"`
+	Filter      any    `json:"filter,omitempty"`
+}
+
+type dateOnOrAfterFilter struct {
+	Property string         `json:"property"`
+	Date     dateFilterExpr `json:"date"`
+}
+
+type dateFilterExpr struct {
+	OnOrAfter string `json:"on_or_after,omitempty"`
 }
 
 type queryResponse struct {
@@ -57,6 +67,10 @@ func New(httpClient *http.Client, apiKey string, cfg retry.Config) *Client {
 }
 
 func (c *Client) QueryDatabase(ctx context.Context, databaseID string) ([]page, error) {
+	return c.QueryDatabaseOnOrAfter(ctx, databaseID, "", "")
+}
+
+func (c *Client) QueryDatabaseOnOrAfter(ctx context.Context, databaseID, dateProperty, onOrAfter string) ([]page, error) {
 	if c.apiKey == "" {
 		return nil, errors.New("notion api key is empty")
 	}
@@ -65,8 +79,17 @@ func (c *Client) QueryDatabase(ctx context.Context, databaseID string) ([]page, 
 	}
 	var out []page
 	cursor := ""
+	var filter any
+	if strings.TrimSpace(dateProperty) != "" && strings.TrimSpace(onOrAfter) != "" {
+		filter = dateOnOrAfterFilter{
+			Property: dateProperty,
+			Date: dateFilterExpr{
+				OnOrAfter: onOrAfter,
+			},
+		}
+	}
 	for {
-		reqBody := queryRequest{StartCursor: cursor, PageSize: 100}
+		reqBody := queryRequest{StartCursor: cursor, PageSize: 100, Filter: filter}
 		data, err := json.Marshal(reqBody)
 		if err != nil {
 			return nil, err

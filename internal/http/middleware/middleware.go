@@ -19,12 +19,12 @@ func Logging(next http.Handler) http.Handler {
 }
 
 // BasicAuth returns middleware that enforces HTTP Basic Authentication
-// when enabled in the config. Credentials are sourced from env.yaml.
+// when enabled in env config. Credentials are sourced from env.yaml.
 func BasicAuth(cfg *config.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c, env := cfg.Get()
-			if !c.Security.BasicAuth.Enabled {
+			_, env := cfg.Get()
+			if !env.Security.BasicAuth.Enabled {
 				next.ServeHTTP(w, r)
 				return
 			}

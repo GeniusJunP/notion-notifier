@@ -59,9 +59,7 @@
   "calendar_sync": { ... },
   "property_mapping": { ... },
   "content_rules": { ... },
-  "snooze_until": "",
-  "mute_until": "",
-  "security": { "basic_auth": { "enabled": false } }
+  "snooze_until": ""
 }
 ```
 
@@ -94,15 +92,13 @@
   "last_sync_count": 25,
   "last_sync_error": "",
   "snooze_active": false,
-  "snooze_until": "",
-  "mute_active": false,
-  "mute_until": ""
+  "snooze_until": ""
 }
 ```
 
 ### GET /api/events/upcoming
 
-直近14日間の予定を同期ステータス付きで返す。
+直近14日間の予定を返す。状態は `calendar_state` のみを返す。
 
 **Response 200:**
 ```json
@@ -117,9 +113,7 @@
     "is_all_day": false,
     "location": "会議室A",
     "url": "https://notion.so/abc123",
-    "sync_status": "synced",  // cache status (backward compatibility)
-    "cache_status": "synced", // "synced" | "pending" | "unsynced"
-    "calendar_status": "present" // "present" | "missing" | "disabled" | "unavailable"
+    "calendar_state": "synced" // "disabled" | "needs_sync" | "synced" | "error"
   }
 ]
 ```
@@ -192,7 +186,7 @@ Notion同期を手動実行。
 **Request Body:**
 ```json
 {
-  "template": "⏰ {{.MinutesBefore}}分後に「{{.Name}}」",
+  "template": "## 予定リマインド！⏰\n@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！\n\n### 詳細\n- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}",
   "from_date": "2026-02-10",
   "to_date": "2026-02-17",
   "minutes_before": 30
@@ -202,8 +196,7 @@ Notion同期を手動実行。
 **Response 200:**
 ```json
 {
-  "message": "⏰ 30分後に「ミーティング」",
-  "payload": "{\"content\":\"...\"}"
+  "message": "## 予定リマインド！⏰\n@everyone **ミーティング** が **30分後** に始まります！\n\n### 詳細\n- **日時:** 2026-02-11 `10:00`"
 }
 ```
 
@@ -214,7 +207,7 @@ Notion同期を手動実行。
 **Request Body:**
 ```json
 {
-  "template": "今週の予定: {{range .Events}}...",
+  "template": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！\n{{range .Events}}\n### {{.Name}}\n- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}\n{{end}}\n{{else}}\n## 今週の予定！📣\n@everyone 今週の予定はありません！\n{{end}}",
   "from_date": "2026-02-10",
   "to_date": "2026-02-17"
 }
@@ -223,7 +216,7 @@ Notion同期を手動実行。
 **Response 200:**
 ```json
 {
-  "message": "今週の予定: ..."
+  "message": "## 今週の予定！📣\n@everyone **今週は 2 件** あります！\n\n### 企画会議\n- **日時:** 2026-02-11 `10:00`"
 }
 ```
 
@@ -234,7 +227,7 @@ Notion同期を手動実行。
 **Response 200:**
 ```json
 {
-  "advance": "📢 まもなく「{{.Name}}」が始まります...",
-  "periodic": "📋 今後の予定（{{len .Events}}件）..."
+  "advance": "## 予定リマインド！⏰\n@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！...",
+  "periodic": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！..."
 }
 ```

@@ -58,7 +58,13 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `SCHEDULE_WEBHOOK_URL`         | `webhook.schedule_url`         |
 | `NOTIFICATION_WEBHOOK_URL`     | `webhook.notification_url`     |
 | `GOOGLE_CALENDAR_ID`           | `google.calendar_id`           |
-| `GOOGLE_SERVICE_ACCOUNT_KEY`   | `google.service_account_key`   |
+| `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
+| `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
+| `GOOGLE_OAUTH_REFRESH_TOKEN`   | `google.oauth_refresh_token`   |
+| `APP_PORT`                     | `server.port`                  |
+| `APP_TLS_CERT_FILE`            | `server.tls.cert_file`         |
+| `APP_TLS_KEY_FILE`             | `server.tls.key_file`          |
+| `BASIC_AUTH_ENABLED`           | `security.basic_auth.enabled`  |
 | `BASIC_AUTH_USERNAME`          | `security.basic_auth.username` |
 | `BASIC_AUTH_PASSWORD`          | `security.basic_auth.password` |
 
@@ -71,7 +77,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | **スケジュール設定**（間隔など）         | ○        | ○         |
 | **プロパティマッピング**                 | ○        | ○         |
 | **コンテンツ抽出ルール**                 | ○        | ○         |
-| **スヌーズ/ミュート**                    | ○        | ○         |
+| **スヌーズ**                             | ○        | ○         |
 
 ## 機能一覧
 
@@ -121,9 +127,10 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | 機能     | 説明                                                           |
 | -------- | -------------------------------------------------------------- |
 | スヌーズ | 今後の予定通知のみ停止（1週間/2週間/1ヶ月/3ヶ月/カスタム日付） |
-| ミュート | 全通知を停止（休暇用）                                         |
 
 ### 3. Google Calendar連携
+
+Google Calendar APIはOAuth 2.0（ユーザー認可）で接続する。
 
 | 機能         | 説明                   |
 | ------------ | ---------------------- |
@@ -238,13 +245,6 @@ content_rules:
 
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効
-mute_until: "" # ISO8601日時、空白=無効
-
-# セキュリティ（オプション）
-security:
-  basic_auth:
-    enabled: false
-    # 認証情報は env.yaml または環境変数で指定
 ```
 
 ### env.yaml
@@ -261,7 +261,19 @@ webhook:
 
 google:
   calendar_id: ""
-  service_account_key: ""
+  oauth_client_id: ""
+  oauth_client_secret: ""
+  oauth_refresh_token: ""
+server:
+  port: 8080
+  tls:
+    cert_file: ""
+    key_file: ""
+security:
+  basic_auth:
+    enabled: false
+    username: ""
+    password: ""
 ```
 
 ## テンプレート
@@ -281,6 +293,7 @@ google:
 | `{{.Name}}`          | 予定名（タイトル）               |
 | `{{.Date}}`          | 日付（YYYY-MM-DD）               |
 | `{{.Time}}`          | 開始時刻（HH:mm）               |
+| `{{.EndDate}}`       | 終了日（YYYY-MM-DD、空の場合あり） |
 | `{{.EndTime}}`       | 終了時刻（HH:mm、空の場合あり） |
 | `{{.IsAllDay}}`      | 終日イベントかどうか             |
 | `{{.Location}}`      | 場所                             |
@@ -316,7 +329,7 @@ Webhookの `payload_template` では以下の変数を使用できる：
 @everyone 次の予定一覧！
 
 {{range .Events}}
-- **{{.Name}}** ({{.Date}} {{.Time}}){{if .Location}} 📍{{.Location}}{{end}}
+- **{{.Name}}** ({{.Date}} {{.Time}} - {{.EndDate}} {{.EndTime}}){{if .Location}} 📍{{.Location}}{{end}}
 {{end}}
 ```
 
@@ -344,7 +357,7 @@ var webAssets embed.FS
 
 | タブ           | 機能                                              |
 | -------------- | ------------------------------------------------- |
-| ダッシュボード | 予定一覧、同期ボタン、スヌーズ/ミュート、手動通知 |
+| ダッシュボード | 予定一覧、同期ボタン、スヌーズ、手動通知 |
 | 通知設定       | 事前通知/定期通知の設定                          |
 | カレンダー連携 | Google Calendar連携設定                           |
 | プロパティ     | Notionカラムとテンプレートのマッピング            |

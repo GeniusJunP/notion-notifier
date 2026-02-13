@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,8 +24,6 @@ type Config struct {
 	PropertyMap   PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
 	ContentRules  ContentRules       `yaml:"content_rules" json:"content_rules"`
 	SnoozeUntil   string             `yaml:"snooze_until" json:"snooze_until"`
-	MuteUntil     string             `yaml:"mute_until" json:"mute_until"`
-	Security      SecurityConfig     `yaml:"security" json:"security"`
 }
 
 type SyncConfig struct {
@@ -51,13 +50,10 @@ type AdvanceNotification struct {
 	Enabled       bool              `yaml:"enabled" json:"enabled"`
 	MinutesBefore int               `yaml:"minutes_before" json:"minutes_before"`
 	Message       string            `yaml:"message" json:"message"`
-	Location      string            `yaml:"location" json:"location"`
-	URL           string            `yaml:"url" json:"url"`
 	Conditions    AdvanceConditions `yaml:"conditions" json:"conditions"`
 }
 
 type AdvanceConditions struct {
-	Enabled         bool             `yaml:"enabled" json:"enabled"`
 	DaysOfWeek      []int            `yaml:"days_of_week" json:"days_of_week"`
 	PropertyFilters []PropertyFilter `yaml:"property_filters" json:"property_filters"`
 }
@@ -104,18 +100,11 @@ type ContentRules struct {
 	DelimiterText     string `yaml:"delimiter_text" json:"delimiter_text"`
 }
 
-type SecurityConfig struct {
-	BasicAuth BasicAuthConfig `yaml:"basic_auth" json:"basic_auth"`
-}
-
-type BasicAuthConfig struct {
-	Enabled bool `yaml:"enabled" json:"enabled"`
-}
-
 type Env struct {
 	Notion   NotionEnv   `yaml:"notion" json:"notion"`
 	Webhook  WebhookEnv  `yaml:"webhook" json:"webhook"`
 	Google   GoogleEnv   `yaml:"google" json:"google"`
+	Server   ServerEnv   `yaml:"server" json:"server"`
 	Security SecurityEnv `yaml:"security" json:"security"`
 }
 
@@ -131,7 +120,19 @@ type WebhookEnv struct {
 
 type GoogleEnv struct {
 	CalendarID        string `yaml:"calendar_id" json:"calendar_id"`
-	ServiceAccountKey string `yaml:"service_account_key" json:"service_account_key"`
+	OAuthClientID     string `yaml:"oauth_client_id" json:"oauth_client_id"`
+	OAuthClientSecret string `yaml:"oauth_client_secret" json:"oauth_client_secret"`
+	OAuthRefreshToken string `yaml:"oauth_refresh_token" json:"oauth_refresh_token"`
+}
+
+type ServerEnv struct {
+	Port int       `yaml:"port" json:"port"`
+	TLS  TLSServer `yaml:"tls" json:"tls"`
+}
+
+type TLSServer struct {
+	CertFile string `yaml:"cert_file" json:"cert_file"`
+	KeyFile  string `yaml:"key_file" json:"key_file"`
 }
 
 type SecurityEnv struct {
@@ -139,6 +140,7 @@ type SecurityEnv struct {
 }
 
 type BasicAuthEnv struct {
+	Enabled  bool   `yaml:"enabled" json:"enabled"`
 	Username string `yaml:"username" json:"username"`
 	Password string `yaml:"password" json:"password"`
 }
@@ -180,7 +182,13 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Webhook.ScheduleURL = pickEnv("SCHEDULE_WEBHOOK_URL", env.Webhook.ScheduleURL)
 	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
-	env.Google.ServiceAccountKey = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY", env.Google.ServiceAccountKey)
+	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
+	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
+	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
+	env.Server.Port = pickEnvInt("APP_PORT", env.Server.Port)
+	env.Server.TLS.CertFile = pickEnv("APP_TLS_CERT_FILE", env.Server.TLS.CertFile)
+	env.Server.TLS.KeyFile = pickEnv("APP_TLS_KEY_FILE", env.Server.TLS.KeyFile)
+	env.Security.BasicAuth.Enabled = pickEnvBool("BASIC_AUTH_ENABLED", env.Security.BasicAuth.Enabled)
 	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
 	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
 	return env
@@ -191,6 +199,30 @@ func pickEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func pickEnvBool(key string, fallback bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func pickEnvInt(key string, fallback int) int {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func ValidateConfig(cfg Config) error {
@@ -239,11 +271,6 @@ func ValidateConfig(cfg Config) error {
 			return fmt.Errorf("snooze_until must be RFC3339: %w", err)
 		}
 	}
-	if cfg.MuteUntil != "" {
-		if _, err := time.Parse(time.RFC3339, cfg.MuteUntil); err != nil {
-			return fmt.Errorf("mute_until must be RFC3339: %w", err)
-		}
-	}
 	return nil
 }
 
@@ -253,17 +280,6 @@ func validateHHMM(value string) error {
 	}
 	_, err := time.Parse("15:04", value)
 	return err
-}
-
-func IsMuted(cfg Config, now time.Time) bool {
-	if cfg.MuteUntil == "" {
-		return false
-	}
-	until, err := time.Parse(time.RFC3339, cfg.MuteUntil)
-	if err != nil {
-		return false
-	}
-	return now.Before(until)
 }
 
 func IsSnoozed(cfg Config, now time.Time) bool {
@@ -343,15 +359,29 @@ func SanitizeTemplate(input string) string {
 }
 
 // DefaultAdvanceMessage is the default message template for advance notifications.
-const DefaultAdvanceMessage = `📢 まもなく「{{.Name}}」が始まります（{{.MinutesBefore}}分前）
-📅 {{.Date}} {{.Time}}
-📍 {{.Location}}
-🔗 {{.URL}}`
+const DefaultAdvanceMessage = "## 予定リマインド！⏰\n" +
+	"@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！\n\n" +
+	"### 詳細\n" +
+	"- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}\n" +
+	"{{if .Location}}- **場所:** {{.Location}}{{end}}\n" +
+	"{{if .URL}}- **詳細:** {{.URL}}{{end}}\n" +
+	"{{with .Content}}- **メモ:** {{.}}{{end}}"
 
 // DefaultPeriodicMessage is the default message template for periodic notifications.
-const DefaultPeriodicMessage = `📋 今後の予定（{{len .Events}}件）
-{{range .Events}}• {{.Date}} {{.Time}} - {{.Name}} @ {{.Location}}
-{{end}}`
+const DefaultPeriodicMessage = "{{if .Events}}\n" +
+	"## 今週の予定！📣\n" +
+	"@everyone **今週は {{len .Events}} 件** あります！\n\n" +
+	"{{range .Events}}\n" +
+	"### {{.Name}}\n" +
+	"- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}\n" +
+	"{{if .Location}}- **場所:** {{.Location}}{{end}}\n" +
+	"{{if .URL}}- **詳細:** {{.URL}}{{end}}\n" +
+	"{{with .Content}}- **メモ:** {{.}}{{end}}\n\n" +
+	"{{end}}\n" +
+	"{{else}}\n" +
+	"## 今週の予定！📣\n" +
+	"@everyone 今週の予定はありません！\n" +
+	"{{end}}"
 
 // DefaultTemplates returns the default message templates keyed by type.
 func DefaultTemplates() map[string]string {

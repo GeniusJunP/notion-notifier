@@ -41,6 +41,7 @@ type AdvanceSchedule struct {
 type SyncRecord struct {
 	NotionPageID    string
 	CalendarEventID string
+	Attempted       bool
 	Synced          bool
 }
 
@@ -48,6 +49,7 @@ type TemplateEvent struct {
 	Name          string
 	Date          string
 	Time          string
+	EndDate       string
 	EndTime       string
 	IsAllDay      bool
 	Location      string

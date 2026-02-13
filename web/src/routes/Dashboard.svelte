@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { api, type DashboardData, type UpcomingEvent } from "../lib/api";
     import { addToast } from "../lib/store";
+    import PreviewModal from "../components/PreviewModal.svelte";
     import {
         RefreshCw,
         CalendarDays,
@@ -11,7 +12,6 @@
         CheckCircle,
         Send,
         Play,
-        MessageSquare,
         RotateCcw,
     } from "lucide-svelte";
 
@@ -26,9 +26,48 @@
     let manualToDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0];
-    let manualPreview = "";
     let isPreviewLoading = false;
     let isSending = false;
+    let previewOpen = false;
+    let previewTitle = "";
+    let previewContent = "";
+
+    function openPreview(title: string, content: string) {
+        previewTitle = title;
+        previewContent = content;
+        previewOpen = true;
+    }
+
+    const calendarStateMeta: Record<
+        UpcomingEvent["calendar_state"],
+        { className: string; label: string }
+    > = {
+        disabled: { className: "bg-gray-100 text-gray-600", label: "連携オフ" },
+        needs_sync: { className: "bg-amber-100 text-amber-700", label: "要同期" },
+        synced: { className: "bg-green-100 text-green-700", label: "反映済み" },
+        error: { className: "bg-red-100 text-red-700", label: "連携エラー" },
+    };
+
+    function formatEventDateTime(event: UpcomingEvent): string {
+        const startDate = event.start_date;
+        const endDate = event.end_date || event.start_date;
+        if (event.is_all_day) {
+            if (endDate && endDate !== startDate) {
+                return `${startDate} - ${endDate} (終日)`;
+            }
+            return `${startDate} (終日)`;
+        }
+        const start = event.start_time
+            ? `${startDate} ${event.start_time}`
+            : startDate;
+        if (!event.end_time) {
+            return start;
+        }
+        if (endDate && endDate !== startDate) {
+            return `${start} - ${endDate} ${event.end_time}`;
+        }
+        return `${start} - ${event.end_time}`;
+    }
 
     async function loadData() {
         isLoading = true;
@@ -82,7 +121,7 @@
                 from_date: manualFromDate,
                 to_date: manualToDate,
             });
-            manualPreview = res.message;
+            openPreview("手動通知プレビュー", res.message);
         } catch (e: any) {
             addToast(`プレビュー失敗: ${e.error || "不明なエラー"}`, "error");
         } finally {
@@ -104,7 +143,7 @@
                 to_date: manualToDate,
             });
             addToast("通知を送信しました", "success");
-            manualPreview = res.message;
+            openPreview("送信メッセージ", res.message);
         } catch (e: any) {
             addToast(`送信失敗: ${e.error || "不明なエラー"}`, "error");
         } finally {
@@ -121,6 +160,7 @@
             addToast("デフォルトテンプレートの取得に失敗しました", "error");
         }
     }
+
 </script>
 
 <div class="space-y-8">
@@ -142,7 +182,7 @@
                 <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.today_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Found in Notion</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notion 内予定数</p>
             </div>
         </div>
 
@@ -186,7 +226,7 @@
                 <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dashboard?.last_sync_count ?? 0}
                 </h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Synchronized Items</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">同期済み件数</p>
             </div>
         </div>
 
@@ -210,10 +250,10 @@
             </div>
             <div>
                 <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {dashboard?.last_sync_error ? "Error" : "Healthy"}
+                    {dashboard?.last_sync_error ? "エラー" : "正常"}
                 </h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                    {dashboard?.last_sync_error || "No issues detected"}
+                    {dashboard?.last_sync_error || "問題は検出されていません"}
                 </p>
             </div>
         </div>
@@ -283,7 +323,7 @@
         </div>
 
         <div class="p-6 space-y-5">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label
                         for="manual-from-date"
@@ -357,18 +397,6 @@
                 </button>
             </div>
 
-            {#if manualPreview}
-                <div
-                    class="p-4 bg-gray-900 dark:bg-gray-800 rounded-2xl text-white dark:text-gray-100 font-mono text-xs whitespace-pre-wrap relative animate-in zoom-in-95 duration-200"
-                >
-                    <div
-                        class="absolute top-2 right-2 flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
-                    >
-                        <MessageSquare size={10} /> Preview
-                    </div>
-                    {manualPreview}
-                </div>
-            {/if}
         </div>
     </div>
 
@@ -427,14 +455,9 @@
                                 </h3>
                                 <div class="flex flex-col items-end gap-1">
                                     <span
-                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {event.cache_status ===
-                                        'synced'
-                                            ? 'bg-green-100 text-green-700'
-                                            : event.cache_status === 'pending'
-                                              ? 'bg-amber-100 text-amber-700'
-                                              : 'bg-gray-100 text-gray-600'}"
+                                        class={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${calendarStateMeta[event.calendar_state].className}`}
                                     >
-                                        Calender: {event.cache_status}
+                                        {calendarStateMeta[event.calendar_state].label}
                                     </span>
                                 </div>
                             </div>
@@ -443,12 +466,7 @@
                                     class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                                 >
                                     <Clock size={14} class="text-gray-400 dark:text-gray-500" />
-                                    <span
-                                        >{event.start_date}
-                                        {event.is_all_day
-                                            ? "(終日)"
-                                            : event.start_time}</span
-                                    >
+                                    <span>{formatEventDateTime(event)}</span>
                                 </div>
                                 {#if event.location}
                                     <div
@@ -475,6 +493,7 @@
                             <a
                                 href={event.url}
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 class="text-xs text-brand-600 font-bold flex items-center gap-1 hover:underline"
                             >
                                 Notion で開く
@@ -487,3 +506,10 @@
         {/if}
     </div>
 </div>
+
+<PreviewModal
+    open={previewOpen}
+    title={previewTitle}
+    content={previewContent}
+    on:close={() => (previewOpen = false)}
+/>

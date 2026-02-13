@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,20 +41,19 @@ type Scheduler struct {
 	calendar *calendar.Client
 	renderer *tpl.Renderer
 
-	mu               sync.Mutex
-	advanceTimers    map[string]*time.Timer
-	periodicLastSent map[int]string
-	notionKey        string
-	calendarKey      string
-	calendarID       string
-	statusMu         sync.RWMutex
-	notionStatus     SyncStatus
-	periodicMu       sync.Mutex
-	opsMu            sync.Mutex
-	runtimeMu        sync.RWMutex
-	runtimeCtx       context.Context
-	runtimeCancel    context.CancelFunc
-	wg               sync.WaitGroup
+	mu                  sync.Mutex
+	advanceTimers       map[string]*time.Timer
+	periodicLastSent    map[int]string
+	notionKey           string
+	calendarFingerprint string
+	statusMu            sync.RWMutex
+	notionStatus        SyncStatus
+	periodicMu          sync.Mutex
+	opsMu               sync.Mutex
+	runtimeMu           sync.RWMutex
+	runtimeCtx          context.Context
+	runtimeCancel       context.CancelFunc
+	wg                  sync.WaitGroup
 }
 
 type SyncStatus struct {
@@ -153,7 +151,7 @@ func (s *Scheduler) periodicLoop() {
 				if now.Format("15:04") != rule.Time {
 					continue
 				}
-				if !slices.Contains(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
+				if !matchesDays(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
 					continue
 				}
 				key := now.Format("2006-01-02")
@@ -164,7 +162,7 @@ func (s *Scheduler) periodicLoop() {
 				if err != nil {
 					return
 				}
-				err = s.sendPeriodic(opCtx, now, i, rule)
+				err = s.sendPeriodic(opCtx, now, rule)
 				cancel()
 				if err != nil {
 					log.Printf("periodic notification failed: %v", err)
@@ -228,7 +226,8 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 		logging.Error("SYNC", "notion client not configured")
 		return 0, err
 	}
-	pages, err := s.notion.QueryDatabase(ctx, env.Notion.DatabaseID)
+	fromDate := notionOnOrAfterDate(time.Now(), loc)
+	pages, err := s.notion.QueryDatabaseOnOrAfter(ctx, env.Notion.DatabaseID, cfg.PropertyMap.Date, fromDate)
 	if err != nil {
 		s.setNotionStatus(0, err)
 		logging.Error("SYNC", "notion query failed: %v", err)
@@ -359,7 +358,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 	return nil
 }
 
-func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, idx int, rule config.PeriodicNotification) error {
+func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
 	cfg, _ := s.cfg.Get()
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
@@ -409,30 +408,18 @@ func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string,
 	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
 }
 
-func (s *Scheduler) PreviewManualPayload(ctx context.Context, template string, from, to time.Time) (string, string, error) {
+func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
 	cfg, _ := s.cfg.Get()
 	events, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
 	message, err := s.renderer.RenderList(template, templateEvents)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-	payloadCtx := models.WebhookPayloadContext{
-		Type:    notificationTypeManual,
-		Message: message,
-		Events:  templateEvents,
-	}
-	if len(templateEvents) > 0 {
-		payloadCtx.Event = templateEvents[0]
-	}
-	payload, err := s.renderer.RenderPayload(cfg.Webhook.Schedule.PayloadTemplate, payloadCtx)
-	if err != nil {
-		return message, "", err
-	}
-	return message, payload, nil
+	return message, nil
 }
 
 func (s *Scheduler) SyncCalendar(_ context.Context, from, to time.Time) (int, error) {
@@ -448,21 +435,34 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Info("CALENDAR", "calendar sync skipped (disabled)")
 		return 0, nil
 	}
-	if env.Google.CalendarID != "" && env.Google.ServiceAccountKey != "" {
-		s.mu.Lock()
-		if s.calendar == nil || s.calendarKey != env.Google.ServiceAccountKey || s.calendarID != env.Google.CalendarID {
-			client, err := calendar.NewClient(ctx, env.Google.CalendarID, env.Google.ServiceAccountKey)
-			if err != nil {
-				s.mu.Unlock()
-				logging.Error("CALENDAR", "calendar client init failed: %v", err)
-				return 0, err
-			}
-			s.calendar = client
-			s.calendarKey = env.Google.ServiceAccountKey
-			s.calendarID = env.Google.CalendarID
-		}
-		s.mu.Unlock()
+	calendarOpts := calendar.ClientOptions{
+		CalendarID:        env.Google.CalendarID,
+		OAuthClientID:     env.Google.OAuthClientID,
+		OAuthClientSecret: env.Google.OAuthClientSecret,
+		OAuthRefreshToken: env.Google.OAuthRefreshToken,
 	}
+	if err := calendarOpts.Validate(); err != nil {
+		s.mu.Lock()
+		s.calendar = nil
+		s.calendarFingerprint = ""
+		s.mu.Unlock()
+		logging.Error("CALENDAR", "calendar oauth config invalid: %v", err)
+		return 0, err
+	}
+	fingerprint := calendarOpts.Fingerprint()
+
+	s.mu.Lock()
+	if s.calendar == nil || s.calendarFingerprint != fingerprint {
+		client, err := calendar.NewClient(ctx, calendarOpts)
+		if err != nil {
+			s.mu.Unlock()
+			logging.Error("CALENDAR", "calendar client init failed: %v", err)
+			return 0, err
+		}
+		s.calendar = client
+		s.calendarFingerprint = fingerprint
+	}
+	s.mu.Unlock()
 	if s.calendar == nil {
 		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")
@@ -523,6 +523,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		}
 
 		needsUpsert := !hasRecord ||
+			!record.Attempted ||
 			!record.Synced ||
 			record.CalendarEventID != primary.ID ||
 			!calendar.EventMatchesNotion(primary, ev, loc)
@@ -537,6 +538,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    notionID,
 				CalendarEventID: primary.ID,
+				Attempted:       true,
 				Synced:          false,
 			})
 			continue
@@ -545,6 +547,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record = models.SyncRecord{
 			NotionPageID:    notionID,
 			CalendarEventID: newID,
+			Attempted:       true,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
@@ -567,6 +570,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    ev.NotionPageID,
 				CalendarEventID: existingCalID,
+				Attempted:       true,
 				Synced:          false,
 			})
 			continue
@@ -574,6 +578,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		record := models.SyncRecord{
 			NotionPageID:    ev.NotionPageID,
 			CalendarEventID: newID,
+			Attempted:       true,
 			Synced:          true,
 		}
 		_ = s.repo.UpsertSyncRecord(ctx, record)
@@ -651,12 +656,10 @@ func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, e
 }
 
 func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string, cfg config.Config, scheduled bool) error {
-	if config.IsMuted(cfg, time.Now()) {
-		return nil
-	}
 	if scheduled && config.IsSnoozed(cfg, time.Now()) {
 		return nil
 	}
+	logging.Info("WBHK", "sending (%s)", typ)
 	envCfg, env := s.cfg.Get()
 	target := envCfg.Webhook.Notification
 	url := env.Webhook.NotificationURL
@@ -693,10 +696,10 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	}
 	_ = s.repo.InsertNotificationHistory(ctx, history)
 	if status == "failed" {
-		logging.Error("WEBHOOK", "send failed (%s): %s", typ, errStr)
+		logging.Error("WBHK", "send failed (%s): %s", typ, errStr)
 		return errors.New(errStr)
 	}
-	logging.Info("WEBHOOK", "send ok (%s)", typ)
+	logging.Info("WBHK", "send ok (%s)", typ)
 	return nil
 }
 
@@ -749,15 +752,21 @@ func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 	return t
 }
 
-func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
-	if !rule.Conditions.Enabled {
-		return true
+func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
+	if loc == nil {
+		loc = time.Local
 	}
-	if len(rule.Conditions.DaysOfWeek) > 0 {
-		start := parseEventStart(ev, nil)
-		if !slices.Contains(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
-			return false
-		}
+	localNow := now.In(loc)
+	localMidnight := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, loc)
+	// Notion date-only filter is effectively compared at UTC day granularity.
+	// Convert local day start to UTC day so early local-time events are included.
+	return localMidnight.UTC().Format("2006-01-02")
+}
+
+func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
+	start := parseEventStart(ev, nil)
+	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
+		return false
 	}
 	if len(rule.Conditions.PropertyFilters) == 0 {
 		return true
@@ -828,6 +837,7 @@ func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateE
 		Name:     ev.Title,
 		Date:     ev.StartDate,
 		Time:     ev.StartTime,
+		EndDate:  ev.EndDate,
 		EndTime:  ev.EndTime,
 		IsAllDay: ev.IsAllDay,
 		Location: ev.Location,
@@ -846,6 +856,18 @@ func weekdayToConfig(day time.Weekday) int {
 		return 7
 	}
 	return int(day)
+}
+
+func matchesDays(days []int, weekday int) bool {
+	if len(days) == 0 {
+		return true
+	}
+	for _, day := range days {
+		if day == weekday {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scheduler) setRuntimeContext(parent context.Context) {

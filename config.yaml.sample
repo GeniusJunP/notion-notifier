@@ -10,28 +10,35 @@ notifications:
   advance:
     - enabled: true
       minutes_before: 30
-      message: "⏰ {{.MinutesBefore}}分後に「{{.Name}}」が始まります"
-      location: "{{.Location}}"
-      url: "{{.URL}}"
+      message: |
+        @everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！
+        詳細は前のメッセージを参照してください。
       conditions:
-        enabled: false
-        days_of_week: []
+        days_of_week: [] # 空配列=曜日制限なし
         property_filters: []
 
   # 定期通知（複数設定可）
   periodic:
     - enabled: true
-      days_of_week: [1, 4] # 月曜、木曜
+      days_of_week: []
       time: "09:00"
       days_ahead: 7
       message: |
-        @everyone 今週の予定をお届けします！
+        {{if .Events}}
+        ## 📣 今週の予定
+        @everyone **今週は {{len .Events}} 件** あります！
 
         {{range .Events}}
-        📅 **{{.Name}}** ({{.Date}})
-        🕐 {{.Time}}
-        📍 {{.Location}}
+        ### {{.Name}}
+        {{with .Date}}- **日時:** {{.}} {{end}}{{if .IsAllDay}}終日{{else}}{{with .Time}} {{.}} {{end}}{{end}}{{with .EndDate}} 〜 {{.}}{{end}}{{with .EndTime}} {{.}}{{end}}
+        {{with .Location}}- **場所:** {{.}}{{end}}
+        {{with .URL}}- **詳細:** {{.}}{{end}}
+        {{with .Content}}- **メモ:**
+        {{.}}{{end}}
 
+        {{end}}
+        {{else}}
+        @everyone 今週の予定はありません！
         {{end}}
 
 # Webhook設定（任意JSON）
@@ -56,11 +63,7 @@ property_mapping:
   location: "場所"
   attendees: "" # Notionのpeopleプロパティ名（Calendar招待メール抽出用）
   attendees_enabled: false # attendees同期を有効にする
-  custom:
-    - variable: "speaker"
-      property: "登壇者"
-    - variable: "category"
-      property: "カテゴリ"
+  custom: [] # カスタムマッピング（空配列=未設定）
 
 # コンテンツ抽出ルール
 content_rules:
@@ -72,9 +75,3 @@ content_rules:
 
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効
-mute_until: "" # ISO8601日時、空白=無効
-
-# セキュリティ（オプション）
-security:
-  basic_auth:
-    enabled: false # 認証情報は env.yaml / 環境変数で設定

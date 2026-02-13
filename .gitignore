@@ -3,5 +3,4 @@ env.yaml
 data.db
 *.log
 .DS_Store
-web/src/lib/*
 web/node_modules/*

@@ -4,9 +4,17 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/fs"
+	"math/big"
+	"net"
 	"net/http"
 	"time"
 
@@ -30,6 +38,13 @@ type App struct {
 	repo      *db.Repository
 	scheduler *scheduler.Scheduler
 	server    *http.Server
+	tls       tlsRuntime
+}
+
+type tlsRuntime struct {
+	certFile string
+	keyFile  string
+	selfSign bool
 }
 
 // New creates a fully-wired App ready to Start.
@@ -59,8 +74,14 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 	webhookClient := webhook.New(httpClient, retryCfg)
 
 	var calendarClient *calendar.Client
-	if cfg.CalendarSync.Enabled && env.Google.CalendarID != "" && env.Google.ServiceAccountKey != "" {
-		calendarClient, err = calendar.NewClient(context.Background(), env.Google.CalendarID, env.Google.ServiceAccountKey)
+	calendarOpts := calendar.ClientOptions{
+		CalendarID:        env.Google.CalendarID,
+		OAuthClientID:     env.Google.OAuthClientID,
+		OAuthClientSecret: env.Google.OAuthClientSecret,
+		OAuthRefreshToken: env.Google.OAuthRefreshToken,
+	}
+	if cfg.CalendarSync.Enabled && calendarOpts.IsConfigured() {
+		calendarClient, err = calendar.NewClient(context.Background(), calendarOpts)
 		if err != nil {
 			return nil, fmt.Errorf("calendar client: %w", err)
 		}
@@ -71,10 +92,24 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 
 	// HTTP Router
 	handler := buildRouter(manager, repo, sched)
+	addr, tlsCfg, err := resolveServerRuntime(env)
+	if err != nil {
+		return nil, fmt.Errorf("config: %w", err)
+	}
 
 	httpSrv := &http.Server{
-		Addr:    ":8080",
+		Addr:    addr,
 		Handler: handler,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+	if tlsCfg.selfSign {
+		cert, err := generateSelfSignedCert()
+		if err != nil {
+			return nil, fmt.Errorf("self-signed cert: %w", err)
+		}
+		httpSrv.TLSConfig.Certificates = []tls.Certificate{cert}
 	}
 
 	return &App{
@@ -82,6 +117,7 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 		repo:      repo,
 		scheduler: sched,
 		server:    httpSrv,
+		tls:       tlsCfg,
 	}, nil
 }
 
@@ -109,14 +145,70 @@ func buildRouter(cfg *config.Manager, repo *db.Repository, sched *scheduler.Sche
 	return handler
 }
 
+func resolveServerRuntime(env config.Env) (string, tlsRuntime, error) {
+	port := env.Server.Port
+	if port == 0 {
+		port = 8080
+	}
+	if port < 1 || port > 65535 {
+		return "", tlsRuntime{}, fmt.Errorf("server.port must be between 1 and 65535: %d", port)
+	}
+	tlsCfg := tlsRuntime{
+		certFile: env.Server.TLS.CertFile,
+		keyFile:  env.Server.TLS.KeyFile,
+	}
+	if tlsCfg.certFile == "" && tlsCfg.keyFile == "" {
+		tlsCfg.selfSign = true
+	} else if tlsCfg.certFile == "" || tlsCfg.keyFile == "" {
+		return "", tlsRuntime{}, errors.New("set both server.tls.cert_file and server.tls.key_file, or leave both empty for self-signed")
+	}
+	return fmt.Sprintf(":%d", port), tlsCfg, nil
+}
+
+func generateSelfSignedCert() (tls.Certificate, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	serialLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialLimit)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	cert := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			CommonName: "localhost",
+		},
+		NotBefore:   time.Now().Add(-1 * time.Hour),
+		NotAfter:    time.Now().Add(365 * 24 * time.Hour),
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:    []string{"localhost"},
+		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
+	}
+	der, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
+	return tls.X509KeyPair(certPEM, keyPEM)
+}
+
 // Start begins the scheduler and HTTP server. Blocks until ctx is done.
 func (a *App) Start(ctx context.Context) error {
 	a.scheduler.Start(ctx)
 
 	go func() {
 		fmt.Printf("Starting server on %s\n", a.server.Addr)
-		fmt.Printf("URL: http://localhost%s\n", a.server.Addr)
-		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		run := func() error { return a.server.ListenAndServeTLS(a.tls.certFile, a.tls.keyFile) }
+		if a.tls.selfSign {
+			fmt.Println("TLS: using generated self-signed certificate for localhost")
+			run = func() error { return a.server.ListenAndServeTLS("", "") }
+		}
+		fmt.Printf("URL: https://localhost%s\n", a.server.Addr)
+		if err := run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("HTTP server error: %v\n", err)
 		}
 	}()

@@ -10,6 +10,7 @@ import (
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/db"
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/models"
 	"notion-notifier/internal/scheduler"
 )
 
@@ -74,12 +75,12 @@ func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.cfg.UpdateConfig(incoming); err != nil {
-		logging.Error("CONFIG", "update failed: %v", err)
+		logging.Error("CONF", "update failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "failed to save config")
 		return
 	}
 
-	logging.Info("CONFIG", "config updated from %s", r.RemoteAddr)
+	logging.Info("CONF", "config updated from %s", r.RemoteAddr)
 	// Return the normalized config
 	saved, _ := h.cfg.Get()
 	respondJSON(w, http.StatusOK, saved)
@@ -96,8 +97,6 @@ type dashboardResponse struct {
 	LastSyncError string `json:"last_sync_error,omitempty"`
 	SnoozeActive  bool   `json:"snooze_active"`
 	SnoozeUntil   string `json:"snooze_until,omitempty"`
-	MuteActive    bool   `json:"mute_active"`
-	MuteUntil     string `json:"mute_until,omitempty"`
 }
 
 func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -139,8 +138,6 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		LastSyncError: status.LastError,
 		SnoozeActive:  config.IsSnoozed(cfg, now),
 		SnoozeUntil:   cfg.SnoozeUntil,
-		MuteActive:    config.IsMuted(cfg, now),
-		MuteUntil:     cfg.MuteUntil,
 	}
 	respondJSON(w, http.StatusOK, resp)
 }
@@ -148,16 +145,16 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 // --- GET /api/events/upcoming ---
 
 type eventResponse struct {
-	NotionPageID string `json:"notion_page_id"`
-	Title        string `json:"title"`
-	StartDate    string `json:"start_date"`
-	StartTime    string `json:"start_time"`
-	EndDate      string `json:"end_date,omitempty"`
-	EndTime      string `json:"end_time,omitempty"`
-	IsAllDay     bool   `json:"is_all_day"`
-	Location     string `json:"location,omitempty"`
-	URL          string `json:"url,omitempty"`
-	CacheStatus  string `json:"cache_status"`
+	NotionPageID  string `json:"notion_page_id"`
+	Title         string `json:"title"`
+	StartDate     string `json:"start_date"`
+	StartTime     string `json:"start_time"`
+	EndDate       string `json:"end_date,omitempty"`
+	EndTime       string `json:"end_time,omitempty"`
+	IsAllDay      bool   `json:"is_all_day"`
+	Location      string `json:"location,omitempty"`
+	URL           string `json:"url,omitempty"`
+	CalendarState string `json:"calendar_state"`
 }
 
 func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
@@ -172,37 +169,45 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 
 	events, _ := h.repo.ListUpcomingEvents(r.Context(), 14, now)
 
-	// Build sync status map
+	// Build sync record map
 	ids := make([]string, 0, len(events))
 	for _, ev := range events {
 		if ev.NotionPageID != "" {
 			ids = append(ids, ev.NotionPageID)
 		}
 	}
-	syncMap := map[string]string{}
+	syncMap := map[string]models.SyncRecord{}
 	if len(ids) > 0 {
-		if m, err := h.repo.GetSyncStatusMap(r.Context(), ids); err == nil {
+		if m, err := h.repo.GetSyncRecordMap(r.Context(), ids); err == nil {
 			syncMap = m
 		}
 	}
 
 	out := make([]eventResponse, 0, len(events))
 	for _, ev := range events {
-		cacheStatus := "unsynced"
-		if v, ok := syncMap[ev.NotionPageID]; ok && v != "" {
-			cacheStatus = v
+		calendarState := "disabled"
+		if cfg.CalendarSync.Enabled {
+			record, ok := syncMap[ev.NotionPageID]
+			switch {
+			case !ok || !record.Attempted:
+				calendarState = "needs_sync"
+			case record.Synced:
+				calendarState = "synced"
+			default:
+				calendarState = "error"
+			}
 		}
 		out = append(out, eventResponse{
-			NotionPageID: ev.NotionPageID,
-			Title:        ev.Title,
-			StartDate:    ev.StartDate,
-			StartTime:    ev.StartTime,
-			EndDate:      ev.EndDate,
-			EndTime:      ev.EndTime,
-			IsAllDay:     ev.IsAllDay,
-			Location:     ev.Location,
-			URL:          ev.URL,
-			CacheStatus:  cacheStatus,
+			NotionPageID:  ev.NotionPageID,
+			Title:         ev.Title,
+			StartDate:     ev.StartDate,
+			StartTime:     ev.StartTime,
+			EndDate:       ev.EndDate,
+			EndTime:       ev.EndTime,
+			IsAllDay:      ev.IsAllDay,
+			Location:      ev.Location,
+			URL:           ev.URL,
+			CalendarState: calendarState,
 		})
 	}
 	respondJSON(w, http.StatusOK, out)
@@ -340,7 +345,6 @@ type notificationRequest struct {
 
 type previewResponse struct {
 	Message string `json:"message"`
-	Payload string `json:"payload,omitempty"`
 }
 
 func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
@@ -372,13 +376,13 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	message, payload, err := h.sched.PreviewManualPayload(r.Context(), req.Template, from, to)
+	message, err := h.sched.PreviewManualTemplate(r.Context(), req.Template, from, to)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "preview failed: "+err.Error())
 		return
 	}
 
-	respondJSON(w, http.StatusOK, previewResponse{Message: message, Payload: payload})
+	respondJSON(w, http.StatusOK, previewResponse{Message: message})
 }
 
 // --- POST /api/notifications/manual ---

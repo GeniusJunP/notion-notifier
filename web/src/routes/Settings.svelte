@@ -7,7 +7,6 @@
         Database,
         FileText,
         Globe,
-        ShieldCheck,
         Plus,
         Trash2,
         Hash,
@@ -137,7 +136,7 @@
                     </div>
 
                     <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label
                                     for="settings-mapping-usage"
@@ -166,7 +165,7 @@
                                     <div
                                         class="h-10 flex items-center justify-between px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
-                                        参加者 (People)
+                                        参加者
                                             
                                         <button
                                             on:click={() => {
@@ -180,6 +179,8 @@
                                                 .attendees_enabled
                                                 ? 'bg-green-500 dark:bg-green-600 text-white border-green-500 dark:border-green-600'
                                                 : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500'}"
+                                            aria-label="参加者プロパティの利用を切り替え"
+                                            aria-pressed={config.property_mapping.attendees_enabled}
                                         >
 
                                             {config.property_mapping
@@ -222,16 +223,14 @@
                                         }
                                         class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                     />
-                                    <div class="flex gap-2">
-                                        <input
-                                            type="text"
-                                            bind:value={
-                                                config.property_mapping
-                                                    .attendees
-                                            }
-                                            class="flex-1 h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        bind:value={
+                                            config.property_mapping
+                                                .attendees
+                                        }
+                                        class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -240,14 +239,13 @@
                             <div
                                 class="pt-4 border-t border-gray-100 dark:border-gray-600 space-y-3"
                             >
-                                <label
-                                    for="settings-custom-mappings"
+                                <p
                                     class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest"
-                                    >カスタムマッピング</label
                                 >
+                                    カスタムマッピング
+                                </p>
                                 {#each config.property_mapping.custom as custom, idx}
                                     <div
-                                        id="settings-custom-mappings"
                                         class="flex items-center gap-2 group"
                                     >
                                         <div
@@ -269,7 +267,8 @@
                                         <button
                                             on:click={() =>
                                                 removeCustomMapping(idx)}
-                                            class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                            class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                            aria-label={`カスタムマッピング ${idx + 1} を削除`}
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -320,6 +319,8 @@
                                         .content_rules.include_start_heading
                                         ? 'bg-orange-500 dark:bg-orange-600 text-white border-orange-500 dark:border-orange-600'
                                         : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500'}"
+                                    aria-label="開始見出しを通知本文に含める設定を切り替え"
+                                    aria-pressed={config.content_rules.include_start_heading}
                                 >
                                     見出し含む
                                 </button>
@@ -415,44 +416,11 @@
                     <h3
                         class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                     >
-                        <ShieldCheck size={20} class="text-green-500 dark:text-green-400" />
-                        セキュリティ・その他
+                        <Hash size={20} class="text-green-500 dark:text-green-400" />
+                        その他
                     </h3>
                     <div class="space-y-4">
-                        <div
-                            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-2xl"
-                        >
-                            <div>
-                                <span
-                                    class="block text-sm font-bold text-gray-800 dark:text-gray-200"
-                                    >Basic 認証</span
-                                >
-                                <span class="text-[11px] text-gray-400 dark:text-gray-500"
-                                    >認証情報は env.yaml で設定してください</span
-                                >
-                            </div>
-                            <div
-                                class="px-3 py-1 bg-{config.security.basic_auth
-                                    .enabled
-                                    ? 'green'
-                                    : 'gray'}-100 dark:bg-{config.security.basic_auth
-                                    .enabled
-                                    ? 'green'
-                                    : 'gray'}-900 text-{config.security
-                                    .basic_auth.enabled
-                                    ? 'green'
-                                    : 'gray'}-700 dark:text-{config.security
-                                    .basic_auth.enabled
-                                    ? 'green'
-                                    : 'gray'}-300 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                            >
-                                {config.security.basic_auth.enabled
-                                    ? "Enabled"
-                                    : "Disabled"}
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label
                                     for="settings-snooze"
@@ -463,19 +431,6 @@
                                     id="settings-snooze"
                                     type="datetime-local"
                                     bind:value={config.snooze_until}
-                                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    for="settings-mute"
-                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2"
-                                    >ミュート (Mute)</label
-                                >
-                                <input
-                                    id="settings-mute"
-                                    type="datetime-local"
-                                    bind:value={config.mute_until}
                                     class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs"
                                 />
                             </div>
