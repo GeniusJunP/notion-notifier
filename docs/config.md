@@ -19,7 +19,15 @@ notifications:
   advance:               # 事前通知（配列）
     - enabled: true
       minutes_before: 30  # 必須, > 0
-      message: "テンプレート"
+      message: |
+        ## 予定リマインド！⏰
+        @everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！
+
+        ### 詳細
+        - **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}
+        {{if .Location}}- **場所:** {{.Location}}{{end}}
+        {{if .URL}}- **詳細:** {{.URL}}{{end}}
+        {{with .Content}}- **メモ:** {{.}}{{end}}
       conditions:
         days_of_week: []       # 1-7 (月-日), 空配列=制限なし
         property_filters: []
@@ -28,7 +36,23 @@ notifications:
       days_of_week: [1, 4]    # 1-7 (月-日), 空配列=制限なし（毎日）
       time: "09:00"           # 必須, HH:mm
       days_ahead: 7           # 必須, > 0
-      message: "テンプレート"
+      message: |
+        {{if .Events}}
+        ## 今週の予定！📣
+        @everyone **今週は {{len .Events}} 件** あります！
+
+        {{range .Events}}
+        ### {{.Name}}
+        - **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}
+        {{if .Location}}- **場所:** {{.Location}}{{end}}
+        {{if .URL}}- **詳細:** {{.URL}}{{end}}
+        {{with .Content}}- **メモ:** {{.}}{{end}}
+
+        {{end}}
+        {{else}}
+        ## 今週の予定！📣
+        @everyone 今週の予定はありません！
+        {{end}}
 
 webhook:
   schedule:

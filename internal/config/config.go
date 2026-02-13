@@ -327,15 +327,29 @@ func SanitizeTemplate(input string) string {
 }
 
 // DefaultAdvanceMessage is the default message template for advance notifications.
-const DefaultAdvanceMessage = `📢 まもなく「{{.Name}}」が始まります（{{.MinutesBefore}}分前）
-📅 {{.Date}} {{.Time}}
-📍 {{.Location}}
-🔗 {{.URL}}`
+const DefaultAdvanceMessage = "## 予定リマインド！⏰\n" +
+	"@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！\n\n" +
+	"### 詳細\n" +
+	"- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}\n" +
+	"{{if .Location}}- **場所:** {{.Location}}{{end}}\n" +
+	"{{if .URL}}- **詳細:** {{.URL}}{{end}}\n" +
+	"{{with .Content}}- **メモ:** {{.}}{{end}}"
 
 // DefaultPeriodicMessage is the default message template for periodic notifications.
-const DefaultPeriodicMessage = `📋 今後の予定（{{len .Events}}件）
-{{range .Events}}• {{.Date}} {{.Time}} - {{.Name}} @ {{.Location}}
-{{end}}`
+const DefaultPeriodicMessage = "{{if .Events}}\n" +
+	"## 今週の予定！📣\n" +
+	"@everyone **今週は {{len .Events}} 件** あります！\n\n" +
+	"{{range .Events}}\n" +
+	"### {{.Name}}\n" +
+	"- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}\n" +
+	"{{if .Location}}- **場所:** {{.Location}}{{end}}\n" +
+	"{{if .URL}}- **詳細:** {{.URL}}{{end}}\n" +
+	"{{with .Content}}- **メモ:** {{.}}{{end}}\n\n" +
+	"{{end}}\n" +
+	"{{else}}\n" +
+	"## 今週の予定！📣\n" +
+	"@everyone 今週の予定はありません！\n" +
+	"{{end}}"
 
 // DefaultTemplates returns the default message templates keyed by type.
 func DefaultTemplates() map[string]string {

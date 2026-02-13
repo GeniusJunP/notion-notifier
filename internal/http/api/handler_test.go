@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,6 +133,42 @@ func TestHandlePreviewNotificationReturnsMessageOnly(t *testing.T) {
 	}
 	if _, ok := advanceResp["message"]; !ok {
 		t.Fatalf("advance preview response must include message field")
+	}
+}
+
+func TestHandleDefaultTemplates(t *testing.T) {
+	mux, repo, _ := setupAPIHandler(t, true)
+	defer repo.Close()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/templates/defaults", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unexpected status: got=%d want=%d body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var payload map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	advance, ok := payload["advance"]
+	if !ok {
+		t.Fatalf("response must include advance template")
+	}
+	periodic, ok := payload["periodic"]
+	if !ok {
+		t.Fatalf("response must include periodic template")
+	}
+
+	if !strings.Contains(advance, "## 予定リマインド！⏰") {
+		t.Fatalf("advance template must include new heading")
+	}
+	if !strings.Contains(periodic, "## 今週の予定！📣") {
+		t.Fatalf("periodic template must include new heading")
+	}
+	if strings.Contains(periodic, "次の予定に備えましょう！") {
+		t.Fatalf("periodic template must not include removed phrase")
 	}
 }
 
