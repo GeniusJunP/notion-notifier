@@ -11,17 +11,14 @@ notifications:
     - enabled: true
       minutes_before: 30
       message: "⏰ {{.MinutesBefore}}分後に「{{.Name}}」が始まります"
-      location: "{{.Location}}"
-      url: "{{.URL}}"
       conditions:
-        enabled: false
-        days_of_week: []
+        days_of_week: [] # 空配列=曜日制限なし
         property_filters: []
 
   # 定期通知（複数設定可）
   periodic:
     - enabled: true
-      days_of_week: [1, 4] # 月曜、木曜
+      days_of_week: [] # 空配列=毎日
       time: "09:00"
       days_ahead: 7
       message: |

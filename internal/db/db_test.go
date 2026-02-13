@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -185,5 +186,84 @@ func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
 	}
 	if count != 0 {
 		t.Fatalf("schedules were not cleared: count=%d", count)
+	}
+}
+
+func TestUpsertSyncRecordPersistsAttempted(t *testing.T) {
+	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer repo.Close()
+
+	ctx := context.Background()
+	if err := repo.UpsertSyncRecord(ctx, models.SyncRecord{
+		NotionPageID:    "page-1",
+		CalendarEventID: "cal-1",
+		Attempted:       true,
+		Synced:          false,
+	}); err != nil {
+		t.Fatalf("upsert sync record: %v", err)
+	}
+
+	records, err := repo.ListSyncRecords(ctx)
+	if err != nil {
+		t.Fatalf("list sync records: %v", err)
+	}
+	if len(records) != 1 {
+		t.Fatalf("unexpected records len: got=%d want=1", len(records))
+	}
+	if !records[0].Attempted {
+		t.Fatalf("attempted was not persisted: got=%v want=true", records[0].Attempted)
+	}
+	if records[0].Synced {
+		t.Fatalf("synced was not persisted: got=%v want=false", records[0].Synced)
+	}
+}
+
+func TestMigrateSyncRecordsAddsAttemptedFromLegacySchema(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "legacy.db")
+	dsn := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)", path)
+
+	legacyDB, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		t.Fatalf("open legacy db: %v", err)
+	}
+
+	if _, err := legacyDB.Exec(`CREATE TABLE sync_records (
+		notion_page_id TEXT PRIMARY KEY,
+		calendar_event_id TEXT NOT NULL,
+		synced INTEGER DEFAULT 0
+	);`); err != nil {
+		legacyDB.Close()
+		t.Fatalf("create legacy table: %v", err)
+	}
+	if _, err := legacyDB.Exec(`INSERT INTO sync_records (notion_page_id, calendar_event_id, synced) VALUES
+		('page-1', 'cal-1', 1),
+		('page-2', '', 0);`); err != nil {
+		legacyDB.Close()
+		t.Fatalf("insert legacy records: %v", err)
+	}
+	if err := legacyDB.Close(); err != nil {
+		t.Fatalf("close legacy db: %v", err)
+	}
+
+	repo, err := Open(path)
+	if err != nil {
+		t.Fatalf("open migrated db: %v", err)
+	}
+	defer repo.Close()
+
+	records, err := repo.ListSyncRecords(context.Background())
+	if err != nil {
+		t.Fatalf("list sync records: %v", err)
+	}
+	if len(records) != 2 {
+		t.Fatalf("unexpected records len: got=%d want=2", len(records))
+	}
+	for _, rec := range records {
+		if !rec.Attempted {
+			t.Fatalf("legacy record attempted should be true: notion_page_id=%s", rec.NotionPageID)
+		}
 	}
 }
