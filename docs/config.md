@@ -60,7 +60,6 @@ content_rules:
   delimiter_text: ""
 
 snooze_until: ""         # RFC3339 or ""
-mute_until: ""           # RFC3339 or ""
 
 security:
   basic_auth:
@@ -91,7 +90,6 @@ security:
 | `calendar_sync.interval_hours` | int | - | 6 | 自動同期間隔（時間） |
 | `calendar_sync.lookahead_days` | int | - | 30 | 同期対象日数 |
 | `snooze_until` | string | - | "" | スヌーズ期限 (RFC3339) |
-| `mute_until` | string | - | "" | ミュート期限 (RFC3339) |
 | `security.basic_auth.enabled` | bool | - | false | Basic認証有効化 |
 
 ## 正規化ルール (`NormalizeConfig`)
@@ -116,7 +114,7 @@ security:
 - `notifications.periodic[].days_ahead`: > 0
 - `notifications.periodic[].time`: HH:mm 形式
 - `notifications.periodic[].days_of_week`: 各要素 1-7
-- `snooze_until`, `mute_until`: 空 or RFC3339
+- `snooze_until`: 空 or RFC3339
 
 ## 認証情報 (`env.yaml`)
 

@@ -96,8 +96,6 @@ type dashboardResponse struct {
 	LastSyncError string `json:"last_sync_error,omitempty"`
 	SnoozeActive  bool   `json:"snooze_active"`
 	SnoozeUntil   string `json:"snooze_until,omitempty"`
-	MuteActive    bool   `json:"mute_active"`
-	MuteUntil     string `json:"mute_until,omitempty"`
 }
 
 func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -139,8 +137,6 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		LastSyncError: status.LastError,
 		SnoozeActive:  config.IsSnoozed(cfg, now),
 		SnoozeUntil:   cfg.SnoozeUntil,
-		MuteActive:    config.IsMuted(cfg, now),
-		MuteUntil:     cfg.MuteUntil,
 	}
 	respondJSON(w, http.StatusOK, resp)
 }

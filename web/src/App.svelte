@@ -28,6 +28,8 @@
     RefreshCcw,
     Database,
     BellOff,
+    VolumeX,
+    Loader2,
   } from "lucide-svelte";
 
   // Routes

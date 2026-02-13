@@ -23,7 +23,6 @@ type Config struct {
 	PropertyMap   PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
 	ContentRules  ContentRules       `yaml:"content_rules" json:"content_rules"`
 	SnoozeUntil   string             `yaml:"snooze_until" json:"snooze_until"`
-	MuteUntil     string             `yaml:"mute_until" json:"mute_until"`
 	Security      SecurityConfig     `yaml:"security" json:"security"`
 }
 
@@ -243,11 +242,6 @@ func ValidateConfig(cfg Config) error {
 			return fmt.Errorf("snooze_until must be RFC3339: %w", err)
 		}
 	}
-	if cfg.MuteUntil != "" {
-		if _, err := time.Parse(time.RFC3339, cfg.MuteUntil); err != nil {
-			return fmt.Errorf("mute_until must be RFC3339: %w", err)
-		}
-	}
 	return nil
 }
 
@@ -257,17 +251,6 @@ func validateHHMM(value string) error {
 	}
 	_, err := time.Parse("15:04", value)
 	return err
-}
-
-func IsMuted(cfg Config, now time.Time) bool {
-	if cfg.MuteUntil == "" {
-		return false
-	}
-	until, err := time.Parse(time.RFC3339, cfg.MuteUntil)
-	if err != nil {
-		return false
-	}
-	return now.Before(until)
 }
 
 func IsSnoozed(cfg Config, now time.Time) bool {

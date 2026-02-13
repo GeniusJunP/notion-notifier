@@ -72,7 +72,6 @@ content_rules:
 
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効
-mute_until: "" # ISO8601日時、空白=無効
 
 # セキュリティ（オプション）
 security:

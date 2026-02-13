@@ -60,7 +60,6 @@
   "property_mapping": { ... },
   "content_rules": { ... },
   "snooze_until": "",
-  "mute_until": "",
   "security": { "basic_auth": { "enabled": false } }
 }
 ```
@@ -94,9 +93,7 @@
   "last_sync_count": 25,
   "last_sync_error": "",
   "snooze_active": false,
-  "snooze_until": "",
-  "mute_active": false,
-  "mute_until": ""
+  "snooze_until": ""
 }
 ```
 
