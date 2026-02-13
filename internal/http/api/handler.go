@@ -145,15 +145,15 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 // --- GET /api/events/upcoming ---
 
 type eventResponse struct {
-	NotionPageID string `json:"notion_page_id"`
-	Title        string `json:"title"`
-	StartDate    string `json:"start_date"`
-	StartTime    string `json:"start_time"`
-	EndDate      string `json:"end_date,omitempty"`
-	EndTime      string `json:"end_time,omitempty"`
-	IsAllDay     bool   `json:"is_all_day"`
-	Location     string `json:"location,omitempty"`
-	URL          string `json:"url,omitempty"`
+	NotionPageID  string `json:"notion_page_id"`
+	Title         string `json:"title"`
+	StartDate     string `json:"start_date"`
+	StartTime     string `json:"start_time"`
+	EndDate       string `json:"end_date,omitempty"`
+	EndTime       string `json:"end_time,omitempty"`
+	IsAllDay      bool   `json:"is_all_day"`
+	Location      string `json:"location,omitempty"`
+	URL           string `json:"url,omitempty"`
 	CalendarState string `json:"calendar_state"`
 }
 
@@ -198,15 +198,15 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		out = append(out, eventResponse{
-			NotionPageID: ev.NotionPageID,
-			Title:        ev.Title,
-			StartDate:    ev.StartDate,
-			StartTime:    ev.StartTime,
-			EndDate:      ev.EndDate,
-			EndTime:      ev.EndTime,
-			IsAllDay:     ev.IsAllDay,
-			Location:     ev.Location,
-			URL:          ev.URL,
+			NotionPageID:  ev.NotionPageID,
+			Title:         ev.Title,
+			StartDate:     ev.StartDate,
+			StartTime:     ev.StartTime,
+			EndDate:       ev.EndDate,
+			EndTime:       ev.EndTime,
+			IsAllDay:      ev.IsAllDay,
+			Location:      ev.Location,
+			URL:           ev.URL,
 			CalendarState: calendarState,
 		})
 	}

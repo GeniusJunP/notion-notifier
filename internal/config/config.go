@@ -50,8 +50,6 @@ type AdvanceNotification struct {
 	Enabled       bool              `yaml:"enabled" json:"enabled"`
 	MinutesBefore int               `yaml:"minutes_before" json:"minutes_before"`
 	Message       string            `yaml:"message" json:"message"`
-	Location      string            `yaml:"location" json:"location"`
-	URL           string            `yaml:"url" json:"url"`
 	Conditions    AdvanceConditions `yaml:"conditions" json:"conditions"`
 }
 
