@@ -107,6 +107,14 @@
         padding-left: 1.25rem;
     }
 
+    .markdown-preview :global(ul) {
+        list-style: disc;
+    }
+
+    .markdown-preview :global(ol) {
+        list-style: decimal;
+    }
+
     .markdown-preview :global(li) {
         margin: 0.2rem 0;
     }

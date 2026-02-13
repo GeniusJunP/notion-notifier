@@ -49,6 +49,7 @@ type TemplateEvent struct {
 	Name          string
 	Date          string
 	Time          string
+	EndDate       string
 	EndTime       string
 	IsAllDay      bool
 	Location      string

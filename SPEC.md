@@ -285,6 +285,7 @@ google:
 | `{{.Name}}`          | 予定名（タイトル）               |
 | `{{.Date}}`          | 日付（YYYY-MM-DD）               |
 | `{{.Time}}`          | 開始時刻（HH:mm）               |
+| `{{.EndDate}}`       | 終了日（YYYY-MM-DD、空の場合あり） |
 | `{{.EndTime}}`       | 終了時刻（HH:mm、空の場合あり） |
 | `{{.IsAllDay}}`      | 終日イベントかどうか             |
 | `{{.Location}}`      | 場所                             |
@@ -320,7 +321,7 @@ Webhookの `payload_template` では以下の変数を使用できる：
 @everyone 次の予定一覧！
 
 {{range .Events}}
-- **{{.Name}}** ({{.Date}} {{.Time}}){{if .Location}} 📍{{.Location}}{{end}}
+- **{{.Name}}** ({{.Date}} {{.Time}} - {{.EndDate}} {{.EndTime}}){{if .Location}} 📍{{.Location}}{{end}}
 {{end}}
 ```
 

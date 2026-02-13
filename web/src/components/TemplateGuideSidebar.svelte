@@ -5,6 +5,7 @@
         "{{.Name}}",
         "{{.Date}}",
         "{{.Time}}",
+        "{{.EndDate}}",
         "{{.EndTime}}",
         "{{.IsAllDay}}",
         "{{.Location}}",
@@ -34,7 +35,7 @@
 {{if .IsAllDay}}
 終日
 {{else}}
-{{.Time}}-{{.EndTime}}
+{{.Date}} {{.Time}} - {{.EndDate}} {{.EndTime}}
 {{end}}
 
 {{if .Location}}
@@ -53,7 +54,7 @@
 ### range / end（複数イベント）
 \`\`\`gotemplate
 {{range .Events}}
-- **{{.Name}}** ({{.Date}} {{if .IsAllDay}}終日{{else}}{{.Time}}{{end}})
+- **{{.Name}}** ({{.Date}} {{if .IsAllDay}}終日{{else}}{{.Time}}〜{{.EndDate}} {{.EndTime}}{{end}})
   {{if .Location}}📍 {{.Location}}{{end}}
 {{end}}
 \`\`\`

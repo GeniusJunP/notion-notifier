@@ -226,7 +226,7 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 		logging.Error("SYNC", "notion client not configured")
 		return 0, err
 	}
-	fromDate := time.Now().In(loc).Format("2006-01-02")
+	fromDate := notionOnOrAfterDate(time.Now(), loc)
 	pages, err := s.notion.QueryDatabaseOnOrAfter(ctx, env.Notion.DatabaseID, cfg.PropertyMap.Date, fromDate)
 	if err != nil {
 		s.setNotionStatus(0, err)
@@ -752,6 +752,17 @@ func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 	return t
 }
 
+func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
+	if loc == nil {
+		loc = time.Local
+	}
+	localNow := now.In(loc)
+	localMidnight := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, loc)
+	// Notion date-only filter is effectively compared at UTC day granularity.
+	// Convert local day start to UTC day so early local-time events are included.
+	return localMidnight.UTC().Format("2006-01-02")
+}
+
 func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
 	start := parseEventStart(ev, nil)
 	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
@@ -826,6 +837,7 @@ func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateE
 		Name:     ev.Title,
 		Date:     ev.StartDate,
 		Time:     ev.StartTime,
+		EndDate:  ev.EndDate,
 		EndTime:  ev.EndTime,
 		IsAllDay: ev.IsAllDay,
 		Location: ev.Location,

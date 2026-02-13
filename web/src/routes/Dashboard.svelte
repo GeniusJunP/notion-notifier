@@ -48,6 +48,27 @@
         error: { className: "bg-red-100 text-red-700", label: "連携エラー" },
     };
 
+    function formatEventDateTime(event: UpcomingEvent): string {
+        const startDate = event.start_date;
+        const endDate = event.end_date || event.start_date;
+        if (event.is_all_day) {
+            if (endDate && endDate !== startDate) {
+                return `${startDate} - ${endDate} (終日)`;
+            }
+            return `${startDate} (終日)`;
+        }
+        const start = event.start_time
+            ? `${startDate} ${event.start_time}`
+            : startDate;
+        if (!event.end_time) {
+            return start;
+        }
+        if (endDate && endDate !== startDate) {
+            return `${start} - ${endDate} ${event.end_time}`;
+        }
+        return `${start} - ${event.end_time}`;
+    }
+
     async function loadData() {
         isLoading = true;
         try {
@@ -445,12 +466,7 @@
                                     class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                                 >
                                     <Clock size={14} class="text-gray-400 dark:text-gray-500" />
-                                    <span
-                                        >{event.start_date}
-                                        {event.is_all_day
-                                            ? "(終日)"
-                                            : event.start_time}</span
-                                    >
+                                    <span>{formatEventDateTime(event)}</span>
                                 </div>
                                 {#if event.location}
                                     <div
