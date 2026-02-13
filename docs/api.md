@@ -59,8 +59,7 @@
   "calendar_sync": { ... },
   "property_mapping": { ... },
   "content_rules": { ... },
-  "snooze_until": "",
-  "security": { "basic_auth": { "enabled": false } }
+  "snooze_until": ""
 }
 ```
 

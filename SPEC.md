@@ -61,6 +61,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
 | `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
 | `GOOGLE_OAUTH_REFRESH_TOKEN`   | `google.oauth_refresh_token`   |
+| `BASIC_AUTH_ENABLED`           | `security.basic_auth.enabled`  |
 | `BASIC_AUTH_USERNAME`          | `security.basic_auth.username` |
 | `BASIC_AUTH_PASSWORD`          | `security.basic_auth.password` |
 
@@ -241,12 +242,6 @@ content_rules:
 
 # 通知抑制
 snooze_until: "" # ISO8601日時、空白=無効
-
-# セキュリティ（オプション）
-security:
-  basic_auth:
-    enabled: false
-    # 認証情報は env.yaml または環境変数で指定
 ```
 
 ### env.yaml
@@ -266,6 +261,11 @@ google:
   oauth_client_id: ""
   oauth_client_secret: ""
   oauth_refresh_token: ""
+security:
+  basic_auth:
+    enabled: false
+    username: ""
+    password: ""
 ```
 
 ## テンプレート

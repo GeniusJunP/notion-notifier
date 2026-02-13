@@ -83,10 +83,6 @@ content_rules:
   delimiter_text: ""
 
 snooze_until: ""         # RFC3339 or ""
-
-security:
-  basic_auth:
-    enabled: false
 ```
 
 ## フィールド詳細
@@ -114,7 +110,6 @@ security:
 | `property_mapping.attendees` | string | - | "" | 参加者メール抽出元のNotion peopleプロパティ |
 | `property_mapping.attendees_enabled` | bool | - | false | 参加者同期の有効化 |
 | `snooze_until` | string | - | "" | スヌーズ期限 (RFC3339) |
-| `security.basic_auth.enabled` | bool | - | false | Basic認証有効化 |
 
 ## 正規化ルール (`NormalizeConfig`)
 
@@ -160,6 +155,7 @@ google:
   oauth_refresh_token: ""
 security:
   basic_auth:
+    enabled: false
     username: ""
     password: ""
 ```

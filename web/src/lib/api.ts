@@ -7,16 +7,7 @@ export interface Config {
   calendar_sync: CalendarSyncConfig;
   property_mapping: PropertyMapping;
   content_rules: ContentRules;
-  security: SecurityConfig;
   snooze_until: string;
-}
-
-export interface SecurityConfig {
-  basic_auth: BasicAuthConfig;
-}
-
-export interface BasicAuthConfig {
-  enabled: boolean;
 }
 
 export interface SyncConfig {

@@ -219,11 +219,6 @@ func setupAPIHandler(t *testing.T, calendarEnabled bool) (*http.ServeMux, *db.Re
 			StopAtDelimiter:   true,
 			DelimiterText:     "",
 		},
-		Security: config.SecurityConfig{
-			BasicAuth: config.BasicAuthConfig{
-				Enabled: false,
-			},
-		},
 	})
 	if err := config.WriteConfig(cfgPath, cfg); err != nil {
 		t.Fatalf("write config: %v", err)

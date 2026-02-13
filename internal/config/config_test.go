@@ -40,3 +40,21 @@ func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
 		}
 	}
 }
+
+func TestApplyEnvOverridesBasicAuthEnabled(t *testing.T) {
+	t.Setenv("BASIC_AUTH_ENABLED", "true")
+	env := ApplyEnvOverrides(Env{})
+	if !env.Security.BasicAuth.Enabled {
+		t.Fatalf("BASIC_AUTH_ENABLED=true must enable basic auth")
+	}
+
+	t.Setenv("BASIC_AUTH_ENABLED", "false")
+	env = ApplyEnvOverrides(Env{
+		Security: SecurityEnv{
+			BasicAuth: BasicAuthEnv{Enabled: true},
+		},
+	})
+	if env.Security.BasicAuth.Enabled {
+		t.Fatalf("BASIC_AUTH_ENABLED=false must disable basic auth")
+	}
+}

@@ -7,7 +7,6 @@
         Database,
         FileText,
         Globe,
-        ShieldCheck,
         Plus,
         Trash2,
         Hash,
@@ -419,33 +418,10 @@
                     <h3
                         class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                     >
-                        <ShieldCheck size={20} class="text-green-500 dark:text-green-400" />
-                        セキュリティ・その他
+                        <Hash size={20} class="text-green-500 dark:text-green-400" />
+                        その他
                     </h3>
                     <div class="space-y-4">
-                        <div
-                            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-2xl"
-                        >
-                            <div>
-                                <span
-                                    class="block text-sm font-bold text-gray-800 dark:text-gray-200"
-                                    >Basic 認証</span
-                                >
-                                <span class="text-[11px] text-gray-400 dark:text-gray-500"
-                                    >認証情報は env.yaml で設定してください</span
-                                >
-                            </div>
-                            <div
-                                class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {config.security.basic_auth.enabled
-                                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-                            >
-                                {config.security.basic_auth.enabled
-                                    ? "Enabled"
-                                    : "Disabled"}
-                            </div>
-                        </div>
-
                         <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label

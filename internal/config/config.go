@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,7 +24,6 @@ type Config struct {
 	PropertyMap   PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
 	ContentRules  ContentRules       `yaml:"content_rules" json:"content_rules"`
 	SnoozeUntil   string             `yaml:"snooze_until" json:"snooze_until"`
-	Security      SecurityConfig     `yaml:"security" json:"security"`
 }
 
 type SyncConfig struct {
@@ -100,14 +100,6 @@ type ContentRules struct {
 	DelimiterText     string `yaml:"delimiter_text" json:"delimiter_text"`
 }
 
-type SecurityConfig struct {
-	BasicAuth BasicAuthConfig `yaml:"basic_auth" json:"basic_auth"`
-}
-
-type BasicAuthConfig struct {
-	Enabled bool `yaml:"enabled" json:"enabled"`
-}
-
 type Env struct {
 	Notion   NotionEnv   `yaml:"notion" json:"notion"`
 	Webhook  WebhookEnv  `yaml:"webhook" json:"webhook"`
@@ -137,6 +129,7 @@ type SecurityEnv struct {
 }
 
 type BasicAuthEnv struct {
+	Enabled  bool   `yaml:"enabled" json:"enabled"`
 	Username string `yaml:"username" json:"username"`
 	Password string `yaml:"password" json:"password"`
 }
@@ -181,6 +174,7 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
 	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
 	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
+	env.Security.BasicAuth.Enabled = pickEnvBool("BASIC_AUTH_ENABLED", env.Security.BasicAuth.Enabled)
 	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
 	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
 	return env
@@ -191,6 +185,18 @@ func pickEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func pickEnvBool(key string, fallback bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func ValidateConfig(cfg Config) error {
