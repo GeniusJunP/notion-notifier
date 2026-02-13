@@ -66,3 +66,15 @@ func TestApplyEnvOverridesAppPort(t *testing.T) {
 		t.Fatalf("APP_PORT must override server port: got=%d want=%d", env.Server.Port, 19090)
 	}
 }
+
+func TestApplyEnvOverridesTLSFiles(t *testing.T) {
+	t.Setenv("APP_TLS_CERT_FILE", "/tmp/cert.pem")
+	t.Setenv("APP_TLS_KEY_FILE", "/tmp/key.pem")
+	env := ApplyEnvOverrides(Env{})
+	if env.Server.TLS.CertFile != "/tmp/cert.pem" {
+		t.Fatalf("APP_TLS_CERT_FILE must override cert path")
+	}
+	if env.Server.TLS.KeyFile != "/tmp/key.pem" {
+		t.Fatalf("APP_TLS_KEY_FILE must override key path")
+	}
+}

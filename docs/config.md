@@ -155,11 +155,16 @@ google:
   oauth_refresh_token: ""
 server:
   port: 8080
+  tls:
+    cert_file: ""
+    key_file: ""
 security:
   basic_auth:
     enabled: false
     username: ""
     password: ""
 ```
+
+`server.tls.cert_file` と `server.tls.key_file` の両方が空の場合、サーバーは自己署名証明書を自動生成してHTTPSで起動します。
 
 環境変数で上書き可能（詳細は SPEC.md 参照）。

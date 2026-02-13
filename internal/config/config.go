@@ -126,7 +126,13 @@ type GoogleEnv struct {
 }
 
 type ServerEnv struct {
-	Port int `yaml:"port" json:"port"`
+	Port int       `yaml:"port" json:"port"`
+	TLS  TLSServer `yaml:"tls" json:"tls"`
+}
+
+type TLSServer struct {
+	CertFile string `yaml:"cert_file" json:"cert_file"`
+	KeyFile  string `yaml:"key_file" json:"key_file"`
 }
 
 type SecurityEnv struct {
@@ -180,6 +186,8 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
 	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
 	env.Server.Port = pickEnvInt("APP_PORT", env.Server.Port)
+	env.Server.TLS.CertFile = pickEnv("APP_TLS_CERT_FILE", env.Server.TLS.CertFile)
+	env.Server.TLS.KeyFile = pickEnv("APP_TLS_KEY_FILE", env.Server.TLS.KeyFile)
 	env.Security.BasicAuth.Enabled = pickEnvBool("BASIC_AUTH_ENABLED", env.Security.BasicAuth.Enabled)
 	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
 	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
