@@ -334,6 +334,13 @@
           </button>
         </div>
 
+        {#if dashboardData?.snooze_active}
+          <div class="mx-3 px-3 py-2 bg-gray-100 dark:bg-gray-700/50 rounded-lg flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            <BellOff size={14} />
+            <span class="text-[10px] font-bold uppercase tracking-wider">SNOOZE ACTIVE</span>
+          </div>
+        {/if}
+
       </div>
     </nav>
   </aside>
