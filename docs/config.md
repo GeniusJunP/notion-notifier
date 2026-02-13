@@ -153,6 +153,8 @@ google:
   oauth_client_id: ""
   oauth_client_secret: ""
   oauth_refresh_token: ""
+server:
+  port: 8080
 security:
   basic_auth:
     enabled: false

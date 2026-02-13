@@ -77,9 +77,13 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 
 	// HTTP Router
 	handler := buildRouter(manager, repo, sched)
+	addr, err := resolveListenAddr(env)
+	if err != nil {
+		return nil, fmt.Errorf("config: %w", err)
+	}
 
 	httpSrv := &http.Server{
-		Addr:    ":8080",
+		Addr:    addr,
 		Handler: handler,
 	}
 
@@ -113,6 +117,17 @@ func buildRouter(cfg *config.Manager, repo *db.Repository, sched *scheduler.Sche
 	handler = middleware.BasicAuth(cfg)(handler)
 	handler = middleware.Logging(handler)
 	return handler
+}
+
+func resolveListenAddr(env config.Env) (string, error) {
+	port := env.Server.Port
+	if port == 0 {
+		port = 8080
+	}
+	if port < 1 || port > 65535 {
+		return "", fmt.Errorf("server.port must be between 1 and 65535: %d", port)
+	}
+	return fmt.Sprintf(":%d", port), nil
 }
 
 // Start begins the scheduler and HTTP server. Blocks until ctx is done.

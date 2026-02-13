@@ -104,6 +104,7 @@ type Env struct {
 	Notion   NotionEnv   `yaml:"notion" json:"notion"`
 	Webhook  WebhookEnv  `yaml:"webhook" json:"webhook"`
 	Google   GoogleEnv   `yaml:"google" json:"google"`
+	Server   ServerEnv   `yaml:"server" json:"server"`
 	Security SecurityEnv `yaml:"security" json:"security"`
 }
 
@@ -122,6 +123,10 @@ type GoogleEnv struct {
 	OAuthClientID     string `yaml:"oauth_client_id" json:"oauth_client_id"`
 	OAuthClientSecret string `yaml:"oauth_client_secret" json:"oauth_client_secret"`
 	OAuthRefreshToken string `yaml:"oauth_refresh_token" json:"oauth_refresh_token"`
+}
+
+type ServerEnv struct {
+	Port int `yaml:"port" json:"port"`
 }
 
 type SecurityEnv struct {
@@ -174,6 +179,7 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
 	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
 	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
+	env.Server.Port = pickEnvInt("APP_PORT", env.Server.Port)
 	env.Security.BasicAuth.Enabled = pickEnvBool("BASIC_AUTH_ENABLED", env.Security.BasicAuth.Enabled)
 	env.Security.BasicAuth.Username = pickEnv("BASIC_AUTH_USERNAME", env.Security.BasicAuth.Username)
 	env.Security.BasicAuth.Password = pickEnv("BASIC_AUTH_PASSWORD", env.Security.BasicAuth.Password)
@@ -193,6 +199,18 @@ func pickEnvBool(key string, fallback bool) bool {
 		return fallback
 	}
 	parsed, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func pickEnvInt(key string, fallback int) int {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(v)
 	if err != nil {
 		return fallback
 	}

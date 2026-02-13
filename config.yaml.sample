@@ -30,7 +30,7 @@ notifications:
 
         {{range .Events}}
         ### {{.Name}}
-        {{with .Date}}- **日時:** {{.}} {{end}}{{if .IsAllDay}}終日{{else}}{{with .Time}} {{.}} {{end}}{{end}}{{with .EndDate}} 〜 {{.}} {{with $.EndTime}} {{.}} {{end}}{{end}}
+        {{with .Date}}- **日時:** {{.}} {{end}}{{if .IsAllDay}}終日{{else}}{{with .Time}} {{.}} {{end}}{{end}}{{with .EndDate}} 〜 {{.}}{{end}}{{with .EndTime}} {{.}}{{end}}
         {{with .Location}}- **場所:** {{.}}{{end}}
         {{with .URL}}- **詳細:** {{.}}{{end}}
         {{with .Content}}- **メモ:**

@@ -58,3 +58,11 @@ func TestApplyEnvOverridesBasicAuthEnabled(t *testing.T) {
 		t.Fatalf("BASIC_AUTH_ENABLED=false must disable basic auth")
 	}
 }
+
+func TestApplyEnvOverridesAppPort(t *testing.T) {
+	t.Setenv("APP_PORT", "19090")
+	env := ApplyEnvOverrides(Env{})
+	if env.Server.Port != 19090 {
+		t.Fatalf("APP_PORT must override server port: got=%d want=%d", env.Server.Port, 19090)
+	}
+}

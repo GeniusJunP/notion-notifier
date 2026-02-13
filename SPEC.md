@@ -61,6 +61,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
 | `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
 | `GOOGLE_OAUTH_REFRESH_TOKEN`   | `google.oauth_refresh_token`   |
+| `APP_PORT`                     | `server.port`                  |
 | `BASIC_AUTH_ENABLED`           | `security.basic_auth.enabled`  |
 | `BASIC_AUTH_USERNAME`          | `security.basic_auth.username` |
 | `BASIC_AUTH_PASSWORD`          | `security.basic_auth.password` |
