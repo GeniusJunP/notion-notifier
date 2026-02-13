@@ -22,8 +22,10 @@
     "vite": "^5.0.12"
   },
   "dependencies": {
-    "lucide-svelte": "^0.322.0",
     "clsx": "^2.1.0",
+    "dompurify": "^3.3.1",
+    "lucide-svelte": "^0.322.0",
+    "marked": "^15.0.12",
     "tailwind-merge": "^2.2.1"
   }
 }

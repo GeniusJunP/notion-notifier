@@ -14,7 +14,6 @@
     LayoutDashboard,
     Bell,
     Calendar,
-    Clock,
     Settings,
     History,
     Menu,
@@ -35,7 +34,9 @@
   import CalendarSync from "./routes/Calendar.svelte";
   import SystemSettings from "./routes/Settings.svelte";
   import NotificationHistory from "./routes/History.svelte";
+  import PreviewModal from "./components/PreviewModal.svelte";
   import SidebarButton from "./components/SidebarButton.svelte";
+  import TemplateGuideSidebar from "./components/TemplateGuideSidebar.svelte";
   let isSidebarOpen = true;
   let isServiceActive = true;
   let isSyncing = false;
@@ -47,6 +48,9 @@
   let mediaQuery: MediaQueryList | null = null;
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
   const mainNavId = "main-navigation";
+  let guideModalOpen = false;
+  let guideModalTitle = "";
+  let guideModalContent = "";
 
   configStore.subscribe((v) => (config = v));
 
@@ -133,6 +137,12 @@
     });
   }
 
+  function openGuideModal(event: CustomEvent<{ title: string; content: string }>) {
+    guideModalTitle = event.detail.title;
+    guideModalContent = event.detail.content;
+    guideModalOpen = true;
+  }
+
   onMount(async () => {
     if (window.innerWidth < 1024) {
       isSidebarOpen = false;
@@ -202,6 +212,8 @@
         return Dashboard;
     }
   })();
+  $: showTemplateGuide =
+    $activeRoute === "/notifications" || $activeRoute === "/settings";
   $: currentDate = dateFormatter.format(now);
   $: currentWeekday = weekdayFormatter.format(now);
   $: currentTime = timeFormatter.format(now);
@@ -328,6 +340,10 @@
             </div>
           </div>
         {/if}
+
+        {#if showTemplateGuide}
+          <TemplateGuideSidebar on:openGuide={openGuideModal} />
+        {/if}
       </div>
     </nav>
   </aside>
@@ -396,7 +412,7 @@
         >
           <div
             class="w-2 h-2 rounded-full {isServiceActive
-              ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+              ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
               : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
           ></div>
           <span class="text-[10px] font-bold tracking-wider {isServiceActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
@@ -426,6 +442,13 @@
       </div>
     </main>
   </div>
+
+  <PreviewModal
+    open={guideModalOpen}
+    title={guideModalTitle}
+    content={guideModalContent}
+    on:close={() => (guideModalOpen = false)}
+  />
 
   <!-- Toast Container -->
   <div
