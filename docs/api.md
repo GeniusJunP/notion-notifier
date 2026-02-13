@@ -99,7 +99,7 @@
 
 ### GET /api/events/upcoming
 
-直近14日間の予定を同期ステータス付きで返す。
+直近14日間の予定を返す。状態は `calendar_state` のみを返す。
 
 **Response 200:**
 ```json
@@ -114,9 +114,7 @@
     "is_all_day": false,
     "location": "会議室A",
     "url": "https://notion.so/abc123",
-    "sync_status": "synced",  // cache status (backward compatibility)
-    "cache_status": "synced", // "synced" | "pending" | "unsynced"
-    "calendar_status": "present" // "present" | "missing" | "disabled" | "unavailable"
+    "calendar_state": "synced" // "disabled" | "needs_sync" | "synced" | "error"
   }
 ]
 ```
@@ -199,8 +197,7 @@ Notion同期を手動実行。
 **Response 200:**
 ```json
 {
-  "message": "⏰ 30分後に「ミーティング」",
-  "payload": "{\"content\":\"...\"}"
+  "message": "⏰ 30分後に「ミーティング」"
 }
 ```
 

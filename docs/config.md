@@ -20,15 +20,12 @@ notifications:
     - enabled: true
       minutes_before: 30  # 必須, > 0
       message: "テンプレート"
-      location: ""
-      url: ""
       conditions:
-        enabled: false
-        days_of_week: []       # 1-7 (月-日)
+        days_of_week: []       # 1-7 (月-日), 空配列=制限なし
         property_filters: []
   periodic:              # 定期通知（配列）
     - enabled: true
-      days_of_week: [1, 4]    # 1-7 (月-日)
+      days_of_week: [1, 4]    # 1-7 (月-日), 空配列=制限なし（毎日）
       time: "09:00"           # 必須, HH:mm
       days_ahead: 7           # 必須, > 0
       message: "テンプレート"
@@ -50,6 +47,8 @@ property_mapping:
   title: "名前"
   date: "日付"
   location: "場所"
+  attendees: ""          # Notion people property name
+  attendees_enabled: false
   custom: []
 
 content_rules:
@@ -76,19 +75,20 @@ security:
 | `notifications.advance[].enabled` | bool | - | false | 有効/無効 |
 | `notifications.advance[].minutes_before` | int | ○ | - | 何分前に通知 |
 | `notifications.advance[].message` | string | - | "" | Go template |
-| `notifications.advance[].conditions.enabled` | bool | - | false | 条件フィルタ有効化 |
-| `notifications.advance[].conditions.days_of_week` | []int | - | [] | 1-7 |
+| `notifications.advance[].conditions.days_of_week` | []int | - | [] | 1-7, 空配列は制限なし |
 | `notifications.advance[].conditions.property_filters` | []obj | - | [] | プロパティフィルタ |
 | `notifications.periodic[].enabled` | bool | - | false | 有効/無効 |
-| `notifications.periodic[].days_of_week` | []int | - | [] | 1-7 |
+| `notifications.periodic[].days_of_week` | []int | - | [] | 1-7, 空配列は制限なし（毎日） |
 | `notifications.periodic[].time` | string | ○ | - | HH:mm |
 | `notifications.periodic[].days_ahead` | int | ○ | - | 何日先まで |
 | `notifications.periodic[].message` | string | - | "" | Go template |
 | `webhook.schedule.content_type` | string | - | "application/json" | Content-Type |
-| `webhook.schedule.payload_template` | string | - | `{"content":"{{.Message}}"}` | ペイロードテンプレート |
+| `webhook.schedule.payload_template` | string | - | `{"content":{{json .Message}}}` | ペイロードテンプレート |
 | `calendar_sync.enabled` | bool | - | false | カレンダー同期有効化 |
 | `calendar_sync.interval_hours` | int | - | 6 | 自動同期間隔（時間） |
 | `calendar_sync.lookahead_days` | int | - | 30 | 同期対象日数 |
+| `property_mapping.attendees` | string | - | "" | 参加者メール抽出元のNotion peopleプロパティ |
+| `property_mapping.attendees_enabled` | bool | - | false | 参加者同期の有効化 |
 | `snooze_until` | string | - | "" | スヌーズ期限 (RFC3339) |
 | `security.basic_auth.enabled` | bool | - | false | Basic認証有効化 |
 
@@ -114,6 +114,7 @@ security:
 - `notifications.periodic[].days_ahead`: > 0
 - `notifications.periodic[].time`: HH:mm 形式
 - `notifications.periodic[].days_of_week`: 各要素 1-7
+- `notifications.advance[].conditions.days_of_week`: 各要素 1-7
 - `snooze_until`: 空 or RFC3339
 
 ## 認証情報 (`env.yaml`)
