@@ -165,7 +165,7 @@
                                     <div
                                         class="h-10 flex items-center justify-between px-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300"
                                     >
-                                        参加者 (People)
+                                        参加者
                                             
                                         <button
                                             on:click={() => {
@@ -223,16 +223,14 @@
                                         }
                                         class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
                                     />
-                                    <div class="flex gap-2">
-                                        <input
-                                            type="text"
-                                            bind:value={
-                                                config.property_mapping
-                                                    .attendees
-                                            }
-                                            class="flex-1 h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        bind:value={
+                                            config.property_mapping
+                                                .attendees
+                                        }
+                                        class="w-full h-10 px-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
+                                    />
                                 </div>
                             </div>
                         </div>
