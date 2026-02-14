@@ -55,10 +55,11 @@ notifications:
         {{end}}
 
 webhook:
-  schedule:
+  is_test: false
+  notification:
     content_type: "application/json"
     payload_template: '{"content":{{json .Message}}}'
-  notification:
+  internal_notification:
     content_type: "application/json"
     payload_template: '{"content":{{json .Message}}}'
 
@@ -102,8 +103,11 @@ snooze_until: ""         # RFC3339 or ""
 | `notifications.periodic[].time` | string | ○ | - | HH:mm |
 | `notifications.periodic[].days_ahead` | int | ○ | - | 何日先まで |
 | `notifications.periodic[].message` | string | - | "" | Go template |
-| `webhook.schedule.content_type` | string | - | "application/json" | Content-Type |
-| `webhook.schedule.payload_template` | string | - | `{"content":{{json .Message}}}` | ペイロードテンプレート |
+| `webhook.is_test` | bool | - | false | 内部通知テンプレートを使うテストモード |
+| `webhook.notification.content_type` | string | - | "application/json" | Content-Type |
+| `webhook.notification.payload_template` | string | - | `{"content":{{json .Message}}}` | ペイロードテンプレート |
+| `webhook.internal_notification.content_type` | string | - | "application/json" | Content-Type |
+| `webhook.internal_notification.payload_template` | string | - | `{"content":{{json .Message}}}` | ペイロードテンプレート |
 | `calendar_sync.enabled` | bool | - | false | カレンダー同期有効化 |
 | `calendar_sync.interval_hours` | int | - | 6 | 自動同期間隔（時間） |
 | `calendar_sync.lookahead_days` | int | - | 30 | 同期対象日数 |
@@ -146,8 +150,8 @@ notion:
   api_key: ""
   database_id: ""
 webhook:
-  schedule_url: ""
   notification_url: ""
+  internal_notification_url: ""
 google:
   calendar_id: ""
   oauth_client_id: ""

@@ -55,8 +55,8 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | ------------------------------ | ------------------------------ |
 | `NOTION_API_KEY`               | `notion.api_key`               |
 | `NOTION_DATABASE_ID`           | `notion.database_id`           |
-| `SCHEDULE_WEBHOOK_URL`         | `webhook.schedule_url`         |
 | `NOTIFICATION_WEBHOOK_URL`     | `webhook.notification_url`     |
+| `INTERNAL_NOTIFICATION_WEBHOOK_URL` | `webhook.internal_notification_url` |
 | `GOOGLE_CALENDAR_ID`           | `google.calendar_id`           |
 | `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
 | `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
@@ -204,10 +204,11 @@ notifications:
 
 # Webhook設定（任意JSON）
 webhook:
-  schedule:
+  is_test: false
+  notification:
     content_type: "application/json"
     payload_template: "{\"content\":\"{{.Message}}\"}"
-  notification:
+  internal_notification:
     content_type: "application/json"
     payload_template: "{\"content\":\"{{.Message}}\"}"
 
@@ -256,8 +257,8 @@ notion:
   database_id: ""
 
 webhook:
-  schedule_url: ""
   notification_url: ""
+  internal_notification_url: ""
 
 google:
   calendar_id: ""

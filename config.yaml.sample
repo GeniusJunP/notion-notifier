@@ -43,10 +43,11 @@ notifications:
 
 # Webhook設定（任意JSON）
 webhook:
-  schedule:
+  is_test: false
+  notification:
     content_type: "application/json"
     payload_template: "{\"content\":{{json .Message}}}"
-  notification:
+  internal_notification:
     content_type: "application/json"
     payload_template: "{\"content\":{{json .Message}}}"
 

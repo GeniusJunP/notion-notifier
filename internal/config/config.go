@@ -37,8 +37,9 @@ type Notifications struct {
 }
 
 type WebhookConfig struct {
-	Schedule     WebhookTarget `yaml:"schedule" json:"schedule"`
-	Notification WebhookTarget `yaml:"notification" json:"notification"`
+	IsTest               bool          `yaml:"is_test" json:"is_test"`
+	Notification         WebhookTarget `yaml:"notification" json:"notification"`
+	InternalNotification WebhookTarget `yaml:"internal_notification" json:"internal_notification"`
 }
 
 type WebhookTarget struct {
@@ -114,8 +115,8 @@ type NotionEnv struct {
 }
 
 type WebhookEnv struct {
-	ScheduleURL     string `yaml:"schedule_url" json:"schedule_url"`
-	NotificationURL string `yaml:"notification_url" json:"notification_url"`
+	NotificationURL         string `yaml:"notification_url" json:"notification_url"`
+	InternalNotificationURL string `yaml:"internal_notification_url" json:"internal_notification_url"`
 }
 
 type GoogleEnv struct {
@@ -179,8 +180,8 @@ func LoadEnv(path string) (Env, error) {
 func ApplyEnvOverrides(env Env) Env {
 	env.Notion.APIKey = pickEnv("NOTION_API_KEY", env.Notion.APIKey)
 	env.Notion.DatabaseID = pickEnv("NOTION_DATABASE_ID", env.Notion.DatabaseID)
-	env.Webhook.ScheduleURL = pickEnv("SCHEDULE_WEBHOOK_URL", env.Webhook.ScheduleURL)
 	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
+	env.Webhook.InternalNotificationURL = pickEnv("INTERNAL_NOTIFICATION_WEBHOOK_URL", env.Webhook.InternalNotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
 	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
 	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
@@ -332,25 +333,25 @@ func NormalizeConfig(cfg Config) Config {
 	}
 
 	// Webhook defaults
-	if cfg.Webhook.Schedule.ContentType == "" {
-		cfg.Webhook.Schedule.ContentType = "application/json"
-	}
 	if cfg.Webhook.Notification.ContentType == "" {
 		cfg.Webhook.Notification.ContentType = "application/json"
 	}
+	if cfg.Webhook.InternalNotification.ContentType == "" {
+		cfg.Webhook.InternalNotification.ContentType = "application/json"
+	}
 	defaultPayload := `{"content":{{json .Message}}}`
 	legacyPayload := `{"content":"{{.Message}}"}`
-	if cfg.Webhook.Schedule.PayloadTemplate == "" || cfg.Webhook.Schedule.PayloadTemplate == legacyPayload {
-		cfg.Webhook.Schedule.PayloadTemplate = defaultPayload
-	}
 	if cfg.Webhook.Notification.PayloadTemplate == "" || cfg.Webhook.Notification.PayloadTemplate == legacyPayload {
 		cfg.Webhook.Notification.PayloadTemplate = defaultPayload
+	}
+	if cfg.Webhook.InternalNotification.PayloadTemplate == "" || cfg.Webhook.InternalNotification.PayloadTemplate == legacyPayload {
+		cfg.Webhook.InternalNotification.PayloadTemplate = defaultPayload
 	}
 	if cfg.CalendarSync.LookaheadDays <= 0 {
 		cfg.CalendarSync.LookaheadDays = 30
 	}
-	cfg.Webhook.Schedule.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Schedule.PayloadTemplate)
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
+	cfg.Webhook.InternalNotification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.InternalNotification.PayloadTemplate)
 	return cfg
 }
 

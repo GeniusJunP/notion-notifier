@@ -78,3 +78,16 @@ func TestApplyEnvOverridesTLSFiles(t *testing.T) {
 		t.Fatalf("APP_TLS_KEY_FILE must override key path")
 	}
 }
+
+func TestApplyEnvOverridesWebhookURLs(t *testing.T) {
+	t.Setenv("NOTIFICATION_WEBHOOK_URL", "https://example.com/notification")
+	t.Setenv("INTERNAL_NOTIFICATION_WEBHOOK_URL", "https://example.com/internal")
+
+	env := ApplyEnvOverrides(Env{})
+	if env.Webhook.NotificationURL != "https://example.com/notification" {
+		t.Fatalf("NOTIFICATION_WEBHOOK_URL must override webhook notification url")
+	}
+	if env.Webhook.InternalNotificationURL != "https://example.com/internal" {
+		t.Fatalf("INTERNAL_NOTIFICATION_WEBHOOK_URL must override webhook internal notification url")
+	}
+}

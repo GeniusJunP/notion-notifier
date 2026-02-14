@@ -350,7 +350,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
-	if err := s.sendWebhook(ctx, notificationTypeAdvance, message, []models.TemplateEvent{templateEvent}, rule.MinutesBefore, event.NotionPageID, cfg, true); err != nil {
+	if err := s.sendWebhook(ctx, notificationTypeAdvance, message, []models.TemplateEvent{templateEvent}, rule.MinutesBefore, event.NotionPageID); err != nil {
 		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
@@ -372,7 +372,7 @@ func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config
 	if err != nil {
 		return err
 	}
-	return s.sendWebhook(ctx, notificationTypePeriodic, message, templateEvents, 0, "", cfg, true)
+	return s.sendWebhook(ctx, notificationTypePeriodic, message, templateEvents, 0, "")
 }
 
 func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
@@ -386,7 +386,7 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 	if err != nil {
 		return "", err
 	}
-	if err := s.sendWebhook(ctx, notificationTypeManual, message, templateEvents, 0, "", cfg, true); err != nil {
+	if err := s.sendWebhook(ctx, notificationTypeManual, message, templateEvents, 0, ""); err != nil {
 		return message, err
 	}
 	return message, nil
@@ -655,18 +655,17 @@ func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, e
 	return deleted
 }
 
-func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string, cfg config.Config, scheduled bool) error {
-	if scheduled && config.IsSnoozed(cfg, time.Now()) {
-		return nil
-	}
+func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string) error {
 	logging.Info("WBHK", "sending (%s)", typ)
 	envCfg, env := s.cfg.Get()
-	target := envCfg.Webhook.Notification
-	url := env.Webhook.NotificationURL
-	if scheduled {
-		target = envCfg.Webhook.Schedule
-		url = env.Webhook.ScheduleURL
+	if !envCfg.Webhook.IsTest && config.IsSnoozed(envCfg, time.Now()) {
+		return nil
 	}
+	payloadTarget := envCfg.Webhook.Notification
+	if envCfg.Webhook.IsTest {
+		payloadTarget = envCfg.Webhook.InternalNotification
+	}
+	url := env.Webhook.NotificationURL
 	payloadCtx := models.WebhookPayloadContext{
 		Type:          typ,
 		Message:       message,
@@ -676,13 +675,13 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	if len(events) > 0 {
 		payloadCtx.Event = events[0]
 	}
-	payload, err := s.renderer.RenderPayload(target.PayloadTemplate, payloadCtx)
+	payload, err := s.renderer.RenderPayload(payloadTarget.PayloadTemplate, payloadCtx)
 	if err != nil {
 		return err
 	}
 	status := "success"
 	errStr := ""
-	if err := s.webhook.Send(ctx, url, target.ContentType, []byte(payload)); err != nil {
+	if err := s.webhook.Send(ctx, url, payloadTarget.ContentType, []byte(payload)); err != nil {
 		status = "failed"
 		errStr = err.Error()
 	}

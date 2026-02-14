@@ -190,11 +190,11 @@ func setupAPIHandler(t *testing.T, calendarEnabled bool) (*http.ServeMux, *db.Re
 			Periodic: []config.PeriodicNotification{},
 		},
 		Webhook: config.WebhookConfig{
-			Schedule: config.WebhookTarget{
+			Notification: config.WebhookTarget{
 				ContentType:     "application/json",
 				PayloadTemplate: `{"content":{{json .Message}}}`,
 			},
-			Notification: config.WebhookTarget{
+			InternalNotification: config.WebhookTarget{
 				ContentType:     "application/json",
 				PayloadTemplate: `{"content":{{json .Message}}}`,
 			},

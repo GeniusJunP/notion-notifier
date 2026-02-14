@@ -46,8 +46,9 @@ export interface PeriodicNotification {
 }
 
 export interface WebhookConfig {
-  schedule: WebhookTarget;
+  is_test: boolean;
   notification: WebhookTarget;
+  internal_notification: WebhookTarget;
 }
 
 export interface WebhookTarget {
