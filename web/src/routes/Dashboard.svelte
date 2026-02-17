@@ -519,5 +519,6 @@
     open={previewOpen}
     title={previewTitle}
     content={previewContent}
+    mode="webhook"
     on:close={() => (previewOpen = false)}
 />

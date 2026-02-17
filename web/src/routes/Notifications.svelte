@@ -19,7 +19,6 @@
     let config: Config | null = null;
     configStore.subscribe((v) => (config = v));
 
-    let activeTab: "advance" | "periodic" = "advance";
     let isSaving = false;
     let previewOpen = false;
     let previewTitle = "";
@@ -474,5 +473,6 @@
     open={previewOpen}
     title={previewTitle}
     content={previewContent}
+    mode="webhook"
     on:close={() => (previewOpen = false)}
 />

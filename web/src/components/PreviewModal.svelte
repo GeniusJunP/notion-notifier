@@ -7,22 +7,38 @@
     export let open = false;
     export let title = "プレビュー";
     export let content = "";
+    export let mode: "webhook" | "guide" = "webhook";
 
     const dispatch = createEventDispatcher<{ close: void }>();
     const markdownOptions = {
         gfm: true,
         breaks: true,
     } as const;
+    const webhookRenderer = new marked.Renderer();
+    webhookRenderer.space = (token: { raw?: string }) => {
+        const raw = typeof token.raw === "string" ? token.raw : "";
+        const newlineCount = raw.split("\n").length - 1;
+        if (newlineCount <= 0) {
+            return "";
+        }
+        return "<br>".repeat(newlineCount);
+    };
 
-    function renderMarkdown(source: string): string {
+    function renderMarkdown(source: string, currentMode: "webhook" | "guide"): string {
         if (!source.trim()) {
             return "";
         }
-        const html = marked.parse(source, markdownOptions) as string;
+        const html =
+            currentMode === "webhook"
+                ? (marked.parse(source, {
+                      ...markdownOptions,
+                      renderer: webhookRenderer,
+                  }) as string)
+                : (marked.parse(source, markdownOptions) as string);
         return DOMPurify.sanitize(html);
     }
 
-    $: renderedContent = renderMarkdown(content);
+    $: renderedContent = renderMarkdown(content, mode);
 
     function close() {
         dispatch("close");
