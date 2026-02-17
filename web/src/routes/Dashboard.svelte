@@ -147,6 +147,9 @@
             });
             addToast("通知を送信しました", "success");
             openPreview("送信メッセージ", res.message);
+            try {
+                configStore.set(await api.getConfig());
+            } catch {}
         } catch (e: any) {
             addToast(`送信失敗: ${e.error || "不明なエラー"}`, "error");
         } finally {
