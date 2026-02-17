@@ -41,6 +41,9 @@ notifications:
         @everyone 今週の予定はありません！
         {{end}}
 
+  # 手動通知テンプレート（空欄で定期通知と同じデフォルト）
+  manual: ""
+
 # Webhook設定（任意JSON）
 webhook:
   is_test: false

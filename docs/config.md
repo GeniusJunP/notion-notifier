@@ -53,6 +53,17 @@ notifications:
         ## 今週の予定！📣
         @everyone 今週の予定はありません！
         {{end}}
+  manual: |              # 手動通知テンプレート
+    {{if .Events}}
+    ## 今週の予定！📣
+    @everyone **今週は {{len .Events}} 件** あります！
+    {{range .Events}}
+    ### {{.Name}}
+    {{end}}
+    {{else}}
+    ## 今週の予定！📣
+    @everyone 今週の予定はありません！
+    {{end}}
 
 webhook:
   is_test: false
@@ -103,7 +114,8 @@ snooze_until: ""         # RFC3339 or ""
 | `notifications.periodic[].time` | string | ○ | - | HH:mm |
 | `notifications.periodic[].days_ahead` | int | ○ | - | 何日先まで |
 | `notifications.periodic[].message` | string | - | "" | Go template |
-| `webhook.is_test` | bool | - | false | 内部通知テンプレートを使うテストモード |
+| `notifications.manual` | string | - | `DefaultManualMessage` | 手動通知で使う Go template |
+| `webhook.is_test` | bool | - | false | 内部通知テンプレートと内部通知URLを使うテストモード |
 | `webhook.notification.content_type` | string | - | "application/json" | Content-Type |
 | `webhook.notification.payload_template` | string | - | `{"content":{{json .Message}}}` | ペイロードテンプレート |
 | `webhook.internal_notification.content_type` | string | - | "application/json" | Content-Type |
@@ -125,7 +137,8 @@ snooze_until: ""         # RFC3339 or ""
 6. `calendar_sync.lookahead_days` が 0以下なら `30`
 7. Webhook の `content_type` が空なら `"application/json"`
 8. Webhook の `payload_template` が空ならデフォルトテンプレート
-9. テンプレート文字列の `\r\n` → `\n` 変換
+9. `notifications.manual` が空なら `DefaultManualMessage` を設定
+10. テンプレート文字列の `\r\n` → `\n` 変換
 
 ## バリデーションルール (`ValidateConfig`)
 

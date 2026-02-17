@@ -1,5 +1,7 @@
 param(
-  [string]$HostName = "example-server"
+  [string]$HostName = "example-server",
+  [ValidateSet("install", "update")]
+  [string]$Mode = "install"
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,19 +31,30 @@ Remove-Item Env:CGO_ENABLED
 Pop-Location
 
 Write-Host "[3/6] Prepare remote directories"
-ssh $HostName "mkdir -p $RemoteBase/releases/$ReleaseTs $RemoteBase/shared ~/.config/systemd/user"
+if ($Mode -eq "install") {
+  ssh $HostName "mkdir -p $RemoteBase/releases/$ReleaseTs $RemoteBase/shared ~/.config/systemd/user"
+} else {
+  ssh $HostName "mkdir -p $RemoteBase/releases/$ReleaseTs"
+}
 
 Write-Host "[4/6] Upload artifacts and runtime files"
 scp "$Root/build/notion-notifier" "$HostName`:$RemoteBase/releases/$ReleaseTs/notion-notifier"
-scp "$Root/config.yaml" "$HostName`:$RemoteBase/shared/config.yaml"
-scp "$Root/env.yaml" "$HostName`:$RemoteBase/shared/env.yaml"
-scp "$Root/data.db" "$HostName`:$RemoteBase/shared/data.db"
+if ($Mode -eq "install") {
+  scp "$Root/config.yaml" "$HostName`:$RemoteBase/shared/config.yaml"
+  scp "$Root/env.yaml" "$HostName`:$RemoteBase/shared/env.yaml"
+  scp "$Root/data.db" "$HostName`:$RemoteBase/shared/data.db"
+}
 
 Write-Host "[5/6] Set permissions and switch release"
-ssh $HostName "chmod 700 $RemoteBase $RemoteBase/shared && chmod 755 $RemoteBase/releases/$ReleaseTs $RemoteBase/releases/$ReleaseTs/notion-notifier && chmod 600 $RemoteBase/shared/config.yaml $RemoteBase/shared/env.yaml $RemoteBase/shared/data.db && ln -sfn $RemoteBase/releases/$ReleaseTs $RemoteBase/current"
+if ($Mode -eq "install") {
+  ssh $HostName "chmod 700 $RemoteBase $RemoteBase/shared && chmod 755 $RemoteBase/releases/$ReleaseTs $RemoteBase/releases/$ReleaseTs/notion-notifier && chmod 600 $RemoteBase/shared/config.yaml $RemoteBase/shared/env.yaml $RemoteBase/shared/data.db && ln -sfn $RemoteBase/releases/$ReleaseTs $RemoteBase/current"
+} else {
+  ssh $HostName "chmod 755 $RemoteBase/releases/$ReleaseTs $RemoteBase/releases/$ReleaseTs/notion-notifier && ln -sfn $RemoteBase/releases/$ReleaseTs $RemoteBase/current"
+}
 
-Write-Host "[6/6] Install/restart user service"
-$serviceScript = @'
+Write-Host "[6/6] $Mode: service operation"
+if ($Mode -eq "install") {
+  $serviceScript = @'
 cat > ~/.config/systemd/user/notion-notifier.service <<"UNIT"
 [Unit]
 Description=Notion Notifier
@@ -70,6 +83,13 @@ loginctl show-user "$(id -un)" -p Linger | grep -q "Linger=yes" || loginctl enab
 systemctl --user --no-pager --full status notion-notifier.service | sed -n "1,20p"
 '@
 
-ssh $HostName $serviceScript
+  ssh $HostName $serviceScript
+} else {
+  $restartScript = @'
+systemctl --user restart notion-notifier.service
+systemctl --user --no-pager --full status notion-notifier.service | sed -n "1,20p"
+'@
+  ssh $HostName $restartScript
+}
 
-Write-Host "Deployment completed: $ReleaseTs"
+Write-Host "Deployment completed ($Mode): $ReleaseTs"

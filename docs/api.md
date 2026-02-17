@@ -53,7 +53,8 @@
   "sync": { "check_interval": 15 },
   "notifications": {
     "advance": [...],
-    "periodic": [...]
+    "periodic": [...],
+    "manual": "{{if .Events}}..."
   },
   "webhook": { ... },
   "calendar_sync": { ... },
@@ -228,6 +229,7 @@ Notion同期を手動実行。
 ```json
 {
   "advance": "## 予定リマインド！⏰\n@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！...",
-  "periodic": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！..."
+  "periodic": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！...",
+  "manual": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！..."
 }
 ```
