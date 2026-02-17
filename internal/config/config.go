@@ -33,6 +33,7 @@ type SyncConfig struct {
 type Notifications struct {
 	Advance  []AdvanceNotification  `yaml:"advance" json:"advance"`
 	Periodic []PeriodicNotification `yaml:"periodic" json:"periodic"`
+	Manual   string                 `yaml:"manual" json:"manual"`
 	Weekly   []PeriodicNotification `yaml:"weekly" json:"-"`
 }
 
@@ -316,6 +317,10 @@ func NormalizeConfig(cfg Config) Config {
 		cfg.Notifications.Periodic = cfg.Notifications.Weekly
 	}
 	cfg.Notifications.Weekly = nil
+	if cfg.Notifications.Manual == "" {
+		cfg.Notifications.Manual = DefaultManualMessage
+	}
+	cfg.Notifications.Manual = SanitizeTemplate(cfg.Notifications.Manual)
 
 	// Timezone default
 	if cfg.Timezone == "" {
@@ -384,10 +389,14 @@ const DefaultPeriodicMessage = "{{if .Events}}\n" +
 	"@everyone 今週の予定はありません！\n" +
 	"{{end}}"
 
+// DefaultManualMessage is the default message template for manual notifications.
+const DefaultManualMessage = DefaultPeriodicMessage
+
 // DefaultTemplates returns the default message templates keyed by type.
 func DefaultTemplates() map[string]string {
 	return map[string]string{
 		"advance":  DefaultAdvanceMessage,
 		"periodic": DefaultPeriodicMessage,
+		"manual":   DefaultManualMessage,
 	}
 }

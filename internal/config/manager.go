@@ -4,6 +4,21 @@ import (
 	"sync"
 )
 
+type ValidationError struct {
+	Err error
+}
+
+func (e ValidationError) Error() string {
+	if e.Err == nil {
+		return "validation failed"
+	}
+	return e.Err.Error()
+}
+
+func (e ValidationError) Unwrap() error {
+	return e.Err
+}
+
 type Manager struct {
 	mu      sync.RWMutex
 	cfg     Config
@@ -25,24 +40,36 @@ func NewManager(cfgPath, envPath string) (*Manager, error) {
 	return &Manager{cfg: cfg, env: env, cfgPath: cfgPath, envPath: envPath}, nil
 }
 
-func (m *Manager) Get() (Config, Env) {
+func (m *Manager) Snapshot() (Config, Env) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.cfg, m.env
 }
 
-func (m *Manager) UpdateConfig(cfg Config) error {
+func (m *Manager) Config() Config {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.cfg
+}
+
+func (m *Manager) Env() Env {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.env
+}
+
+func (m *Manager) UpdateConfig(cfg Config) (Config, error) {
 	cfg = NormalizeConfig(cfg)
 	if err := ValidateConfig(cfg); err != nil {
-		return err
+		return Config{}, ValidationError{Err: err}
 	}
 	if err := WriteConfig(m.cfgPath, cfg); err != nil {
-		return err
+		return Config{}, err
 	}
 	m.mu.Lock()
 	m.cfg = cfg
 	m.mu.Unlock()
-	return nil
+	return cfg, nil
 }
 
 func (m *Manager) Reload() error {

@@ -16,6 +16,10 @@ func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
 	if !ok {
 		t.Fatalf("periodic template is missing")
 	}
+	manual, ok := templates["manual"]
+	if !ok {
+		t.Fatalf("manual template is missing")
+	}
 
 	advanceTokens := []string{
 		"## 予定リマインド！⏰",
@@ -38,6 +42,9 @@ func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
 		if !strings.Contains(periodic, token) {
 			t.Fatalf("periodic template must contain %q", token)
 		}
+	}
+	if manual != periodic {
+		t.Fatalf("manual template must match periodic template by default")
 	}
 }
 

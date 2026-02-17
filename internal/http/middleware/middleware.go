@@ -23,7 +23,7 @@ func Logging(next http.Handler) http.Handler {
 func BasicAuth(cfg *config.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, env := cfg.Get()
+			env := cfg.Env()
 			if !env.Security.BasicAuth.Enabled {
 				next.ServeHTTP(w, r)
 				return
