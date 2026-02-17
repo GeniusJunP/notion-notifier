@@ -2,7 +2,6 @@ import { writable } from 'svelte/store';
 import type { Config } from './api';
 
 export const configStore = writable<Config | null>(null);
-export const isConfigDirty = writable(false);
 
 export interface Toast {
   id: string;

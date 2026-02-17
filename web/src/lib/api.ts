@@ -17,6 +17,7 @@ export interface SyncConfig {
 export interface Notifications {
   advance: AdvanceNotification[];
   periodic: PeriodicNotification[];
+  manual: string;
 }
 
 export interface AdvanceNotification {
