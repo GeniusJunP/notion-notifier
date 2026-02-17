@@ -75,9 +75,9 @@ func TestHandleUpcomingEventsCalendarState(t *testing.T) {
 		t.Fatalf("unexpected state for error: got=%q want=%q", got, "error")
 	}
 
-	cfg, _ := cfgMgr.Get()
+	cfg := cfgMgr.Config()
 	cfg.CalendarSync.Enabled = false
-	if err := cfgMgr.UpdateConfig(cfg); err != nil {
+	if _, err := cfgMgr.UpdateConfig(cfg); err != nil {
 		t.Fatalf("disable calendar sync: %v", err)
 	}
 
@@ -136,6 +136,55 @@ func TestHandlePreviewNotificationReturnsMessageOnly(t *testing.T) {
 	}
 }
 
+func TestHandleManualNotificationPersistsTemplateBeforeSend(t *testing.T) {
+	mux, repo, cfgMgr := setupAPIHandler(t, true)
+	defer repo.Close()
+
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	start := time.Now().In(loc).AddDate(0, 0, 1)
+	startDate := start.Format("2006-01-02")
+
+	if err := repo.UpsertEvents(context.Background(), []models.Event{
+		{
+			NotionPageID: "event-1",
+			Title:        "Planning",
+			StartDate:    startDate,
+			StartTime:    "10:00",
+			RawPropsJSON: "{}",
+			FetchedAt:    time.Now(),
+		},
+	}); err != nil {
+		t.Fatalf("upsert event: %v", err)
+	}
+
+	const template = "manual={{len .Events}}"
+	reqBody := map[string]any{
+		"template":  template,
+		"from_date": startDate,
+		"to_date":   startDate,
+	}
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/notifications/manual", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("unexpected status: got=%d want=%d body=%s", rec.Code, http.StatusInternalServerError, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "send failed") {
+		t.Fatalf("response body must include send failure: %s", rec.Body.String())
+	}
+
+	cfg := cfgMgr.Config()
+	if cfg.Notifications.Manual != template {
+		t.Fatalf("manual template must be saved before send: got=%q want=%q", cfg.Notifications.Manual, template)
+	}
+}
+
 func TestHandleDefaultTemplates(t *testing.T) {
 	mux, repo, _ := setupAPIHandler(t, true)
 	defer repo.Close()
@@ -160,6 +209,10 @@ func TestHandleDefaultTemplates(t *testing.T) {
 	if !ok {
 		t.Fatalf("response must include periodic template")
 	}
+	manual, ok := payload["manual"]
+	if !ok {
+		t.Fatalf("response must include manual template")
+	}
 
 	if !strings.Contains(advance, "## 予定リマインド！⏰") {
 		t.Fatalf("advance template must include new heading")
@@ -169,6 +222,9 @@ func TestHandleDefaultTemplates(t *testing.T) {
 	}
 	if strings.Contains(periodic, "次の予定に備えましょう！") {
 		t.Fatalf("periodic template must not include removed phrase")
+	}
+	if manual != periodic {
+		t.Fatalf("manual template must match periodic template by default")
 	}
 }
 

@@ -1,7 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { api, type DashboardData, type UpcomingEvent } from "../lib/api";
-    import { addToast } from "../lib/store";
+    import {
+        api,
+        type Config,
+        type DashboardData,
+        type UpcomingEvent,
+    } from "../lib/api";
+    import { addToast, configStore } from "../lib/store";
     import PreviewModal from "../components/PreviewModal.svelte";
     import {
         RefreshCw,
@@ -17,6 +22,7 @@
 
     let dashboard: DashboardData | null = null;
     let upcoming: UpcomingEvent[] = [];
+    let config: Config | null = null;
     let isLoading = true;
     let isSyncing = false;
 
@@ -31,6 +37,10 @@
     let previewOpen = false;
     let previewTitle = "";
     let previewContent = "";
+    configStore.subscribe((v) => (config = v));
+    $: if (config && manualTemplate === "") {
+        manualTemplate = config.notifications.manual || "";
+    }
 
     function openPreview(title: string, content: string) {
         previewTitle = title;
@@ -87,13 +97,6 @@
 
     onMount(async () => {
         await loadData();
-        // Load default template
-        try {
-            const defaults = await api.getDefaultTemplates();
-            if (defaults.periodic && !manualTemplate) {
-                manualTemplate = defaults.periodic;
-            }
-        } catch {}
     });
 
     async function handleSync() {
@@ -154,7 +157,7 @@
     async function loadDefaultTemplate() {
         try {
             const defaults = await api.getDefaultTemplates();
-            manualTemplate = defaults.periodic || "";
+            manualTemplate = defaults.manual || defaults.periodic || "";
             addToast("デフォルトテンプレートを読み込みました", "info");
         } catch {
             addToast("デフォルトテンプレートの取得に失敗しました", "error");
@@ -313,13 +316,15 @@
                     </p>
                 </div>
             </div>
-            <button
-                on:click={loadDefaultTemplate}
-                class="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
-            >
-                <RotateCcw size={12} />
-                デフォルトに戻す
-            </button>
+            <div class="flex items-center gap-3">
+                <button
+                    on:click={loadDefaultTemplate}
+                    class="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
+                >
+                    <RotateCcw size={12} />
+                    デフォルトに戻す
+                </button>
+            </div>
         </div>
 
         <div class="p-6 space-y-5">

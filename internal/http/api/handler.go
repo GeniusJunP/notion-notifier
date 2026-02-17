@@ -2,9 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"notion-notifier/internal/config"
@@ -55,8 +54,7 @@ func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getConfig(w http.ResponseWriter, _ *http.Request) {
-	cfg, _ := h.cfg.Get()
-	respondJSON(w, http.StatusOK, cfg)
+	respondJSON(w, http.StatusOK, h.cfg.Config())
 }
 
 func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
@@ -66,23 +64,21 @@ func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	incoming = config.NormalizeConfig(incoming)
-	if err := config.ValidateConfig(incoming); err != nil {
-		respondValidationError(w, "validation failed", map[string]string{
-			"config": err.Error(),
-		})
-		return
-	}
-
-	if err := h.cfg.UpdateConfig(incoming); err != nil {
+	saved, err := h.cfg.UpdateConfig(incoming)
+	if err != nil {
+		var vErr config.ValidationError
+		if errors.As(err, &vErr) {
+			respondValidationError(w, "validation failed", map[string]string{
+				"config": vErr.Error(),
+			})
+			return
+		}
 		logging.Error("CONF", "update failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "failed to save config")
 		return
 	}
 
 	logging.Info("CONF", "config updated from %s", r.RemoteAddr)
-	// Return the normalized config
-	saved, _ := h.cfg.Get()
 	respondJSON(w, http.StatusOK, saved)
 }
 
@@ -105,13 +101,18 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cfg, _ := h.cfg.Get()
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	cfg := h.cfg.Config()
+	loc := loadLocationOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	todayEnd := todayStart.AddDate(0, 0, 1)
 
-	todayEvents, _ := h.repo.ListEventsBetween(r.Context(), todayStart, todayEnd)
+	todayEvents, err := h.repo.ListEventsBetween(r.Context(), todayStart, todayEnd)
+	if err != nil {
+		logging.Error("DASH", "list events failed: %v", err)
+		respondError(w, http.StatusInternalServerError, "failed to load dashboard")
+		return
+	}
 	status := h.sched.NotionSyncStatus()
 
 	nextSync := ""
@@ -163,11 +164,16 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cfg, _ := h.cfg.Get()
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	cfg := h.cfg.Config()
+	loc := loadLocationOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 
-	events, _ := h.repo.ListUpcomingEvents(r.Context(), 14, now)
+	events, err := h.repo.ListUpcomingEvents(r.Context(), 14, now)
+	if err != nil {
+		logging.Error("EVENTS", "list upcoming events failed: %v", err)
+		respondError(w, http.StatusInternalServerError, "failed to load events")
+		return
+	}
 
 	// Build sync record map
 	ids := make([]string, 0, len(events))
@@ -178,8 +184,11 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	syncMap := map[string]models.SyncRecord{}
 	if len(ids) > 0 {
-		if m, err := h.repo.GetSyncRecordMap(r.Context(), ids); err == nil {
-			syncMap = m
+		syncMap, err = h.repo.GetSyncRecordMap(r.Context(), ids)
+		if err != nil {
+			logging.Error("EVENTS", "load sync records failed: %v", err)
+			respondError(w, http.StatusInternalServerError, "failed to load events")
+			return
 		}
 	}
 
@@ -230,7 +239,12 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, _ := h.repo.ListNotificationHistory(r.Context(), 50)
+	items, err := h.repo.ListNotificationHistory(r.Context(), 50)
+	if err != nil {
+		logging.Error("HISTORY", "load history failed: %v", err)
+		respondError(w, http.StatusInternalServerError, "failed to load history")
+		return
+	}
 	out := make([]historyResponse, 0, len(items))
 	for _, item := range items {
 		out = append(out, historyResponse{
@@ -253,7 +267,7 @@ func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := h.sched.SyncNotion(r.Context())
+	count, err := h.sched.SyncNotion()
 	if err != nil {
 		logging.Error("SYNC", "notion sync failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "sync failed: "+err.Error())
@@ -287,7 +301,7 @@ func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := h.sched.SyncCalendar(r.Context(), from, to)
+	count, err := h.sched.SyncCalendar(from, to)
 	if err != nil {
 		logging.Error("CALENDAR", "calendar sync failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "calendar sync failed: "+err.Error())
@@ -405,7 +419,16 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	message, err := h.sched.SendManualNotification(r.Context(), req.Template, from, to)
+	cfg := h.cfg.Config()
+	cfg.Notifications.Manual = req.Template
+	saved, err := h.cfg.UpdateConfig(cfg)
+	if err != nil {
+		logging.Error("CONF", "manual template save failed: %v", err)
+		respondError(w, http.StatusInternalServerError, "failed to save manual template")
+		return
+	}
+
+	message, err := h.sched.SendManualNotification(r.Context(), saved.Notifications.Manual, from, to)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "send failed: "+err.Error())
 		return
@@ -423,87 +446,3 @@ func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request)
 	}
 	respondJSON(w, http.StatusOK, config.DefaultTemplates())
 }
-
-// --- Utility ---
-
-func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
-	current, _ := cfg.Get()
-	loc, _ := time.LoadLocation(current.Timezone)
-	now := time.Now().In(loc)
-	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	to := from
-
-	fromStr = strings.TrimSpace(fromStr)
-	toStr = strings.TrimSpace(toStr)
-
-	if fromStr != "" {
-		parsed, err := parseDateInput(fromStr, loc)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-		from = parsed
-	}
-
-	if toStr != "" {
-		parsed, err := parseDateInput(toStr, loc)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-		to = parsed
-	} else if fromStr != "" {
-		to = from
-	}
-
-	if to.Before(from) {
-		return time.Time{}, time.Time{}, errToBeforeFrom
-	}
-
-	return from, to, nil
-}
-
-func parseDateInput(value string, loc *time.Location) (time.Time, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return time.Time{}, errDateRequired
-	}
-	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
-		return parsed.In(loc), nil
-	}
-	layouts := []string{
-		"2006-01-02",
-		"2006-01-02T15:04",
-		"2006-01-02 15:04",
-		"2006-01-02T15:04:05",
-	}
-	for _, layout := range layouts {
-		if parsed, err := time.ParseInLocation(layout, value, loc); err == nil {
-			return parsed, nil
-		}
-	}
-	return time.Time{}, errInvalidDateFormat
-}
-
-func formatDurationShort(d time.Duration) string {
-	if d < 0 {
-		d = -d
-	}
-	if d < time.Minute {
-		return "< 1m"
-	}
-	m := int(d.Minutes())
-	if d < time.Hour {
-		return fmt.Sprintf("%dm", m)
-	}
-	h := int(d.Hours())
-	rm := m % 60
-	if rm == 0 {
-		return fmt.Sprintf("%dh", h)
-	}
-	return fmt.Sprintf("%dh%dm", h, rm)
-}
-
-var (
-	errToBeforeFrom      = fmt.Errorf("to_date must be after from_date")
-	errDateRequired      = fmt.Errorf("date is required")
-	errInvalidDateFormat = fmt.Errorf("invalid date format")
-)
