@@ -48,7 +48,6 @@
 **Response 200:**
 ```json
 {
-  "schema_version": 1,
   "timezone": "Asia/Tokyo",
   "sync": { "check_interval": 15 },
   "notifications": {

@@ -3,11 +3,11 @@
 Generated: 2026-02-17 JST
 
 ## Coverage
-- total functions: 248
-- go functions (including tests): 202
+- total functions: 247
+- go functions (including tests): 201
 - frontend functions (ts+svelte): 45
 - script functions: 1
-- total inferred edges: 248
+- total inferred edges: 247
 
 ## Edge Matrix (Group to Group)
 | From -> To | Edges |
@@ -24,7 +24,7 @@ Generated: 2026-02-17 JST
 | `fe:web/src/routes/Notifications.svelte -> fe:web/src/routes/Notifications.svelte` | 1 |
 | `fe:web/src/routes/Settings.svelte -> fe:web/src/lib/store.ts` | 1 |
 | `go:api -> go:api` | 50 |
-| `go:api -> go:config` | 5 |
+| `go:api -> go:config` | 6 |
 | `go:api -> go:db` | 1 |
 | `go:api -> go:logging` | 13 |
 | `go:api -> go:scheduler` | 1 |
@@ -41,7 +41,7 @@ Generated: 2026-02-17 JST
 | `go:app -> go:webhook` | 1 |
 | `go:calendar -> go:calendar` | 8 |
 | `go:config -> go:config` | 22 |
-| `go:db -> go:db` | 13 |
+| `go:db -> go:db` | 11 |
 | `go:main -> go:app` | 1 |
 | `go:middleware -> go:logging` | 1 |
 | `go:middleware -> go:middleware` | 1 |
@@ -145,223 +145,222 @@ flowchart LR
     f57["internal/http/api/handler.go:(Handler).handleSync"]
     f58["internal/http/api/handler.go:(Handler).handleUpcomingEvents"]
     f59["internal/http/api/handler.go:(Handler).putConfig"]
-    f60["internal/http/api/handler.go:NewHandler"]
-    f61["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
-    f62["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
-    f63["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
-    f64["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
-    f65["internal/http/api/handler_test.go:fetchCalendarStates"]
-    f66["internal/http/api/handler_test.go:postJSON"]
-    f67["internal/http/api/handler_test.go:setupAPIHandler"]
-    f68["internal/http/api/helpers.go:requireMethod"]
-    f69["internal/http/api/helpers.go:respondError"]
-    f70["internal/http/api/helpers.go:respondJSON"]
-    f71["internal/http/api/helpers.go:respondValidationError"]
-    f72["internal/http/api/timeutil.go:formatDurationShort"]
-    f73["internal/http/api/timeutil.go:loadLocationOrLocal"]
-    f74["internal/http/api/timeutil.go:parseDateInput"]
-    f75["internal/http/api/timeutil.go:parseDateRange"]
+    f60["internal/http/api/handler.go:(Handler).saveConfig"]
+    f61["internal/http/api/handler.go:NewHandler"]
+    f62["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
+    f63["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
+    f64["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
+    f65["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
+    f66["internal/http/api/handler_test.go:fetchCalendarStates"]
+    f67["internal/http/api/handler_test.go:postJSON"]
+    f68["internal/http/api/handler_test.go:setupAPIHandler"]
+    f69["internal/http/api/helpers.go:requireMethod"]
+    f70["internal/http/api/helpers.go:respondError"]
+    f71["internal/http/api/helpers.go:respondJSON"]
+    f72["internal/http/api/helpers.go:respondValidationError"]
+    f73["internal/http/api/timeutil.go:formatDurationShort"]
+    f74["internal/http/api/timeutil.go:loadLocationOrLocal"]
+    f75["internal/http/api/timeutil.go:parseDateInput"]
+    f76["internal/http/api/timeutil.go:parseDateRange"]
   end
   subgraph sg12["go:app"]
-    f76["internal/app/app.go:(App).Close"]
-    f77["internal/app/app.go:(App).Start"]
-    f78["internal/app/app.go:New"]
-    f79["internal/app/app.go:buildRouter"]
-    f80["internal/app/app.go:generateSelfSignedCert"]
-    f81["internal/app/app.go:resolveServerRuntime"]
+    f77["internal/app/app.go:(App).Close"]
+    f78["internal/app/app.go:(App).Start"]
+    f79["internal/app/app.go:New"]
+    f80["internal/app/app.go:buildRouter"]
+    f81["internal/app/app.go:generateSelfSignedCert"]
+    f82["internal/app/app.go:resolveServerRuntime"]
   end
   subgraph sg13["go:calendar"]
-    f82["internal/calendar/google.go:(Client).DeleteEvent"]
-    f83["internal/calendar/google.go:(Client).ListEvents"]
-    f84["internal/calendar/google.go:(Client).UpsertEvent"]
-    f85["internal/calendar/google.go:(ClientOptions).Fingerprint"]
-    f86["internal/calendar/google.go:(ClientOptions).IsConfigured"]
-    f87["internal/calendar/google.go:(ClientOptions).Validate"]
-    f88["internal/calendar/google.go:(ClientOptions).normalize"]
-    f89["internal/calendar/google.go:EventMatchesNotion"]
-    f90["internal/calendar/google.go:NewClient"]
-    f91["internal/calendar/google.go:buildStartEnd"]
-    f92["internal/calendar/google.go:equalEmails"]
-    f93["internal/calendar/google.go:extractEmails"]
-    f94["internal/calendar/google.go:mapEvent"]
-    f95["internal/calendar/google.go:normalizeDateTime"]
-    f96["internal/calendar/google.go:sameDateOrDateTime"]
+    f83["internal/calendar/google.go:(Client).DeleteEvent"]
+    f84["internal/calendar/google.go:(Client).ListEvents"]
+    f85["internal/calendar/google.go:(Client).UpsertEvent"]
+    f86["internal/calendar/google.go:(ClientOptions).Fingerprint"]
+    f87["internal/calendar/google.go:(ClientOptions).IsConfigured"]
+    f88["internal/calendar/google.go:(ClientOptions).Validate"]
+    f89["internal/calendar/google.go:(ClientOptions).normalize"]
+    f90["internal/calendar/google.go:EventMatchesNotion"]
+    f91["internal/calendar/google.go:NewClient"]
+    f92["internal/calendar/google.go:buildStartEnd"]
+    f93["internal/calendar/google.go:equalEmails"]
+    f94["internal/calendar/google.go:extractEmails"]
+    f95["internal/calendar/google.go:mapEvent"]
+    f96["internal/calendar/google.go:normalizeDateTime"]
+    f97["internal/calendar/google.go:sameDateOrDateTime"]
   end
   subgraph sg14["go:config"]
-    f97["internal/config/config.go:ApplyEnvOverrides"]
-    f98["internal/config/config.go:DefaultTemplates"]
-    f99["internal/config/config.go:IsSnoozed"]
-    f100["internal/config/config.go:LoadConfig"]
-    f101["internal/config/config.go:LoadEnv"]
-    f102["internal/config/config.go:NormalizeConfig"]
-    f103["internal/config/config.go:SanitizeTemplate"]
-    f104["internal/config/config.go:ValidateConfig"]
-    f105["internal/config/config.go:WriteConfig"]
-    f106["internal/config/config.go:pickEnv"]
-    f107["internal/config/config.go:pickEnvBool"]
-    f108["internal/config/config.go:pickEnvInt"]
-    f109["internal/config/config.go:validateHHMM"]
-    f110["internal/config/config_test.go:TestApplyEnvOverridesAppPort"]
-    f111["internal/config/config_test.go:TestApplyEnvOverridesBasicAuthEnabled"]
-    f112["internal/config/config_test.go:TestApplyEnvOverridesTLSFiles"]
-    f113["internal/config/config_test.go:TestApplyEnvOverridesWebhookURLs"]
-    f114["internal/config/config_test.go:TestDefaultTemplatesContainExpectedTokens"]
-    f115["internal/config/manager.go:(Manager).Config"]
-    f116["internal/config/manager.go:(Manager).Env"]
-    f117["internal/config/manager.go:(Manager).Reload"]
-    f118["internal/config/manager.go:(Manager).Snapshot"]
-    f119["internal/config/manager.go:(Manager).UpdateConfig"]
-    f120["internal/config/manager.go:(ValidationError).Error"]
-    f121["internal/config/manager.go:(ValidationError).Unwrap"]
-    f122["internal/config/manager.go:NewManager"]
+    f98["internal/config/config.go:ApplyEnvOverrides"]
+    f99["internal/config/config.go:DefaultTemplates"]
+    f100["internal/config/config.go:IsSnoozed"]
+    f101["internal/config/config.go:LoadConfig"]
+    f102["internal/config/config.go:LoadEnv"]
+    f103["internal/config/config.go:NormalizeConfig"]
+    f104["internal/config/config.go:SanitizeTemplate"]
+    f105["internal/config/config.go:ValidateConfig"]
+    f106["internal/config/config.go:WriteConfig"]
+    f107["internal/config/config.go:pickEnv"]
+    f108["internal/config/config.go:pickEnvBool"]
+    f109["internal/config/config.go:pickEnvInt"]
+    f110["internal/config/config.go:validateHHMM"]
+    f111["internal/config/config_test.go:TestApplyEnvOverridesAppPort"]
+    f112["internal/config/config_test.go:TestApplyEnvOverridesBasicAuthEnabled"]
+    f113["internal/config/config_test.go:TestApplyEnvOverridesTLSFiles"]
+    f114["internal/config/config_test.go:TestApplyEnvOverridesWebhookURLs"]
+    f115["internal/config/config_test.go:TestDefaultTemplatesContainExpectedTokens"]
+    f116["internal/config/manager.go:(Manager).Config"]
+    f117["internal/config/manager.go:(Manager).Env"]
+    f118["internal/config/manager.go:(Manager).Reload"]
+    f119["internal/config/manager.go:(Manager).Snapshot"]
+    f120["internal/config/manager.go:(Manager).UpdateConfig"]
+    f121["internal/config/manager.go:(ValidationError).Error"]
+    f122["internal/config/manager.go:(ValidationError).Unwrap"]
+    f123["internal/config/manager.go:NewManager"]
   end
   subgraph sg15["go:db"]
-    f123["internal/db/db.go:(Repository).ClearNotificationHistory"]
-    f124["internal/db/db.go:(Repository).ClearSyncRecords"]
-    f125["internal/db/db.go:(Repository).Close"]
-    f126["internal/db/db.go:(Repository).DeleteEventsNotIn"]
-    f127["internal/db/db.go:(Repository).DeleteSyncRecord"]
-    f128["internal/db/db.go:(Repository).GetEvent"]
-    f129["internal/db/db.go:(Repository).GetSyncRecordMap"]
-    f130["internal/db/db.go:(Repository).InsertNotificationHistory"]
-    f131["internal/db/db.go:(Repository).ListEventsBetween"]
-    f132["internal/db/db.go:(Repository).ListNotificationHistory"]
-    f133["internal/db/db.go:(Repository).ListOrphanedSyncRecords"]
-    f134["internal/db/db.go:(Repository).ListPendingAdvanceSchedules"]
-    f135["internal/db/db.go:(Repository).ListSyncRecords"]
-    f136["internal/db/db.go:(Repository).ListUpcomingEvents"]
-    f137["internal/db/db.go:(Repository).MarkAdvanceScheduleFired"]
-    f138["internal/db/db.go:(Repository).ReplaceAdvanceSchedules"]
-    f139["internal/db/db.go:(Repository).UpsertEvents"]
-    f140["internal/db/db.go:(Repository).UpsertSyncRecord"]
-    f141["internal/db/db.go:Open"]
-    f142["internal/db/db.go:decodeStringSlice"]
-    f143["internal/db/db.go:encodeStringSlice"]
-    f144["internal/db/db.go:scanEvents"]
-    f145["internal/db/db_test.go:TestMigrateSyncRecordsAddsAttemptedFromLegacySchema"]
+    f124["internal/db/db.go:(Repository).ClearNotificationHistory"]
+    f125["internal/db/db.go:(Repository).ClearSyncRecords"]
+    f126["internal/db/db.go:(Repository).Close"]
+    f127["internal/db/db.go:(Repository).DeleteEventsNotIn"]
+    f128["internal/db/db.go:(Repository).DeleteSyncRecord"]
+    f129["internal/db/db.go:(Repository).GetEvent"]
+    f130["internal/db/db.go:(Repository).GetSyncRecordMap"]
+    f131["internal/db/db.go:(Repository).InsertNotificationHistory"]
+    f132["internal/db/db.go:(Repository).ListEventsBetween"]
+    f133["internal/db/db.go:(Repository).ListNotificationHistory"]
+    f134["internal/db/db.go:(Repository).ListOrphanedSyncRecords"]
+    f135["internal/db/db.go:(Repository).ListPendingAdvanceSchedules"]
+    f136["internal/db/db.go:(Repository).ListSyncRecords"]
+    f137["internal/db/db.go:(Repository).ListUpcomingEvents"]
+    f138["internal/db/db.go:(Repository).MarkAdvanceScheduleFired"]
+    f139["internal/db/db.go:(Repository).ReplaceAdvanceSchedules"]
+    f140["internal/db/db.go:(Repository).UpsertEvents"]
+    f141["internal/db/db.go:(Repository).UpsertSyncRecord"]
+    f142["internal/db/db.go:Open"]
+    f143["internal/db/db.go:decodeStringSlice"]
+    f144["internal/db/db.go:encodeStringSlice"]
+    f145["internal/db/db.go:scanEvents"]
     f146["internal/db/db_test.go:TestReplaceAdvanceSchedulesClearsAllWhenEmpty"]
     f147["internal/db/db_test.go:TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt"]
     f148["internal/db/db_test.go:TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale"]
     f149["internal/db/db_test.go:TestUpsertEventsPersistsAttendees"]
     f150["internal/db/db_test.go:TestUpsertSyncRecordPersistsAttempted"]
     f151["internal/db/schema.go:initSchema"]
-    f152["internal/db/schema.go:migrateSyncRecords"]
   end
   subgraph sg16["go:logging"]
-    f153["internal/logging/logging.go:Error"]
-    f154["internal/logging/logging.go:Info"]
+    f152["internal/logging/logging.go:Error"]
+    f153["internal/logging/logging.go:Info"]
   end
   subgraph sg17["go:main"]
-    f155["cmd/notion-notifier/main.go:main"]
+    f154["cmd/notion-notifier/main.go:main"]
   end
   subgraph sg18["go:middleware"]
-    f156["internal/http/middleware/middleware.go:(responseRecorder).WriteHeader"]
-    f157["internal/http/middleware/middleware.go:BasicAuth"]
-    f158["internal/http/middleware/middleware.go:Logging"]
+    f155["internal/http/middleware/middleware.go:(responseRecorder).WriteHeader"]
+    f156["internal/http/middleware/middleware.go:BasicAuth"]
+    f157["internal/http/middleware/middleware.go:Logging"]
   end
   subgraph sg19["go:notion"]
-    f159["internal/notion/client.go:(Client).FetchContent"]
-    f160["internal/notion/client.go:(Client).QueryDatabase"]
-    f161["internal/notion/client.go:(Client).QueryDatabaseOnOrAfter"]
-    f162["internal/notion/client.go:(Client).doRequest"]
-    f163["internal/notion/client.go:(Client).listBlocks"]
-    f164["internal/notion/client.go:ExtractEmails"]
-    f165["internal/notion/client.go:ExtractString"]
-    f166["internal/notion/client.go:MapPagesToEvents"]
-    f167["internal/notion/client.go:New"]
-    f168["internal/notion/client.go:blockInfo"]
-    f169["internal/notion/client.go:extractContentFromBlocks"]
-    f170["internal/notion/client.go:formatBlock"]
-    f171["internal/notion/client.go:formatHeading"]
-    f172["internal/notion/client.go:headingMatches"]
-    f173["internal/notion/client.go:joinBlockText"]
-    f174["internal/notion/client.go:joinRichText"]
-    f175["internal/notion/client.go:parseDateRange"]
-    f176["internal/notion/client.go:splitDateTime"]
-    f177["internal/notion/client_test.go:TestMapPagesToEvents_DisabledAttendees"]
-    f178["internal/notion/client_test.go:TestMapPagesToEvents_MapsAttendees"]
-    f179["internal/notion/client_test.go:TestQueryDatabaseOnOrAfter_SendsDateFilter"]
-    f180["internal/notion/client_test.go:TestQueryDatabase_NoFilterWhenDateConfigMissing"]
+    f158["internal/notion/client.go:(Client).FetchContent"]
+    f159["internal/notion/client.go:(Client).QueryDatabase"]
+    f160["internal/notion/client.go:(Client).QueryDatabaseOnOrAfter"]
+    f161["internal/notion/client.go:(Client).doRequest"]
+    f162["internal/notion/client.go:(Client).listBlocks"]
+    f163["internal/notion/client.go:ExtractEmails"]
+    f164["internal/notion/client.go:ExtractString"]
+    f165["internal/notion/client.go:MapPagesToEvents"]
+    f166["internal/notion/client.go:New"]
+    f167["internal/notion/client.go:blockInfo"]
+    f168["internal/notion/client.go:extractContentFromBlocks"]
+    f169["internal/notion/client.go:formatBlock"]
+    f170["internal/notion/client.go:formatHeading"]
+    f171["internal/notion/client.go:headingMatches"]
+    f172["internal/notion/client.go:joinBlockText"]
+    f173["internal/notion/client.go:joinRichText"]
+    f174["internal/notion/client.go:parseDateRange"]
+    f175["internal/notion/client.go:splitDateTime"]
+    f176["internal/notion/client_test.go:TestMapPagesToEvents_DisabledAttendees"]
+    f177["internal/notion/client_test.go:TestMapPagesToEvents_MapsAttendees"]
+    f178["internal/notion/client_test.go:TestQueryDatabaseOnOrAfter_SendsDateFilter"]
+    f179["internal/notion/client_test.go:TestQueryDatabase_NoFilterWhenDateConfigMissing"]
   end
   subgraph sg20["go:retry"]
-    f181["internal/retry/retry.go:(Config).WithDefaults"]
-    f182["internal/retry/retry.go:BackoffDelay"]
-    f183["internal/retry/retry.go:IsRetryableStatus"]
-    f184["internal/retry/retry.go:ParseRetryAfter"]
-    f185["internal/retry/retry.go:Sleep"]
+    f180["internal/retry/retry.go:(Config).WithDefaults"]
+    f181["internal/retry/retry.go:BackoffDelay"]
+    f182["internal/retry/retry.go:IsRetryableStatus"]
+    f183["internal/retry/retry.go:ParseRetryAfter"]
+    f184["internal/retry/retry.go:Sleep"]
   end
   subgraph sg21["go:scheduler"]
-    f186["internal/scheduler/runtime.go:(Scheduler).NotionSyncStatus"]
-    f187["internal/scheduler/runtime.go:(Scheduler).cancelRuntime"]
-    f188["internal/scheduler/runtime.go:(Scheduler).clearAdvanceTimers"]
-    f189["internal/scheduler/runtime.go:(Scheduler).currentTimezone"]
-    f190["internal/scheduler/runtime.go:(Scheduler).markPeriodicSent"]
-    f191["internal/scheduler/runtime.go:(Scheduler).newRuntimeOpContext"]
-    f192["internal/scheduler/runtime.go:(Scheduler).periodicSent"]
-    f193["internal/scheduler/runtime.go:(Scheduler).runtimeContext"]
-    f194["internal/scheduler/runtime.go:(Scheduler).setNotionStatus"]
-    f195["internal/scheduler/runtime.go:(Scheduler).setRuntimeContext"]
-    f196["internal/scheduler/runtime.go:(Scheduler).withRuntimeOp"]
-    f197["internal/scheduler/worker.go:(Scheduler).PreviewAdvanceTemplate"]
-    f198["internal/scheduler/worker.go:(Scheduler).PreviewManualTemplate"]
-    f199["internal/scheduler/worker.go:(Scheduler).RebuildAdvanceSchedules"]
-    f200["internal/scheduler/worker.go:(Scheduler).Reload"]
-    f201["internal/scheduler/worker.go:(Scheduler).SchedulePendingFromDB"]
-    f202["internal/scheduler/worker.go:(Scheduler).SendManualNotification"]
-    f203["internal/scheduler/worker.go:(Scheduler).Start"]
-    f204["internal/scheduler/worker.go:(Scheduler).Stop"]
-    f205["internal/scheduler/worker.go:(Scheduler).SyncCalendar"]
-    f206["internal/scheduler/worker.go:(Scheduler).SyncNotion"]
-    f207["internal/scheduler/worker.go:(Scheduler).calendarLoop"]
-    f208["internal/scheduler/worker.go:(Scheduler).deleteCalendarEvents"]
-    f209["internal/scheduler/worker.go:(Scheduler).fireAdvance"]
-    f210["internal/scheduler/worker.go:(Scheduler).periodicLoop"]
-    f211["internal/scheduler/worker.go:(Scheduler).rebuildAdvanceSchedules"]
-    f212["internal/scheduler/worker.go:(Scheduler).renderListFromRange"]
-    f213["internal/scheduler/worker.go:(Scheduler).schedulePendingFromDB"]
-    f214["internal/scheduler/worker.go:(Scheduler).sendPeriodic"]
-    f215["internal/scheduler/worker.go:(Scheduler).sendWebhook"]
-    f216["internal/scheduler/worker.go:(Scheduler).syncCalendar"]
-    f217["internal/scheduler/worker.go:(Scheduler).syncLoop"]
-    f218["internal/scheduler/worker.go:(Scheduler).syncNotion"]
-    f219["internal/scheduler/worker.go:New"]
-    f220["internal/scheduler/worker.go:buildAdvanceSchedules"]
-    f221["internal/scheduler/worker.go:buildFilterValues"]
-    f222["internal/scheduler/worker.go:buildTemplateEvents"]
-    f223["internal/scheduler/worker.go:extractCustomValues"]
-    f224["internal/scheduler/worker.go:groupCalendarEvents"]
-    f225["internal/scheduler/worker.go:matchAdvanceConditions"]
-    f226["internal/scheduler/worker.go:matchFilter"]
-    f227["internal/scheduler/worker.go:matchesDays"]
-    f228["internal/scheduler/worker.go:notionOnOrAfterDate"]
-    f229["internal/scheduler/worker.go:parseEventStart"]
-    f230["internal/scheduler/worker.go:pickPrimaryCalendarEvent"]
-    f231["internal/scheduler/worker.go:scheduleKey"]
-    f232["internal/scheduler/worker.go:toTemplateEvent"]
-    f233["internal/scheduler/worker.go:weekdayToConfig"]
-    f234["internal/scheduler/worker_test.go:TestMatchAdvanceConditions"]
-    f235["internal/scheduler/worker_test.go:TestMatchesDays"]
-    f236["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_JSTEarlyMorningUsesPreviousUTCDate"]
-    f237["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_PSTUsesSameUTCDate"]
-    f238["internal/scheduler/worker_test.go:TestSendWebhookRecordsHistoryOnPayloadRenderError"]
-    f239["internal/scheduler/worker_test.go:TestToTemplateEvent_MapsEndDateAndTime"]
+    f185["internal/scheduler/runtime.go:(Scheduler).NotionSyncStatus"]
+    f186["internal/scheduler/runtime.go:(Scheduler).cancelRuntime"]
+    f187["internal/scheduler/runtime.go:(Scheduler).clearAdvanceTimers"]
+    f188["internal/scheduler/runtime.go:(Scheduler).currentTimezone"]
+    f189["internal/scheduler/runtime.go:(Scheduler).markPeriodicSent"]
+    f190["internal/scheduler/runtime.go:(Scheduler).newRuntimeOpContext"]
+    f191["internal/scheduler/runtime.go:(Scheduler).periodicSent"]
+    f192["internal/scheduler/runtime.go:(Scheduler).runtimeContext"]
+    f193["internal/scheduler/runtime.go:(Scheduler).setNotionStatus"]
+    f194["internal/scheduler/runtime.go:(Scheduler).setRuntimeContext"]
+    f195["internal/scheduler/runtime.go:(Scheduler).withRuntimeOp"]
+    f196["internal/scheduler/worker.go:(Scheduler).PreviewAdvanceTemplate"]
+    f197["internal/scheduler/worker.go:(Scheduler).PreviewManualTemplate"]
+    f198["internal/scheduler/worker.go:(Scheduler).RebuildAdvanceSchedules"]
+    f199["internal/scheduler/worker.go:(Scheduler).Reload"]
+    f200["internal/scheduler/worker.go:(Scheduler).SchedulePendingFromDB"]
+    f201["internal/scheduler/worker.go:(Scheduler).SendManualNotification"]
+    f202["internal/scheduler/worker.go:(Scheduler).Start"]
+    f203["internal/scheduler/worker.go:(Scheduler).Stop"]
+    f204["internal/scheduler/worker.go:(Scheduler).SyncCalendar"]
+    f205["internal/scheduler/worker.go:(Scheduler).SyncNotion"]
+    f206["internal/scheduler/worker.go:(Scheduler).calendarLoop"]
+    f207["internal/scheduler/worker.go:(Scheduler).deleteCalendarEvents"]
+    f208["internal/scheduler/worker.go:(Scheduler).fireAdvance"]
+    f209["internal/scheduler/worker.go:(Scheduler).periodicLoop"]
+    f210["internal/scheduler/worker.go:(Scheduler).rebuildAdvanceSchedules"]
+    f211["internal/scheduler/worker.go:(Scheduler).renderListFromRange"]
+    f212["internal/scheduler/worker.go:(Scheduler).schedulePendingFromDB"]
+    f213["internal/scheduler/worker.go:(Scheduler).sendPeriodic"]
+    f214["internal/scheduler/worker.go:(Scheduler).sendWebhook"]
+    f215["internal/scheduler/worker.go:(Scheduler).syncCalendar"]
+    f216["internal/scheduler/worker.go:(Scheduler).syncLoop"]
+    f217["internal/scheduler/worker.go:(Scheduler).syncNotion"]
+    f218["internal/scheduler/worker.go:New"]
+    f219["internal/scheduler/worker.go:buildAdvanceSchedules"]
+    f220["internal/scheduler/worker.go:buildFilterValues"]
+    f221["internal/scheduler/worker.go:buildTemplateEvents"]
+    f222["internal/scheduler/worker.go:extractCustomValues"]
+    f223["internal/scheduler/worker.go:groupCalendarEvents"]
+    f224["internal/scheduler/worker.go:matchAdvanceConditions"]
+    f225["internal/scheduler/worker.go:matchFilter"]
+    f226["internal/scheduler/worker.go:matchesDays"]
+    f227["internal/scheduler/worker.go:notionOnOrAfterDate"]
+    f228["internal/scheduler/worker.go:parseEventStart"]
+    f229["internal/scheduler/worker.go:pickPrimaryCalendarEvent"]
+    f230["internal/scheduler/worker.go:scheduleKey"]
+    f231["internal/scheduler/worker.go:toTemplateEvent"]
+    f232["internal/scheduler/worker.go:weekdayToConfig"]
+    f233["internal/scheduler/worker_test.go:TestMatchAdvanceConditions"]
+    f234["internal/scheduler/worker_test.go:TestMatchesDays"]
+    f235["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_JSTEarlyMorningUsesPreviousUTCDate"]
+    f236["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_PSTUsesSameUTCDate"]
+    f237["internal/scheduler/worker_test.go:TestSendWebhookRecordsHistoryOnPayloadRenderError"]
+    f238["internal/scheduler/worker_test.go:TestToTemplateEvent_MapsEndDateAndTime"]
   end
   subgraph sg22["go:static"]
-    f240["internal/http/static/spa.go:NewSPAHandler"]
+    f239["internal/http/static/spa.go:NewSPAHandler"]
   end
   subgraph sg23["go:template"]
-    f241["internal/template/renderer.go:(Renderer).RenderList"]
-    f242["internal/template/renderer.go:(Renderer).RenderPayload"]
-    f243["internal/template/renderer.go:(Renderer).RenderSingle"]
-    f244["internal/template/renderer.go:New"]
-    f245["internal/template/renderer.go:newTemplate"]
+    f240["internal/template/renderer.go:(Renderer).RenderList"]
+    f241["internal/template/renderer.go:(Renderer).RenderPayload"]
+    f242["internal/template/renderer.go:(Renderer).RenderSingle"]
+    f243["internal/template/renderer.go:New"]
+    f244["internal/template/renderer.go:newTemplate"]
   end
   subgraph sg24["go:webhook"]
-    f246["internal/webhook/client.go:(Client).Send"]
-    f247["internal/webhook/client.go:New"]
+    f245["internal/webhook/client.go:(Client).Send"]
+    f246["internal/webhook/client.go:New"]
   end
   subgraph sg25["script:scripts/deploy-mac.sh"]
-    f248["scripts/deploy-mac.sh:usage"]
+    f247["scripts/deploy-mac.sh:usage"]
   end
   f2 --> f8
   f4 --> f3
@@ -391,224 +390,223 @@ flowchart LR
   f40 --> f16
   f41 --> f18
   f45 --> f18
-  f155 --> f78
-  f78 --> f78
-  f78 --> f79
-  f78 --> f80
-  f78 --> f81
-  f78 --> f122
-  f78 --> f141
-  f78 --> f167
-  f78 --> f219
-  f78 --> f244
-  f78 --> f247
-  f79 --> f60
-  f79 --> f157
-  f79 --> f158
-  f79 --> f240
-  f81 --> f78
-  f83 --> f93
+  f154 --> f79
+  f79 --> f79
+  f79 --> f80
+  f79 --> f81
+  f79 --> f82
+  f79 --> f123
+  f79 --> f142
+  f79 --> f166
+  f79 --> f218
+  f79 --> f243
+  f79 --> f246
+  f80 --> f61
+  f80 --> f156
+  f80 --> f157
+  f80 --> f239
+  f82 --> f79
   f84 --> f94
-  f89 --> f92
-  f89 --> f93
-  f89 --> f94
-  f89 --> f96
-  f94 --> f91
-  f96 --> f95
-  f97 --> f106
-  f97 --> f107
-  f97 --> f108
-  f100 --> f102
-  f100 --> f104
-  f102 --> f103
-  f104 --> f109
-  f105 --> f102
-  f110 --> f97
-  f111 --> f97
-  f112 --> f97
-  f113 --> f97
+  f85 --> f95
+  f90 --> f93
+  f90 --> f94
+  f90 --> f95
+  f90 --> f97
+  f95 --> f92
+  f97 --> f96
+  f98 --> f107
+  f98 --> f108
+  f98 --> f109
+  f101 --> f103
+  f101 --> f105
+  f103 --> f104
+  f105 --> f110
+  f106 --> f103
+  f111 --> f98
+  f112 --> f98
+  f113 --> f98
   f114 --> f98
-  f117 --> f97
-  f117 --> f100
-  f117 --> f101
-  f119 --> f102
-  f119 --> f104
-  f119 --> f105
-  f122 --> f97
-  f122 --> f100
-  f122 --> f101
-  f128 --> f142
-  f131 --> f144
-  f139 --> f143
-  f141 --> f141
-  f141 --> f151
-  f144 --> f142
-  f145 --> f141
-  f146 --> f141
-  f147 --> f141
-  f148 --> f141
-  f149 --> f141
-  f150 --> f141
-  f151 --> f152
-  f47 --> f70
-  f48 --> f68
+  f115 --> f99
+  f118 --> f98
+  f118 --> f101
+  f118 --> f102
+  f120 --> f103
+  f120 --> f105
+  f120 --> f106
+  f123 --> f98
+  f123 --> f101
+  f123 --> f102
+  f129 --> f143
+  f132 --> f145
+  f140 --> f144
+  f142 --> f142
+  f142 --> f151
+  f145 --> f143
+  f146 --> f142
+  f147 --> f142
+  f148 --> f142
+  f149 --> f142
+  f150 --> f142
+  f47 --> f71
   f48 --> f69
+  f48 --> f70
+  f48 --> f152
   f48 --> f153
-  f48 --> f154
-  f49 --> f68
   f49 --> f69
   f49 --> f70
-  f49 --> f75
+  f49 --> f71
+  f49 --> f76
+  f49 --> f152
   f49 --> f153
-  f49 --> f154
-  f50 --> f69
-  f51 --> f99
-  f51 --> f68
+  f50 --> f70
+  f51 --> f100
   f51 --> f69
   f51 --> f70
-  f51 --> f72
+  f51 --> f71
   f51 --> f73
-  f51 --> f153
-  f52 --> f98
-  f52 --> f68
-  f52 --> f70
-  f53 --> f68
+  f51 --> f74
+  f51 --> f152
+  f52 --> f99
+  f52 --> f69
+  f52 --> f71
   f53 --> f69
   f53 --> f70
-  f53 --> f153
-  f54 --> f68
+  f53 --> f71
+  f53 --> f152
   f54 --> f69
+  f54 --> f70
+  f54 --> f152
   f54 --> f153
-  f54 --> f154
-  f55 --> f68
+  f55 --> f104
   f55 --> f69
   f55 --> f70
-  f55 --> f75
-  f55 --> f153
-  f56 --> f68
+  f55 --> f71
+  f55 --> f76
+  f55 --> f152
   f56 --> f69
   f56 --> f70
-  f56 --> f75
-  f57 --> f68
+  f56 --> f71
+  f56 --> f76
   f57 --> f69
   f57 --> f70
-  f57 --> f153
-  f58 --> f68
+  f57 --> f71
+  f57 --> f152
   f58 --> f69
   f58 --> f70
-  f58 --> f73
-  f58 --> f153
-  f59 --> f69
+  f58 --> f71
+  f58 --> f74
+  f58 --> f152
   f59 --> f70
   f59 --> f71
+  f59 --> f72
+  f59 --> f152
   f59 --> f153
-  f59 --> f154
-  f61 --> f67
-  f62 --> f67
-  f63 --> f66
-  f63 --> f67
-  f64 --> f65
+  f62 --> f68
+  f63 --> f68
   f64 --> f67
-  f67 --> f102
-  f67 --> f105
-  f67 --> f122
-  f67 --> f141
-  f67 --> f60
-  f67 --> f219
-  f67 --> f244
-  f68 --> f69
+  f64 --> f68
+  f65 --> f66
+  f65 --> f68
+  f68 --> f103
+  f68 --> f106
+  f68 --> f123
+  f68 --> f142
+  f68 --> f61
+  f68 --> f218
+  f68 --> f243
   f69 --> f70
-  f71 --> f70
-  f75 --> f73
-  f75 --> f74
-  f157 --> f157
-  f158 --> f154
-  f159 --> f169
-  f161 --> f167
-  f162 --> f182
-  f162 --> f183
-  f162 --> f184
-  f162 --> f185
-  f165 --> f165
+  f70 --> f71
+  f72 --> f71
+  f76 --> f74
+  f76 --> f75
+  f156 --> f156
+  f157 --> f153
+  f158 --> f168
+  f160 --> f166
+  f161 --> f181
+  f161 --> f182
+  f161 --> f183
+  f161 --> f184
+  f164 --> f164
+  f164 --> f173
+  f165 --> f163
+  f165 --> f164
   f165 --> f174
-  f166 --> f164
-  f166 --> f165
-  f166 --> f175
-  f168 --> f173
-  f169 --> f168
+  f167 --> f172
+  f168 --> f167
+  f168 --> f169
+  f168 --> f170
+  f168 --> f171
   f169 --> f170
-  f169 --> f171
-  f169 --> f172
-  f170 --> f171
-  f175 --> f176
-  f177 --> f166
+  f174 --> f175
+  f176 --> f165
+  f177 --> f165
   f178 --> f166
-  f179 --> f167
-  f180 --> f167
-  f197 --> f223
-  f197 --> f232
-  f208 --> f153
-  f208 --> f154
-  f209 --> f223
+  f179 --> f166
+  f196 --> f222
+  f196 --> f231
+  f207 --> f152
+  f207 --> f153
+  f208 --> f222
+  f208 --> f231
+  f209 --> f226
   f209 --> f232
-  f210 --> f227
-  f210 --> f233
-  f211 --> f220
-  f212 --> f222
-  f213 --> f154
-  f213 --> f231
-  f215 --> f99
+  f210 --> f219
+  f211 --> f221
+  f212 --> f153
+  f212 --> f230
+  f214 --> f100
+  f214 --> f152
+  f214 --> f153
+  f214 --> f218
+  f215 --> f90
+  f215 --> f91
+  f215 --> f152
   f215 --> f153
-  f215 --> f154
-  f215 --> f219
-  f216 --> f89
-  f216 --> f90
-  f216 --> f153
-  f216 --> f154
-  f216 --> f219
-  f216 --> f224
-  f216 --> f230
-  f218 --> f153
-  f218 --> f154
-  f218 --> f166
-  f218 --> f167
-  f218 --> f219
-  f218 --> f228
-  f220 --> f225
-  f220 --> f229
-  f221 --> f223
-  f222 --> f223
-  f222 --> f232
-  f223 --> f165
-  f225 --> f221
-  f225 --> f226
-  f225 --> f227
-  f225 --> f233
-  f234 --> f225
-  f234 --> f233
+  f215 --> f218
+  f215 --> f223
+  f215 --> f229
+  f217 --> f152
+  f217 --> f153
+  f217 --> f165
+  f217 --> f166
+  f217 --> f218
+  f217 --> f227
+  f219 --> f224
+  f219 --> f228
+  f220 --> f222
+  f221 --> f222
+  f221 --> f231
+  f222 --> f164
+  f224 --> f220
+  f224 --> f225
+  f224 --> f226
+  f224 --> f232
+  f233 --> f224
+  f233 --> f232
+  f234 --> f226
+  f234 --> f232
   f235 --> f227
-  f235 --> f233
-  f236 --> f228
-  f237 --> f228
-  f238 --> f102
-  f238 --> f105
-  f238 --> f122
-  f238 --> f141
-  f238 --> f219
-  f238 --> f244
-  f238 --> f247
-  f239 --> f232
-  f241 --> f103
-  f241 --> f245
-  f242 --> f103
-  f242 --> f245
-  f243 --> f103
-  f243 --> f245
-  f245 --> f244
-  f246 --> f182
-  f246 --> f183
-  f246 --> f184
-  f246 --> f185
-  f246 --> f247
-  f248 --> f248
+  f236 --> f227
+  f237 --> f103
+  f237 --> f106
+  f237 --> f123
+  f237 --> f142
+  f237 --> f218
+  f237 --> f243
+  f237 --> f246
+  f238 --> f231
+  f240 --> f104
+  f240 --> f244
+  f241 --> f104
+  f241 --> f244
+  f242 --> f104
+  f242 --> f244
+  f244 --> f243
+  f245 --> f181
+  f245 --> f182
+  f245 --> f183
+  f245 --> f184
+  f245 --> f246
+  f247 --> f247
 ```

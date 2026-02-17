@@ -11,11 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// CurrentSchemaVersion is the latest config schema version.
-const CurrentSchemaVersion = 1
-
 type Config struct {
-	SchemaVersion int                `yaml:"schema_version" json:"schema_version"`
 	Timezone      string             `yaml:"timezone" json:"timezone"`
 	Sync          SyncConfig         `yaml:"sync" json:"sync"`
 	Notifications Notifications      `yaml:"notifications" json:"notifications"`
@@ -34,7 +30,6 @@ type Notifications struct {
 	Advance  []AdvanceNotification  `yaml:"advance" json:"advance"`
 	Periodic []PeriodicNotification `yaml:"periodic" json:"periodic"`
 	Manual   string                 `yaml:"manual" json:"manual"`
-	Weekly   []PeriodicNotification `yaml:"weekly" json:"-"`
 }
 
 type WebhookConfig struct {
@@ -309,14 +304,6 @@ func WriteConfig(path string, cfg Config) error {
 }
 
 func NormalizeConfig(cfg Config) Config {
-	// Schema version migration
-	cfg.SchemaVersion = CurrentSchemaVersion
-
-	// Migrate legacy weekly → periodic
-	if len(cfg.Notifications.Periodic) == 0 && len(cfg.Notifications.Weekly) > 0 {
-		cfg.Notifications.Periodic = cfg.Notifications.Weekly
-	}
-	cfg.Notifications.Weekly = nil
 	if cfg.Notifications.Manual == "" {
 		cfg.Notifications.Manual = DefaultManualMessage
 	}
@@ -345,11 +332,10 @@ func NormalizeConfig(cfg Config) Config {
 		cfg.Webhook.InternalNotification.ContentType = "application/json"
 	}
 	defaultPayload := `{"content":{{json .Message}}}`
-	legacyPayload := `{"content":"{{.Message}}"}`
-	if cfg.Webhook.Notification.PayloadTemplate == "" || cfg.Webhook.Notification.PayloadTemplate == legacyPayload {
+	if cfg.Webhook.Notification.PayloadTemplate == "" {
 		cfg.Webhook.Notification.PayloadTemplate = defaultPayload
 	}
-	if cfg.Webhook.InternalNotification.PayloadTemplate == "" || cfg.Webhook.InternalNotification.PayloadTemplate == legacyPayload {
+	if cfg.Webhook.InternalNotification.PayloadTemplate == "" {
 		cfg.Webhook.InternalNotification.PayloadTemplate = defaultPayload
 	}
 	if cfg.CalendarSync.LookaheadDays <= 0 {

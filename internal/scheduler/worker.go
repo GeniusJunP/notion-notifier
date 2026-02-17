@@ -102,6 +102,12 @@ func (s *Scheduler) Reload() error {
 	s.periodicMu.Lock()
 	s.periodicLastSent = map[int]string{}
 	s.periodicMu.Unlock()
+	if _, err := s.runtimeContext(); err != nil {
+		if errors.Is(err, errSchedulerNotRunning) {
+			return nil
+		}
+		return err
+	}
 	return s.RebuildAdvanceSchedules()
 }
 

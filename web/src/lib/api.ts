@@ -1,5 +1,4 @@
 export interface Config {
-  schema_version: number;
   timezone: string;
   sync: SyncConfig;
   notifications: Notifications;

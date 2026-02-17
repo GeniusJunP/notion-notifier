@@ -4,12 +4,10 @@
 
 - `config.yaml` が唯一の永続設定ソース
 - API経由で更新されるたびに正規化（`NormalizeConfig`）→ バリデーション（`ValidateConfig`）を通過
-- `schema_version` で将来の移行に対応
 
 ## 設定ファイル構造
 
 ```yaml
-schema_version: 1        # 自動付与
 timezone: "Asia/Tokyo"   # 必須, IANA タイムゾーン
 
 sync:
@@ -101,7 +99,6 @@ snooze_until: ""         # RFC3339 or ""
 
 | フィールド | 型 | 必須 | デフォルト | 説明 |
 |---|---|---|---|---|
-| `schema_version` | int | 自動 | 1 | 正規化時に自動設定 |
 | `timezone` | string | ○ | "Asia/Tokyo" | IANA タイムゾーン |
 | `sync.check_interval` | int | ○ | 15 | 同期間隔（分） |
 | `notifications.advance[].enabled` | bool | - | false | 有効/無効 |
@@ -129,16 +126,14 @@ snooze_until: ""         # RFC3339 or ""
 
 ## 正規化ルール (`NormalizeConfig`)
 
-1. `schema_version` を最新版 (1) に設定
-2. `notifications.weekly` → `notifications.periodic` への移行
-3. `timezone` が空なら `"Asia/Tokyo"`
-4. `sync.check_interval` が 0以下なら `15`
-5. `calendar_sync.interval_hours` が 0以下なら `6`
-6. `calendar_sync.lookahead_days` が 0以下なら `30`
-7. Webhook の `content_type` が空なら `"application/json"`
-8. Webhook の `payload_template` が空ならデフォルトテンプレート
-9. `notifications.manual` が空なら `DefaultManualMessage` を設定
-10. テンプレート文字列の `\r\n` → `\n` 変換
+1. `timezone` が空なら `"Asia/Tokyo"`
+2. `sync.check_interval` が 0以下なら `15`
+3. `calendar_sync.interval_hours` が 0以下なら `6`
+4. `calendar_sync.lookahead_days` が 0以下なら `30`
+5. Webhook の `content_type` が空なら `"application/json"`
+6. Webhook の `payload_template` が空ならデフォルトテンプレート
+7. `notifications.manual` が空なら `DefaultManualMessage` を設定
+8. テンプレート文字列の `\r\n` → `\n` 変換
 
 ## バリデーションルール (`ValidateConfig`)
 

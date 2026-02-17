@@ -64,7 +64,7 @@ func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saved, err := h.cfg.UpdateConfig(incoming)
+	saved, err := h.saveConfig(incoming)
 	if err != nil {
 		var vErr config.ValidationError
 		if errors.As(err, &vErr) {
@@ -410,16 +410,16 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	template := config.SanitizeTemplate(req.Template)
 	cfg := h.cfg.Config()
-	cfg.Notifications.Manual = req.Template
-	saved, err := h.cfg.UpdateConfig(cfg)
-	if err != nil {
+	cfg.Notifications.Manual = template
+	if _, err := h.saveConfig(cfg); err != nil {
 		logging.Error("CONF", "manual template save failed: %v", err)
 		respondError(w, http.StatusInternalServerError, "failed to save manual template")
 		return
 	}
 
-	message, err := h.sched.SendManualNotification(r.Context(), saved.Notifications.Manual, from, to)
+	message, err := h.sched.SendManualNotification(r.Context(), template, from, to)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "send failed: "+err.Error())
 		return
@@ -435,4 +435,17 @@ func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusOK, config.DefaultTemplates())
+}
+
+func (h *Handler) saveConfig(next config.Config) (config.Config, error) {
+	saved, err := h.cfg.UpdateConfig(next)
+	if err != nil {
+		return config.Config{}, err
+	}
+	if h.sched != nil {
+		if err := h.sched.Reload(); err != nil {
+			return config.Config{}, err
+		}
+	}
+	return saved, nil
 }

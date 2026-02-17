@@ -44,9 +44,9 @@
 - [x] Publish responsibility map with Mermaid graph (`docs/function-responsibility-map.md`).
 
 ## Refactor Execution Backlog (from Global Audit)
-- [ ] Unify backend config-change hook (`UpdateConfig` success path + scheduler rebuild/reload policy in one place).
+- [x] Unify backend config-change hook (`UpdateConfig` success path + scheduler rebuild/reload policy in one place).
 - [x] Align periodic preview with periodic send semantics (`days_ahead` must drive preview query range).
-- [ ] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
+- [x] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
 - [x] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
 - [ ] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
 
@@ -64,3 +64,12 @@
 - [x] Remove frontend shim layer file (`web/src/lib/config-save.ts`) and merge behavior into `web/src/lib/store.ts`.
 - [x] Remove API thin wrappers (`decodeNotificationRequest`, `parseNotificationRange`) and fold logic into handlers.
 - [x] Keep function-level graph in sync after integration (`go run scripts/generate-function-graphs.go`).
+
+## Backward Compatibility Removal Pass (2026-02-17)
+- [x] Remove config-level backward compatibility fields and migrations (`schema_version`, `notifications.weekly` migration path).
+- [x] Remove legacy payload template fallback replacement logic from config normalization.
+- [x] Remove DB schema migration compatibility code (`migrateSyncRecords` and ALTER fallback path).
+- [x] Remove legacy migration tests tied to old DB schema assumptions.
+- [x] Sync config/API docs and sample config with non-compat-only schema.
+- [x] Verification: `go test ./...`
+- [x] Verification: `npm run check`

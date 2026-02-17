@@ -1,6 +1,6 @@
 # Function Inventory (Global Audit)
 
-Generated: 2026-02-17 09:50:21 JST
+Generated: 2026-02-17 16:08:53 JST
 
 ## Scope
 - scanned with `ls -R` and `rg`
@@ -21,7 +21,10 @@ config.md
 data-flow.md
 deployment-tutorial.md
 features.md
+function-graph-detailed.md
+function-graph-integrated.md
 function-inventory.md
+function-responsibility-map.md
 
 internal:
 app
@@ -98,6 +101,7 @@ scripts:
 deploy-linux.sh
 deploy-mac.sh
 deploy-windows.ps1
+generate-function-graphs.go
 
 web/src:
 App.svelte
@@ -128,9 +132,9 @@ Settings.svelte
 
 ## Function Count
 ```text
-go(all)=200
-go(prod only)=172
-ts(function decl)=4
+go(all)=201
+go(prod only)=174
+ts(function decl)=3
 svelte(function decl)=40
 shell(function decl)=1
 powershell(function decl)=0
@@ -160,19 +164,19 @@ internal/calendar/google.go:52:func (o ClientOptions) IsConfigured() bool {
 internal/calendar/google.go:56:func (o ClientOptions) Fingerprint() string {
 internal/calendar/google.go:67:func NewClient(ctx context.Context, opts ClientOptions) (*Client, error) {
 internal/calendar/google.go:86:func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID string, tz *time.Location) (string, string, error) {
-internal/config/config.go:150:func LoadConfig(path string) (Config, error) {
-internal/config/config.go:166:func LoadEnv(path string) (Env, error) {
-internal/config/config.go:181:func ApplyEnvOverrides(env Env) Env {
-internal/config/config.go:199:func pickEnv(key, fallback string) string {
-internal/config/config.go:206:func pickEnvBool(key string, fallback bool) bool {
-internal/config/config.go:218:func pickEnvInt(key string, fallback int) int {
-internal/config/config.go:230:func ValidateConfig(cfg Config) error {
-internal/config/config.go:279:func validateHHMM(value string) error {
-internal/config/config.go:287:func IsSnoozed(cfg Config, now time.Time) bool {
-internal/config/config.go:298:func WriteConfig(path string, cfg Config) error {
-internal/config/config.go:311:func NormalizeConfig(cfg Config) Config {
-internal/config/config.go:363:func SanitizeTemplate(input string) string {
-internal/config/config.go:396:func DefaultTemplates() map[string]string {
+internal/config/config.go:145:func LoadConfig(path string) (Config, error) {
+internal/config/config.go:161:func LoadEnv(path string) (Env, error) {
+internal/config/config.go:176:func ApplyEnvOverrides(env Env) Env {
+internal/config/config.go:194:func pickEnv(key, fallback string) string {
+internal/config/config.go:201:func pickEnvBool(key string, fallback bool) bool {
+internal/config/config.go:213:func pickEnvInt(key string, fallback int) int {
+internal/config/config.go:225:func ValidateConfig(cfg Config) error {
+internal/config/config.go:274:func validateHHMM(value string) error {
+internal/config/config.go:282:func IsSnoozed(cfg Config, now time.Time) bool {
+internal/config/config.go:293:func WriteConfig(path string, cfg Config) error {
+internal/config/config.go:306:func NormalizeConfig(cfg Config) Config {
+internal/config/config.go:349:func SanitizeTemplate(input string) string {
+internal/config/config.go:382:func DefaultTemplates() map[string]string {
 internal/config/config_test.go:51:func TestApplyEnvOverridesBasicAuthEnabled(t *testing.T) {
 internal/config/config_test.go:69:func TestApplyEnvOverridesAppPort(t *testing.T) {
 internal/config/config_test.go:77:func TestApplyEnvOverridesTLSFiles(t *testing.T) {
@@ -208,25 +212,24 @@ internal/db/db.go:386:func (r *Repository) ListOrphanedSyncRecords(ctx context.C
 internal/db/db.go:411:func (r *Repository) DeleteSyncRecord(ctx context.Context, notionPageID string) error {
 internal/db/db.go:416:func (r *Repository) DeleteEventsNotIn(ctx context.Context, ids []string) error {
 internal/db/db.go:97:func (r *Repository) ListEventsBetween(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-internal/db/db_test.go:15:func TestUpsertEventsPersistsAttendees(t *testing.T) {
-internal/db/db_test.go:164:func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
-internal/db/db_test.go:192:func TestUpsertSyncRecordPersistsAttempted(t *testing.T) {
-internal/db/db_test.go:224:func TestMigrateSyncRecordsAddsAttemptedFromLegacySchema(t *testing.T) {
-internal/db/db_test.go:51:func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
-internal/db/db_test.go:92:func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *testing.T) {
-internal/db/schema.go:75:func migrateSyncRecords(db *sql.DB) error {
-internal/db/schema.go:8:func initSchema(db *sql.DB) error {
-internal/http/api/handler.go:161:func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:236:func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
+internal/db/db_test.go:14:func TestUpsertEventsPersistsAttendees(t *testing.T) {
+internal/db/db_test.go:163:func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
+internal/db/db_test.go:191:func TestUpsertSyncRecordPersistsAttempted(t *testing.T) {
+internal/db/db_test.go:50:func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
+internal/db/db_test.go:91:func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *testing.T) {
+internal/db/schema.go:7:func initSchema(db *sql.DB) error {
+internal/http/api/handler.go:160:func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:234:func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:24:func NewHandler(cfg *config.Manager, repo *db.Repository, sched *scheduler.Scheduler) *Handler {
-internal/http/api/handler.go:264:func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:286:func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:261:func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:282:func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:29:func (h *Handler) Register(mux *http.ServeMux) {
-internal/http/api/handler.go:317:func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:335:func (h *Handler) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:364:func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:404:func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:442:func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:312:func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:329:func (h *Handler) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:357:func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:396:func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:433:func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:440:func (h *Handler) saveConfig(next config.Config) (config.Config, error) {
 internal/http/api/handler.go:45:func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:56:func (h *Handler) getConfig(w http.ResponseWriter, _ *http.Request) {
 internal/http/api/handler.go:60:func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
@@ -240,6 +243,7 @@ internal/http/api/handler_test.go:325:func postJSON(t *testing.T, mux *http.Serv
 internal/http/api/handler_test.go:92:func TestHandlePreviewNotificationReturnsMessageOnly(t *testing.T) {
 internal/http/api/helpers.go:18:func respondError(w http.ResponseWriter, status int, message string) {
 internal/http/api/helpers.go:23:func respondValidationError(w http.ResponseWriter, message string, details map[string]string) {
+internal/http/api/helpers.go:31:func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 internal/http/api/helpers.go:9:func respondJSON(w http.ResponseWriter, status int, data any) {
 internal/http/api/timeutil.go:11:func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
 internal/http/api/timeutil.go:46:func parseDateInput(value string, loc *time.Location) (time.Time, error) {
@@ -290,20 +294,21 @@ internal/scheduler/runtime.go:89:func (s *Scheduler) NotionSyncStatus() SyncStat
 internal/scheduler/runtime.go:8:func (s *Scheduler) setRuntimeContext(parent context.Context) {
 internal/scheduler/runtime.go:95:func (s *Scheduler) setNotionStatus(count int, err error) {
 internal/scheduler/worker.go:101:func (s *Scheduler) Reload() error {
-internal/scheduler/worker.go:108:func (s *Scheduler) syncLoop() {
-internal/scheduler/worker.go:130:func (s *Scheduler) periodicLoop() {
-internal/scheduler/worker.go:176:func (s *Scheduler) calendarLoop() {
-internal/scheduler/worker.go:207:func (s *Scheduler) SyncNotion() (int, error) {
-internal/scheduler/worker.go:217:func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
-internal/scheduler/worker.go:277:func (s *Scheduler) RebuildAdvanceSchedules() error {
-internal/scheduler/worker.go:281:func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
-internal/scheduler/worker.go:296:func (s *Scheduler) SchedulePendingFromDB() error {
-internal/scheduler/worker.go:300:func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
-internal/scheduler/worker.go:336:func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedule) error {
-internal/scheduler/worker.go:361:func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
-internal/scheduler/worker.go:378:func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
-internal/scheduler/worker.go:395:func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
-internal/scheduler/worker.go:411:func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:114:func (s *Scheduler) syncLoop() {
+internal/scheduler/worker.go:136:func (s *Scheduler) periodicLoop() {
+internal/scheduler/worker.go:182:func (s *Scheduler) calendarLoop() {
+internal/scheduler/worker.go:213:func (s *Scheduler) SyncNotion() (int, error) {
+internal/scheduler/worker.go:223:func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
+internal/scheduler/worker.go:283:func (s *Scheduler) RebuildAdvanceSchedules() error {
+internal/scheduler/worker.go:287:func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
+internal/scheduler/worker.go:302:func (s *Scheduler) SchedulePendingFromDB() error {
+internal/scheduler/worker.go:306:func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
+internal/scheduler/worker.go:342:func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedule) error {
+internal/scheduler/worker.go:367:func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
+internal/scheduler/worker.go:379:func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:390:func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
+internal/scheduler/worker.go:406:func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:411:func (s *Scheduler) renderListFromRange(ctx context.Context, template string, from, to time.Time) (string, []models.TemplateEvent, error) {
 internal/scheduler/worker.go:425:func (s *Scheduler) SyncCalendar(from, to time.Time) (int, error) {
 internal/scheduler/worker.go:435:func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 internal/scheduler/worker.go:608:func groupCalendarEvents(events []calendar.CalendarEvent) map[string][]calendar.CalendarEvent {
@@ -314,16 +319,16 @@ internal/scheduler/worker.go:662:func (s *Scheduler) sendWebhook(ctx context.Con
 internal/scheduler/worker.go:708:func buildAdvanceSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.AdvanceSchedule {
 internal/scheduler/worker.go:736:func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 internal/scheduler/worker.go:757:func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
-internal/scheduler/worker.go:768:func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
-internal/scheduler/worker.go:786:func buildFilterValues(ev models.Event, cfg config.Config) map[string]string {
+internal/scheduler/worker.go:768:func matchAdvanceConditions(ev models.Event, start time.Time, rule config.AdvanceNotification, cfg config.Config) bool {
+internal/scheduler/worker.go:785:func buildFilterValues(ev models.Event, cfg config.Config) map[string]string {
 internal/scheduler/worker.go:78:func (s *Scheduler) Start(ctx context.Context) {
-internal/scheduler/worker.go:798:func matchFilter(value, operator, expected string) bool {
-internal/scheduler/worker.go:813:func buildTemplateEvents(events []models.Event, mapping config.PropertyMapping) []models.TemplateEvent {
-internal/scheduler/worker.go:822:func extractCustomValues(raw string, mapping config.PropertyMapping) map[string]string {
-internal/scheduler/worker.go:837:func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateEvent {
-internal/scheduler/worker.go:852:func scheduleKey(notionPageID string, ruleIndex int) string {
-internal/scheduler/worker.go:856:func weekdayToConfig(day time.Weekday) int {
-internal/scheduler/worker.go:863:func matchesDays(days []int, weekday int) bool {
+internal/scheduler/worker.go:797:func matchFilter(value, operator, expected string) bool {
+internal/scheduler/worker.go:812:func buildTemplateEvents(events []models.Event, mapping config.PropertyMapping) []models.TemplateEvent {
+internal/scheduler/worker.go:821:func extractCustomValues(raw string, mapping config.PropertyMapping) map[string]string {
+internal/scheduler/worker.go:836:func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateEvent {
+internal/scheduler/worker.go:851:func scheduleKey(notionPageID string, ruleIndex int) string {
+internal/scheduler/worker.go:855:func weekdayToConfig(day time.Weekday) int {
+internal/scheduler/worker.go:862:func matchesDays(days []int, weekday int) bool {
 internal/scheduler/worker.go:95:func (s *Scheduler) Stop() {
 internal/scheduler/worker_test.go:116:func TestNotionOnOrAfterDate_JSTEarlyMorningUsesPreviousUTCDate(t *testing.T) {
 internal/scheduler/worker_test.go:127:func TestNotionOnOrAfterDate_PSTUsesSameUTCDate(t *testing.T) {
@@ -364,19 +369,19 @@ internal/calendar/google.go:52:func (o ClientOptions) IsConfigured() bool {
 internal/calendar/google.go:56:func (o ClientOptions) Fingerprint() string {
 internal/calendar/google.go:67:func NewClient(ctx context.Context, opts ClientOptions) (*Client, error) {
 internal/calendar/google.go:86:func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID string, tz *time.Location) (string, string, error) {
-internal/config/config.go:150:func LoadConfig(path string) (Config, error) {
-internal/config/config.go:166:func LoadEnv(path string) (Env, error) {
-internal/config/config.go:181:func ApplyEnvOverrides(env Env) Env {
-internal/config/config.go:199:func pickEnv(key, fallback string) string {
-internal/config/config.go:206:func pickEnvBool(key string, fallback bool) bool {
-internal/config/config.go:218:func pickEnvInt(key string, fallback int) int {
-internal/config/config.go:230:func ValidateConfig(cfg Config) error {
-internal/config/config.go:279:func validateHHMM(value string) error {
-internal/config/config.go:287:func IsSnoozed(cfg Config, now time.Time) bool {
-internal/config/config.go:298:func WriteConfig(path string, cfg Config) error {
-internal/config/config.go:311:func NormalizeConfig(cfg Config) Config {
-internal/config/config.go:363:func SanitizeTemplate(input string) string {
-internal/config/config.go:396:func DefaultTemplates() map[string]string {
+internal/config/config.go:145:func LoadConfig(path string) (Config, error) {
+internal/config/config.go:161:func LoadEnv(path string) (Env, error) {
+internal/config/config.go:176:func ApplyEnvOverrides(env Env) Env {
+internal/config/config.go:194:func pickEnv(key, fallback string) string {
+internal/config/config.go:201:func pickEnvBool(key string, fallback bool) bool {
+internal/config/config.go:213:func pickEnvInt(key string, fallback int) int {
+internal/config/config.go:225:func ValidateConfig(cfg Config) error {
+internal/config/config.go:274:func validateHHMM(value string) error {
+internal/config/config.go:282:func IsSnoozed(cfg Config, now time.Time) bool {
+internal/config/config.go:293:func WriteConfig(path string, cfg Config) error {
+internal/config/config.go:306:func NormalizeConfig(cfg Config) Config {
+internal/config/config.go:349:func SanitizeTemplate(input string) string {
+internal/config/config.go:382:func DefaultTemplates() map[string]string {
 internal/config/manager.go:11:func (e ValidationError) Error() string {
 internal/config/manager.go:18:func (e ValidationError) Unwrap() error {
 internal/config/manager.go:30:func NewManager(cfgPath, envPath string) (*Manager, error) {
@@ -407,25 +412,26 @@ internal/db/db.go:386:func (r *Repository) ListOrphanedSyncRecords(ctx context.C
 internal/db/db.go:411:func (r *Repository) DeleteSyncRecord(ctx context.Context, notionPageID string) error {
 internal/db/db.go:416:func (r *Repository) DeleteEventsNotIn(ctx context.Context, ids []string) error {
 internal/db/db.go:97:func (r *Repository) ListEventsBetween(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-internal/db/schema.go:75:func migrateSyncRecords(db *sql.DB) error {
-internal/db/schema.go:8:func initSchema(db *sql.DB) error {
-internal/http/api/handler.go:161:func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:236:func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
+internal/db/schema.go:7:func initSchema(db *sql.DB) error {
+internal/http/api/handler.go:160:func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:234:func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:24:func NewHandler(cfg *config.Manager, repo *db.Repository, sched *scheduler.Scheduler) *Handler {
-internal/http/api/handler.go:264:func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:286:func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:261:func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:282:func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:29:func (h *Handler) Register(mux *http.ServeMux) {
-internal/http/api/handler.go:317:func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:335:func (h *Handler) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:364:func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:404:func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Request) {
-internal/http/api/handler.go:442:func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:312:func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:329:func (h *Handler) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:357:func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:396:func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:433:func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
+internal/http/api/handler.go:440:func (h *Handler) saveConfig(next config.Config) (config.Config, error) {
 internal/http/api/handler.go:45:func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:56:func (h *Handler) getConfig(w http.ResponseWriter, _ *http.Request) {
 internal/http/api/handler.go:60:func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
 internal/http/api/handler.go:98:func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 internal/http/api/helpers.go:18:func respondError(w http.ResponseWriter, status int, message string) {
 internal/http/api/helpers.go:23:func respondValidationError(w http.ResponseWriter, message string, details map[string]string) {
+internal/http/api/helpers.go:31:func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 internal/http/api/helpers.go:9:func respondJSON(w http.ResponseWriter, status int, data any) {
 internal/http/api/timeutil.go:11:func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
 internal/http/api/timeutil.go:46:func parseDateInput(value string, loc *time.Location) (time.Time, error) {
@@ -472,20 +478,21 @@ internal/scheduler/runtime.go:89:func (s *Scheduler) NotionSyncStatus() SyncStat
 internal/scheduler/runtime.go:8:func (s *Scheduler) setRuntimeContext(parent context.Context) {
 internal/scheduler/runtime.go:95:func (s *Scheduler) setNotionStatus(count int, err error) {
 internal/scheduler/worker.go:101:func (s *Scheduler) Reload() error {
-internal/scheduler/worker.go:108:func (s *Scheduler) syncLoop() {
-internal/scheduler/worker.go:130:func (s *Scheduler) periodicLoop() {
-internal/scheduler/worker.go:176:func (s *Scheduler) calendarLoop() {
-internal/scheduler/worker.go:207:func (s *Scheduler) SyncNotion() (int, error) {
-internal/scheduler/worker.go:217:func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
-internal/scheduler/worker.go:277:func (s *Scheduler) RebuildAdvanceSchedules() error {
-internal/scheduler/worker.go:281:func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
-internal/scheduler/worker.go:296:func (s *Scheduler) SchedulePendingFromDB() error {
-internal/scheduler/worker.go:300:func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
-internal/scheduler/worker.go:336:func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedule) error {
-internal/scheduler/worker.go:361:func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
-internal/scheduler/worker.go:378:func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
-internal/scheduler/worker.go:395:func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
-internal/scheduler/worker.go:411:func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:114:func (s *Scheduler) syncLoop() {
+internal/scheduler/worker.go:136:func (s *Scheduler) periodicLoop() {
+internal/scheduler/worker.go:182:func (s *Scheduler) calendarLoop() {
+internal/scheduler/worker.go:213:func (s *Scheduler) SyncNotion() (int, error) {
+internal/scheduler/worker.go:223:func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
+internal/scheduler/worker.go:283:func (s *Scheduler) RebuildAdvanceSchedules() error {
+internal/scheduler/worker.go:287:func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
+internal/scheduler/worker.go:302:func (s *Scheduler) SchedulePendingFromDB() error {
+internal/scheduler/worker.go:306:func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
+internal/scheduler/worker.go:342:func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedule) error {
+internal/scheduler/worker.go:367:func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
+internal/scheduler/worker.go:379:func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:390:func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
+internal/scheduler/worker.go:406:func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
+internal/scheduler/worker.go:411:func (s *Scheduler) renderListFromRange(ctx context.Context, template string, from, to time.Time) (string, []models.TemplateEvent, error) {
 internal/scheduler/worker.go:425:func (s *Scheduler) SyncCalendar(from, to time.Time) (int, error) {
 internal/scheduler/worker.go:435:func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, error) {
 internal/scheduler/worker.go:608:func groupCalendarEvents(events []calendar.CalendarEvent) map[string][]calendar.CalendarEvent {
@@ -496,16 +503,16 @@ internal/scheduler/worker.go:662:func (s *Scheduler) sendWebhook(ctx context.Con
 internal/scheduler/worker.go:708:func buildAdvanceSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.AdvanceSchedule {
 internal/scheduler/worker.go:736:func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 internal/scheduler/worker.go:757:func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
-internal/scheduler/worker.go:768:func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
-internal/scheduler/worker.go:786:func buildFilterValues(ev models.Event, cfg config.Config) map[string]string {
+internal/scheduler/worker.go:768:func matchAdvanceConditions(ev models.Event, start time.Time, rule config.AdvanceNotification, cfg config.Config) bool {
+internal/scheduler/worker.go:785:func buildFilterValues(ev models.Event, cfg config.Config) map[string]string {
 internal/scheduler/worker.go:78:func (s *Scheduler) Start(ctx context.Context) {
-internal/scheduler/worker.go:798:func matchFilter(value, operator, expected string) bool {
-internal/scheduler/worker.go:813:func buildTemplateEvents(events []models.Event, mapping config.PropertyMapping) []models.TemplateEvent {
-internal/scheduler/worker.go:822:func extractCustomValues(raw string, mapping config.PropertyMapping) map[string]string {
-internal/scheduler/worker.go:837:func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateEvent {
-internal/scheduler/worker.go:852:func scheduleKey(notionPageID string, ruleIndex int) string {
-internal/scheduler/worker.go:856:func weekdayToConfig(day time.Weekday) int {
-internal/scheduler/worker.go:863:func matchesDays(days []int, weekday int) bool {
+internal/scheduler/worker.go:797:func matchFilter(value, operator, expected string) bool {
+internal/scheduler/worker.go:812:func buildTemplateEvents(events []models.Event, mapping config.PropertyMapping) []models.TemplateEvent {
+internal/scheduler/worker.go:821:func extractCustomValues(raw string, mapping config.PropertyMapping) map[string]string {
+internal/scheduler/worker.go:836:func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateEvent {
+internal/scheduler/worker.go:851:func scheduleKey(notionPageID string, ruleIndex int) string {
+internal/scheduler/worker.go:855:func weekdayToConfig(day time.Weekday) int {
+internal/scheduler/worker.go:862:func matchesDays(days []int, weekday int) bool {
 internal/scheduler/worker.go:95:func (s *Scheduler) Stop() {
 internal/template/renderer.go:14:func New() *Renderer {
 internal/template/renderer.go:18:func newTemplate(name string) *template.Template {
@@ -518,7 +525,6 @@ internal/webhook/client.go:27:func (c *Client) Send(ctx context.Context, webhook
 
 ## TypeScript Functions
 ```text
-web/src/lib/api.ts:126:async function request<T>(path: string, options?: RequestInit): Promise<T> {
 web/src/lib/store.ts:14:export function addToast(message: string, type: Toast['type'] = 'info') {
 web/src/lib/store.ts:29:export function navigate(path: string) {
 web/src/lib/store.ts:37:export function setDarkMode(value: boolean) {
@@ -526,23 +532,23 @@ web/src/lib/store.ts:37:export function setDarkMode(value: boolean) {
 
 ## Svelte Functions
 ```text
-web/src/App.svelte:111:  async function saveSnooze() {
-web/src/App.svelte:122:  async function clearSnooze() {
-web/src/App.svelte:129:  function toggleDarkMode() {
-web/src/App.svelte:137:  function openGuideModal(event: CustomEvent<{ title: string; content: string }>) {
-web/src/App.svelte:69:  function updateClock() {
-web/src/App.svelte:73:  function closeSidebar() {
-web/src/App.svelte:77:  function openSidebar() {
-web/src/App.svelte:81:  function handleGlobalKeydown(event: KeyboardEvent) {
-web/src/App.svelte:87:  async function checkHealth() {
-web/src/App.svelte:97:  async function handleSync() {
+web/src/App.svelte:112:  async function saveSnooze() {
+web/src/App.svelte:121:  async function clearSnooze() {
+web/src/App.svelte:128:  function toggleDarkMode() {
+web/src/App.svelte:136:  function openGuideModal(event: CustomEvent<{ title: string; content: string }>) {
+web/src/App.svelte:70:  function updateClock() {
+web/src/App.svelte:74:  function closeSidebar() {
+web/src/App.svelte:78:  function openSidebar() {
+web/src/App.svelte:82:  function handleGlobalKeydown(event: KeyboardEvent) {
+web/src/App.svelte:88:  async function checkHealth() {
+web/src/App.svelte:98:  async function handleSync() {
 web/src/components/PreviewModal.svelte:27:    function renderMarkdown(source: string, currentMode: "webhook" | "guide"): string {
 web/src/components/PreviewModal.svelte:43:    function close() {
 web/src/components/PreviewModal.svelte:47:    function handleKeydown(event: KeyboardEvent) {
 web/src/components/TemplateGuideSidebar.svelte:97:    function openGuideDetail() {
 web/src/routes/Calendar.svelte:27:    async function handleConfigUpdate() {
-web/src/routes/Calendar.svelte:38:    async function handleSync() {
-web/src/routes/Calendar.svelte:53:    async function handleClear() {
+web/src/routes/Calendar.svelte:34:    async function handleSync() {
+web/src/routes/Calendar.svelte:49:    async function handleClear() {
 web/src/routes/Dashboard.svelte:102:    async function handleSync() {
 web/src/routes/Dashboard.svelte:115:    async function handleManualPreview() {
 web/src/routes/Dashboard.svelte:135:    async function handleManualSend() {
@@ -553,22 +559,26 @@ web/src/routes/Dashboard.svelte:82:    async function loadData() {
 web/src/routes/History.svelte:20:    async function loadHistory() {
 web/src/routes/History.svelte:33:    async function handleClear() {
 web/src/routes/History.svelte:49:    function formatDate(isoString: string) {
-web/src/routes/Notifications.svelte:100:    async function previewTemplate(
-web/src/routes/Notifications.svelte:116:    async function resetAdvanceTemplate(index: number) {
-web/src/routes/Notifications.svelte:129:    async function resetPeriodicTemplate(index: number) {
-web/src/routes/Notifications.svelte:145:    function toggleDay(list: number[], day: number) {
+web/src/routes/Notifications.svelte:124:    async function resetAdvanceTemplate(index: number) {
+web/src/routes/Notifications.svelte:137:    async function resetPeriodicTemplate(index: number) {
+web/src/routes/Notifications.svelte:153:    function toggleDay(list: number[], day: number) {
 web/src/routes/Notifications.svelte:27:    function openPreview(title: string, content: string) {
 web/src/routes/Notifications.svelte:33:    async function saveConfig() {
-web/src/routes/Notifications.svelte:50:    function addAdvanceRule() {
-web/src/routes/Notifications.svelte:68:    function addPeriodicRule() {
-web/src/routes/Notifications.svelte:84:    function removeAdvanceRule(index: number) {
-web/src/routes/Notifications.svelte:92:    function removePeriodicRule(index: number) {
+web/src/routes/Notifications.svelte:42:    function addAdvanceRule() {
+web/src/routes/Notifications.svelte:60:    function addPeriodicRule() {
+web/src/routes/Notifications.svelte:76:    function removeAdvanceRule(index: number) {
+web/src/routes/Notifications.svelte:84:    function removePeriodicRule(index: number) {
+web/src/routes/Notifications.svelte:92:    async function previewTemplate(
 web/src/routes/Settings.svelte:21:    async function saveConfig() {
-web/src/routes/Settings.svelte:35:    function addCustomMapping() {
-web/src/routes/Settings.svelte:44:    function removeCustomMapping(index: number) {
+web/src/routes/Settings.svelte:30:    function addCustomMapping() {
+web/src/routes/Settings.svelte:39:    function removeCustomMapping(index: number) {
 ```
 
-## Script Functions
+## Shell Functions
 ```text
 scripts/deploy-mac.sh:8:usage() {
+```
+
+## PowerShell Functions
+```text
 ```

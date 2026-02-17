@@ -3,8 +3,8 @@
 Generated: 2026-02-17 JST
 
 ## Coverage
-- total functions: 248
-- go functions (including tests): 202
+- total functions: 247
+- go functions (including tests): 201
 - frontend functions (ts+svelte): 45
 - script functions: 1
 - edge rule: static same-group call references (cross-group links are shown in the integrated graph).
@@ -22,11 +22,11 @@ Generated: 2026-02-17 JST
 | `fe:web/src/routes/History.svelte` | 3 | 0 |
 | `fe:web/src/routes/Notifications.svelte` | 10 | 1 |
 | `fe:web/src/routes/Settings.svelte` | 3 | 0 |
-| `go:api` | 30 | 50 |
+| `go:api` | 31 | 50 |
 | `go:app` | 6 | 5 |
 | `go:calendar` | 15 | 8 |
 | `go:config` | 26 | 22 |
-| `go:db` | 30 | 13 |
+| `go:db` | 28 | 11 |
 | `go:logging` | 2 | 0 |
 | `go:main` | 1 | 0 |
 | `go:middleware` | 3 | 1 |
@@ -171,72 +171,73 @@ flowchart TD
   n12["internal/http/api/handler.go:(Handler).handleSync"]
   n13["internal/http/api/handler.go:(Handler).handleUpcomingEvents"]
   n14["internal/http/api/handler.go:(Handler).putConfig"]
-  n15["internal/http/api/handler.go:NewHandler"]
-  n16["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
-  n17["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
-  n18["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
-  n19["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
-  n20["internal/http/api/handler_test.go:fetchCalendarStates"]
-  n21["internal/http/api/handler_test.go:postJSON"]
-  n22["internal/http/api/handler_test.go:setupAPIHandler"]
-  n23["internal/http/api/helpers.go:requireMethod"]
-  n24["internal/http/api/helpers.go:respondError"]
-  n25["internal/http/api/helpers.go:respondJSON"]
-  n26["internal/http/api/helpers.go:respondValidationError"]
-  n27["internal/http/api/timeutil.go:formatDurationShort"]
-  n28["internal/http/api/timeutil.go:loadLocationOrLocal"]
-  n29["internal/http/api/timeutil.go:parseDateInput"]
-  n30["internal/http/api/timeutil.go:parseDateRange"]
-  n2 --> n25
-  n3 --> n23
+  n15["internal/http/api/handler.go:(Handler).saveConfig"]
+  n16["internal/http/api/handler.go:NewHandler"]
+  n17["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
+  n18["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
+  n19["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
+  n20["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
+  n21["internal/http/api/handler_test.go:fetchCalendarStates"]
+  n22["internal/http/api/handler_test.go:postJSON"]
+  n23["internal/http/api/handler_test.go:setupAPIHandler"]
+  n24["internal/http/api/helpers.go:requireMethod"]
+  n25["internal/http/api/helpers.go:respondError"]
+  n26["internal/http/api/helpers.go:respondJSON"]
+  n27["internal/http/api/helpers.go:respondValidationError"]
+  n28["internal/http/api/timeutil.go:formatDurationShort"]
+  n29["internal/http/api/timeutil.go:loadLocationOrLocal"]
+  n30["internal/http/api/timeutil.go:parseDateInput"]
+  n31["internal/http/api/timeutil.go:parseDateRange"]
+  n2 --> n26
   n3 --> n24
-  n4 --> n23
+  n3 --> n25
   n4 --> n24
   n4 --> n25
-  n4 --> n30
-  n5 --> n24
-  n6 --> n23
+  n4 --> n26
+  n4 --> n31
+  n5 --> n25
   n6 --> n24
   n6 --> n25
-  n6 --> n27
+  n6 --> n26
   n6 --> n28
-  n7 --> n23
-  n7 --> n25
-  n8 --> n23
+  n6 --> n29
+  n7 --> n24
+  n7 --> n26
   n8 --> n24
   n8 --> n25
-  n9 --> n23
+  n8 --> n26
   n9 --> n24
-  n10 --> n23
+  n9 --> n25
   n10 --> n24
   n10 --> n25
-  n10 --> n30
-  n11 --> n23
+  n10 --> n26
+  n10 --> n31
   n11 --> n24
   n11 --> n25
-  n11 --> n30
-  n12 --> n23
+  n11 --> n26
+  n11 --> n31
   n12 --> n24
   n12 --> n25
-  n13 --> n23
+  n12 --> n26
   n13 --> n24
   n13 --> n25
-  n13 --> n28
-  n14 --> n24
+  n13 --> n26
+  n13 --> n29
   n14 --> n25
   n14 --> n26
-  n16 --> n22
-  n17 --> n22
-  n18 --> n21
-  n18 --> n22
-  n19 --> n20
+  n14 --> n27
+  n17 --> n23
+  n18 --> n23
   n19 --> n22
-  n22 --> n15
-  n23 --> n24
+  n19 --> n23
+  n20 --> n21
+  n20 --> n23
+  n23 --> n16
   n24 --> n25
-  n26 --> n25
-  n30 --> n28
-  n30 --> n29
+  n25 --> n26
+  n27 --> n26
+  n31 --> n29
+  n31 --> n30
 ```
 
 ## go:app
@@ -365,27 +366,23 @@ flowchart TD
   n20["internal/db/db.go:decodeStringSlice"]
   n21["internal/db/db.go:encodeStringSlice"]
   n22["internal/db/db.go:scanEvents"]
-  n23["internal/db/db_test.go:TestMigrateSyncRecordsAddsAttemptedFromLegacySchema"]
-  n24["internal/db/db_test.go:TestReplaceAdvanceSchedulesClearsAllWhenEmpty"]
-  n25["internal/db/db_test.go:TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt"]
-  n26["internal/db/db_test.go:TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale"]
-  n27["internal/db/db_test.go:TestUpsertEventsPersistsAttendees"]
-  n28["internal/db/db_test.go:TestUpsertSyncRecordPersistsAttempted"]
-  n29["internal/db/schema.go:initSchema"]
-  n30["internal/db/schema.go:migrateSyncRecords"]
+  n23["internal/db/db_test.go:TestReplaceAdvanceSchedulesClearsAllWhenEmpty"]
+  n24["internal/db/db_test.go:TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt"]
+  n25["internal/db/db_test.go:TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale"]
+  n26["internal/db/db_test.go:TestUpsertEventsPersistsAttendees"]
+  n27["internal/db/db_test.go:TestUpsertSyncRecordPersistsAttempted"]
+  n28["internal/db/schema.go:initSchema"]
   n6 --> n20
   n9 --> n22
   n17 --> n21
   n19 --> n19
-  n19 --> n29
+  n19 --> n28
   n22 --> n20
   n23 --> n19
   n24 --> n19
   n25 --> n19
   n26 --> n19
   n27 --> n19
-  n28 --> n19
-  n29 --> n30
 ```
 
 ## go:logging
