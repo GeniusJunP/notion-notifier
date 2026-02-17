@@ -9,6 +9,7 @@ Generated: 2026-02-17 JST
   - Frontend: `rg -n 'function ...' web/src`
   - Scripts: `rg -n 'name() {' scripts/*`
 - full raw inventory: `docs/function-inventory.md`
+- full function-level graph (all functions): `docs/function-graph-detailed.md`
 
 ## Function Count by Responsibility Boundary
 

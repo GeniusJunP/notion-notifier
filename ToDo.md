@@ -35,6 +35,7 @@
 - [x] Generate all-function inventory file (`docs/function-inventory.md`).
 - [x] Count functions by language and prod/test scope.
 - [x] Classify every production function by responsibility boundary (App/API/Scheduler/DB/Config/UI).
+- [x] Generate all-function-level Mermaid graph (`docs/function-graph-detailed.md`).
 - [x] Detect duplicated write paths (config updates, history writes, sync triggers).
 - [x] Detect config-change paths that require scheduler reload/rebuild and unify the hook point.
 - [x] Detect semantic drift between preview/send behavior across routes.
