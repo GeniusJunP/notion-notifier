@@ -6,6 +6,7 @@
         type PeriodicNotification,
     } from "../lib/api";
     import { configStore, addToast } from "../lib/store";
+    import { saveConfigWithStore } from "../lib/config-save";
     import PreviewModal from "../components/PreviewModal.svelte";
     import {
         Plus,
@@ -31,20 +32,12 @@
     }
 
     async function saveConfig() {
-        if (!config) return;
         isSaving = true;
-        try {
-            const saved = await api.updateConfig(config);
-            configStore.set(saved);
-            addToast("設定を保存しました", "success");
-        } catch (e: any) {
-            addToast(
-                `保存に失敗しました: ${e.error || "不明なエラー"}`,
-                "error",
-            );
-        } finally {
-            isSaving = false;
-        }
+        await saveConfigWithStore(config, {
+            successMessage: "設定を保存しました",
+            errorMessage: "保存に失敗しました",
+        });
+        isSaving = false;
     }
 
     function addAdvanceRule() {
@@ -101,12 +94,28 @@
         template: string,
         title: string,
         minutes_before?: number,
+        days_ahead?: number,
     ) {
         try {
-            const res = await api.previewNotification({
+            const req: {
+                template: string;
+                minutes_before?: number;
+                from_date?: string;
+                to_date?: string;
+            } = {
                 template,
-                minutes_before,
-            });
+            };
+            if (minutes_before && minutes_before > 0) {
+                req.minutes_before = minutes_before;
+            } else if (days_ahead && days_ahead > 0) {
+                const from = new Date();
+                const to = new Date(
+                    Date.now() + days_ahead * 24 * 60 * 60 * 1000,
+                );
+                req.from_date = from.toISOString().split("T")[0];
+                req.to_date = to.toISOString().split("T")[0];
+            }
+            const res = await api.previewNotification(req);
             openPreview(title, res.message);
         } catch (e) {
             addToast("プレビューに失敗しました", "error");
@@ -446,6 +455,8 @@
                                                 previewTemplate(
                                                     rule.message,
                                                     "定期通知プレビュー",
+                                                    undefined,
+                                                    rule.days_ahead,
                                                 )}
                                             class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:underline"
                                         >

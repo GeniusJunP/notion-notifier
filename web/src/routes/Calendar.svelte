@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { api, type Config } from "../lib/api";
     import { configStore, addToast } from "../lib/store";
+    import { saveConfigWithStore } from "../lib/config-save";
     import {
         Calendar,
         RefreshCw,
@@ -25,14 +26,10 @@
     };
 
     async function handleConfigUpdate() {
-        if (!config) return;
-        try {
-            const saved = await api.updateConfig(config);
-            configStore.set(saved);
-            addToast("設定を保存しました", "success");
-        } catch (e) {
-            addToast("保存に失敗しました", "error");
-        }
+        await saveConfigWithStore(config, {
+            successMessage: "設定を保存しました",
+            errorMessage: "保存に失敗しました",
+        });
     }
 
     async function handleSync() {

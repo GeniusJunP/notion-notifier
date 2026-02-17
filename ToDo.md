@@ -36,6 +36,7 @@
 - [x] Count functions by language and prod/test scope.
 - [x] Classify every production function by responsibility boundary (App/API/Scheduler/DB/Config/UI).
 - [x] Generate all-function-level Mermaid graph (`docs/function-graph-detailed.md`).
+- [x] Generate integrated all-function graph (`docs/function-graph-integrated.md`).
 - [x] Detect duplicated write paths (config updates, history writes, sync triggers).
 - [x] Detect config-change paths that require scheduler reload/rebuild and unify the hook point.
 - [x] Detect semantic drift between preview/send behavior across routes.
@@ -48,3 +49,13 @@
 - [ ] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
 - [ ] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
 - [ ] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
+
+## Integration Execution Sprint (2026-02-17)
+- [x] Frontend: unify config save flow (`App/Calendar/Notifications/Settings`) into a shared helper.
+- [x] Scheduler: unify list-template-render pipeline used by periodic/manual/preview manual.
+- [x] Scheduler: remove duplicate `MarkAdvanceScheduleFired` paths in `fireAdvance`.
+- [x] Scheduler: remove duplicate event start parsing in advance schedule matching.
+- [x] API: unify notification request decode + date-range parse used by preview/manual.
+- [x] API: unify HTTP method guard boilerplate per handler.
+- [x] Verification: `go test ./internal/scheduler ./internal/http/api ./internal/config`.
+- [x] Verification: `npm run check`.

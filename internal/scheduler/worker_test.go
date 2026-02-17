@@ -105,7 +105,7 @@ func TestMatchAdvanceConditions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := matchAdvanceConditions(event, tc.rule, cfg)
+			got := matchAdvanceConditions(event, start, tc.rule, cfg)
 			if got != tc.want {
 				t.Fatalf("matchAdvanceConditions() = %v, want %v", got, tc.want)
 			}

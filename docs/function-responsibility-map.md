@@ -10,6 +10,7 @@ Generated: 2026-02-17 JST
   - Scripts: `rg -n 'name() {' scripts/*`
 - full raw inventory: `docs/function-inventory.md`
 - full function-level graph (all functions): `docs/function-graph-detailed.md`
+- unified function-level graph (cross-file/cross-package): `docs/function-graph-integrated.md`
 
 ## Function Count by Responsibility Boundary
 

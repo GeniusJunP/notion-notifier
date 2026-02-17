@@ -26,3 +26,12 @@ func respondValidationError(w http.ResponseWriter, message string, details map[s
 		"details": details,
 	})
 }
+
+// requireMethod validates request method and writes 405 on mismatch.
+func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
+	if r.Method == method {
+		return true
+	}
+	respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	return false
+}

@@ -339,22 +339,22 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
+	}()
 	if !ok {
-		return s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
+		return nil
 	}
 	custom := extractCustomValues(event.RawPropsJSON, cfg.PropertyMap)
 	templateEvent := toTemplateEvent(event, custom)
 	rule := cfg.Notifications.Advance[sched.RuleIndex]
 	message, err := s.renderer.RenderSingle(rule.Message, templateEvent, rule.MinutesBefore)
 	if err != nil {
-		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
 	if err := s.sendWebhook(ctx, notificationTypeAdvance, message, []models.TemplateEvent{templateEvent}, rule.MinutesBefore, event.NotionPageID); err != nil {
-		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 		return err
 	}
-	_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
 	return nil
 }
 
@@ -363,12 +363,7 @@ func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config
 	loc, _ := time.LoadLocation(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	to := from.AddDate(0, 0, rule.DaysAhead)
-	events, err := s.repo.ListEventsBetween(ctx, from, to)
-	if err != nil {
-		return err
-	}
-	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
-	message, err := s.renderer.RenderList(rule.Message, templateEvents)
+	message, templateEvents, err := s.renderListFromRange(ctx, rule.Message, from, to)
 	if err != nil {
 		return err
 	}
@@ -376,13 +371,7 @@ func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config
 }
 
 func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
-	cfg := s.cfg.Config()
-	events, err := s.repo.ListEventsBetween(ctx, from, to)
-	if err != nil {
-		return "", err
-	}
-	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
-	message, err := s.renderer.RenderList(template, templateEvents)
+	message, templateEvents, err := s.renderListFromRange(ctx, template, from, to)
 	if err != nil {
 		return "", err
 	}
@@ -409,17 +398,22 @@ func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string,
 }
 
 func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
+	message, _, err := s.renderListFromRange(ctx, template, from, to)
+	return message, err
+}
+
+func (s *Scheduler) renderListFromRange(ctx context.Context, template string, from, to time.Time) (string, []models.TemplateEvent, error) {
 	cfg := s.cfg.Config()
 	events, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
 	message, err := s.renderer.RenderList(template, templateEvents)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return message, nil
+	return message, templateEvents, nil
 }
 
 func (s *Scheduler) SyncCalendar(from, to time.Time) (int, error) {
@@ -713,7 +707,7 @@ func buildAdvanceSchedules(events []models.Event, cfg config.Config, now time.Ti
 			if !rule.Enabled {
 				continue
 			}
-			if !matchAdvanceConditions(ev, rule, cfg) {
+			if !matchAdvanceConditions(ev, startTime, rule, cfg) {
 				continue
 			}
 			fireAt := startTime.Add(-time.Duration(rule.MinutesBefore) * time.Minute)
@@ -765,8 +759,7 @@ func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
 	return localMidnight.UTC().Format("2006-01-02")
 }
 
-func matchAdvanceConditions(ev models.Event, rule config.AdvanceNotification, cfg config.Config) bool {
-	start := parseEventStart(ev, nil)
+func matchAdvanceConditions(ev models.Event, start time.Time, rule config.AdvanceNotification, cfg config.Config) bool {
 	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
 		return false
 	}

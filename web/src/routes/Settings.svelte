@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { api, type Config } from "../lib/api";
-    import { configStore, addToast } from "../lib/store";
+    import type { Config } from "../lib/api";
+    import { configStore } from "../lib/store";
+    import { saveConfigWithStore } from "../lib/config-save";
     import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
     import {
         Settings,
@@ -19,17 +20,12 @@
     let isSaving = false;
 
     async function saveConfig() {
-        if (!config) return;
         isSaving = true;
-        try {
-            const saved = await api.updateConfig(config);
-            configStore.set(saved);
-            addToast("システム設定を保存しました", "success");
-        } catch (e: any) {
-            addToast(`保存失敗: ${e.error || "不明なエラー"}`, "error");
-        } finally {
-            isSaving = false;
-        }
+        await saveConfigWithStore(config, {
+            successMessage: "システム設定を保存しました",
+            errorMessage: "保存失敗",
+        });
+        isSaving = false;
     }
 
     function addCustomMapping() {

@@ -96,8 +96,7 @@ type dashboardResponse struct {
 }
 
 func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 
@@ -159,8 +158,7 @@ type eventResponse struct {
 }
 
 func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 
@@ -234,8 +232,7 @@ type historyResponse struct {
 }
 
 func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 
@@ -262,8 +259,7 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 // --- POST /api/sync ---
 
 func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -284,8 +280,7 @@ type calendarSyncRequest struct {
 }
 
 func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -315,8 +310,7 @@ func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
 // --- POST /api/calendar/clear ---
 
 func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -333,8 +327,7 @@ func (h *Handler) handleCalendarClear(w http.ResponseWriter, r *http.Request) {
 // --- POST /api/history/clear ---
 
 func (h *Handler) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -362,13 +355,12 @@ type previewResponse struct {
 }
 
 func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	var req notificationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	req, err := decodeNotificationRequest(r)
+	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 		return
 	}
@@ -384,7 +376,7 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
+	from, to, err := parseNotificationRange(req, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return
@@ -402,18 +394,17 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 // --- POST /api/notifications/manual ---
 
 func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	var req notificationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	req, err := decodeNotificationRequest(r)
+	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 		return
 	}
 
-	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
+	from, to, err := parseNotificationRange(req, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return
@@ -440,9 +431,20 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 // --- GET /api/templates/defaults ---
 
 func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	respondJSON(w, http.StatusOK, config.DefaultTemplates())
+}
+
+func decodeNotificationRequest(r *http.Request) (notificationRequest, error) {
+	var req notificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return notificationRequest{}, err
+	}
+	return req, nil
+}
+
+func parseNotificationRange(req notificationRequest, cfg *config.Manager) (time.Time, time.Time, error) {
+	return parseDateRange(req.FromDate, req.ToDate, cfg)
 }
