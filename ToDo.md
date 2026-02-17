@@ -29,3 +29,21 @@
 - [x] Reduce silent error drops in API read endpoints (`dashboard`, `upcoming`, `history`) with explicit fallback/error policy.
 - [x] Split large backend files by responsibility (`internal/scheduler/worker.go`, `internal/http/api/handler.go`, `internal/db/db.go`).
 - [x] Split large frontend route components (`web/src/routes/Settings.svelte`, `web/src/App.svelte`) into focused sections/components.
+
+## Global Function Inventory Audit (2026-02-17)
+- [x] Capture global directory tree snapshot (`ls -R cmd internal web/src scripts docs`).
+- [x] Generate all-function inventory file (`docs/function-inventory.md`).
+- [x] Count functions by language and prod/test scope.
+- [x] Classify every production function by responsibility boundary (App/API/Scheduler/DB/Config/UI).
+- [x] Detect duplicated write paths (config updates, history writes, sync triggers).
+- [x] Detect config-change paths that require scheduler reload/rebuild and unify the hook point.
+- [x] Detect semantic drift between preview/send behavior across routes.
+- [x] Produce remediation map (`keep/merge/delete`) with expected line reduction per module.
+- [x] Publish responsibility map with Mermaid graph (`docs/function-responsibility-map.md`).
+
+## Refactor Execution Backlog (from Global Audit)
+- [ ] Unify backend config-change hook (`UpdateConfig` success path + scheduler rebuild/reload policy in one place).
+- [ ] Align periodic preview with periodic send semantics (`days_ahead` must drive preview query range).
+- [ ] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
+- [ ] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
+- [ ] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
