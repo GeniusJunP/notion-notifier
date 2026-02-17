@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { Config } from "../lib/api";
-    import { configStore } from "../lib/store";
-    import { saveConfigWithStore } from "../lib/config-save";
+    import { configStore, saveConfig as saveConfigState } from "../lib/store";
     import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
     import {
         Settings,
@@ -21,7 +20,7 @@
 
     async function saveConfig() {
         isSaving = true;
-        await saveConfigWithStore(config, {
+        await saveConfigState(config, {
             successMessage: "システム設定を保存しました",
             errorMessage: "保存失敗",
         });

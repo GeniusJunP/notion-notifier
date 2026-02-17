@@ -45,9 +45,9 @@
 
 ## Refactor Execution Backlog (from Global Audit)
 - [ ] Unify backend config-change hook (`UpdateConfig` success path + scheduler rebuild/reload policy in one place).
-- [ ] Align periodic preview with periodic send semantics (`days_ahead` must drive preview query range).
+- [x] Align periodic preview with periodic send semantics (`days_ahead` must drive preview query range).
 - [ ] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
-- [ ] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
+- [x] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
 - [ ] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
 
 ## Integration Execution Sprint (2026-02-17)
@@ -59,3 +59,8 @@
 - [x] API: unify HTTP method guard boilerplate per handler.
 - [x] Verification: `go test ./internal/scheduler ./internal/http/api ./internal/config`.
 - [x] Verification: `npm run check`.
+
+## Destructive Integration Pass (2026-02-17)
+- [x] Remove frontend shim layer file (`web/src/lib/config-save.ts`) and merge behavior into `web/src/lib/store.ts`.
+- [x] Remove API thin wrappers (`decodeNotificationRequest`, `parseNotificationRange`) and fold logic into handlers.
+- [x] Keep function-level graph in sync after integration (`go run scripts/generate-function-graphs.go`).

@@ -3,8 +3,8 @@
 Generated: 2026-02-17 JST
 
 ## Coverage
-- total functions: 250
-- go functions (including tests): 204
+- total functions: 248
+- go functions (including tests): 202
 - frontend functions (ts+svelte): 45
 - script functions: 1
 - edge rule: static same-group call references (cross-group links are shown in the integrated graph).
@@ -16,14 +16,13 @@ Generated: 2026-02-17 JST
 | `fe:web/src/components/PreviewModal.svelte` | 3 | 1 |
 | `fe:web/src/components/TemplateGuideSidebar.svelte` | 1 | 0 |
 | `fe:web/src/lib/api.ts` | 1 | 0 |
-| `fe:web/src/lib/config-save.ts` | 1 | 0 |
-| `fe:web/src/lib/store.ts` | 3 | 0 |
+| `fe:web/src/lib/store.ts` | 4 | 1 |
 | `fe:web/src/routes/Calendar.svelte` | 3 | 0 |
 | `fe:web/src/routes/Dashboard.svelte` | 7 | 3 |
 | `fe:web/src/routes/History.svelte` | 3 | 0 |
 | `fe:web/src/routes/Notifications.svelte` | 10 | 1 |
 | `fe:web/src/routes/Settings.svelte` | 3 | 0 |
-| `go:api` | 32 | 53 |
+| `go:api` | 30 | 50 |
 | `go:app` | 6 | 5 |
 | `go:calendar` | 15 | 8 |
 | `go:config` | 26 | 22 |
@@ -83,20 +82,15 @@ flowchart TD
   n1["web/src/lib/api.ts:request"]
 ```
 
-## fe:web/src/lib/config-save.ts
-
-```mermaid
-flowchart TD
-  n1["web/src/lib/config-save.ts:saveConfigWithStore"]
-```
-
 ## fe:web/src/lib/store.ts
 
 ```mermaid
 flowchart TD
   n1["web/src/lib/store.ts:addToast"]
   n2["web/src/lib/store.ts:navigate"]
-  n3["web/src/lib/store.ts:setDarkMode"]
+  n3["web/src/lib/store.ts:saveConfig"]
+  n4["web/src/lib/store.ts:setDarkMode"]
+  n3 --> n1
 ```
 
 ## fe:web/src/routes/Calendar.svelte
@@ -178,76 +172,71 @@ flowchart TD
   n13["internal/http/api/handler.go:(Handler).handleUpcomingEvents"]
   n14["internal/http/api/handler.go:(Handler).putConfig"]
   n15["internal/http/api/handler.go:NewHandler"]
-  n16["internal/http/api/handler.go:decodeNotificationRequest"]
-  n17["internal/http/api/handler.go:parseNotificationRange"]
-  n18["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
-  n19["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
-  n20["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
-  n21["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
-  n22["internal/http/api/handler_test.go:fetchCalendarStates"]
-  n23["internal/http/api/handler_test.go:postJSON"]
-  n24["internal/http/api/handler_test.go:setupAPIHandler"]
-  n25["internal/http/api/helpers.go:requireMethod"]
-  n26["internal/http/api/helpers.go:respondError"]
-  n27["internal/http/api/helpers.go:respondJSON"]
-  n28["internal/http/api/helpers.go:respondValidationError"]
-  n29["internal/http/api/timeutil.go:formatDurationShort"]
-  n30["internal/http/api/timeutil.go:loadLocationOrLocal"]
-  n31["internal/http/api/timeutil.go:parseDateInput"]
-  n32["internal/http/api/timeutil.go:parseDateRange"]
-  n2 --> n27
-  n3 --> n25
-  n3 --> n26
+  n16["internal/http/api/handler_test.go:TestHandleDefaultTemplates"]
+  n17["internal/http/api/handler_test.go:TestHandleManualNotificationPersistsTemplateBeforeSend"]
+  n18["internal/http/api/handler_test.go:TestHandlePreviewNotificationReturnsMessageOnly"]
+  n19["internal/http/api/handler_test.go:TestHandleUpcomingEventsCalendarState"]
+  n20["internal/http/api/handler_test.go:fetchCalendarStates"]
+  n21["internal/http/api/handler_test.go:postJSON"]
+  n22["internal/http/api/handler_test.go:setupAPIHandler"]
+  n23["internal/http/api/helpers.go:requireMethod"]
+  n24["internal/http/api/helpers.go:respondError"]
+  n25["internal/http/api/helpers.go:respondJSON"]
+  n26["internal/http/api/helpers.go:respondValidationError"]
+  n27["internal/http/api/timeutil.go:formatDurationShort"]
+  n28["internal/http/api/timeutil.go:loadLocationOrLocal"]
+  n29["internal/http/api/timeutil.go:parseDateInput"]
+  n30["internal/http/api/timeutil.go:parseDateRange"]
+  n2 --> n25
+  n3 --> n23
+  n3 --> n24
+  n4 --> n23
+  n4 --> n24
   n4 --> n25
-  n4 --> n26
-  n4 --> n27
-  n4 --> n32
-  n5 --> n26
+  n4 --> n30
+  n5 --> n24
+  n6 --> n23
+  n6 --> n24
   n6 --> n25
-  n6 --> n26
   n6 --> n27
-  n6 --> n29
-  n6 --> n30
+  n6 --> n28
+  n7 --> n23
   n7 --> n25
-  n7 --> n27
+  n8 --> n23
+  n8 --> n24
   n8 --> n25
-  n8 --> n26
-  n8 --> n27
-  n9 --> n25
-  n9 --> n26
-  n10 --> n16
-  n10 --> n17
+  n9 --> n23
+  n9 --> n24
+  n10 --> n23
+  n10 --> n24
   n10 --> n25
-  n10 --> n26
-  n10 --> n27
-  n11 --> n16
-  n11 --> n17
+  n10 --> n30
+  n11 --> n23
+  n11 --> n24
   n11 --> n25
-  n11 --> n26
-  n11 --> n27
+  n11 --> n30
+  n12 --> n23
+  n12 --> n24
   n12 --> n25
-  n12 --> n26
-  n12 --> n27
+  n13 --> n23
+  n13 --> n24
   n13 --> n25
-  n13 --> n26
-  n13 --> n27
-  n13 --> n30
+  n13 --> n28
+  n14 --> n24
+  n14 --> n25
   n14 --> n26
-  n14 --> n27
-  n14 --> n28
-  n17 --> n32
-  n18 --> n24
-  n19 --> n24
-  n20 --> n23
-  n20 --> n24
-  n21 --> n22
-  n21 --> n24
-  n24 --> n15
-  n25 --> n26
-  n26 --> n27
-  n28 --> n27
-  n32 --> n30
-  n32 --> n31
+  n16 --> n22
+  n17 --> n22
+  n18 --> n21
+  n18 --> n22
+  n19 --> n20
+  n19 --> n22
+  n22 --> n15
+  n23 --> n24
+  n24 --> n25
+  n26 --> n25
+  n30 --> n28
+  n30 --> n29
 ```
 
 ## go:app

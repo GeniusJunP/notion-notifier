@@ -5,8 +5,7 @@
         type AdvanceNotification,
         type PeriodicNotification,
     } from "../lib/api";
-    import { configStore, addToast } from "../lib/store";
-    import { saveConfigWithStore } from "../lib/config-save";
+    import { configStore, addToast, saveConfig as saveConfigState } from "../lib/store";
     import PreviewModal from "../components/PreviewModal.svelte";
     import {
         Plus,
@@ -33,7 +32,7 @@
 
     async function saveConfig() {
         isSaving = true;
-        await saveConfigWithStore(config, {
+        await saveConfigState(config, {
             successMessage: "設定を保存しました",
             errorMessage: "保存に失敗しました",
         });

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Config } from './api';
+import { api, type Config } from './api';
 
 export const configStore = writable<Config | null>(null);
 
@@ -38,4 +38,35 @@ export function setDarkMode(value: boolean) {
   darkMode.set(value);
   localStorage.setItem('darkMode', value.toString());
   document.documentElement.classList.toggle('dark', value);
+}
+
+interface SaveConfigOptions {
+  successMessage?: string;
+  errorMessage: string;
+  onSaved?: (saved: Config) => Promise<void> | void;
+}
+
+export async function saveConfig(
+  cfg: Config | null,
+  options: SaveConfigOptions,
+): Promise<Config | null> {
+  if (!cfg) {
+    return null;
+  }
+
+  try {
+    const saved = await api.updateConfig(cfg);
+    configStore.set(saved);
+    if (options.onSaved) {
+      await options.onSaved(saved);
+    }
+    if (options.successMessage) {
+      addToast(options.successMessage, 'success');
+    }
+    return saved;
+  } catch (e: any) {
+    const detail = e?.error ? `: ${e.error}` : '';
+    addToast(`${options.errorMessage}${detail}`, 'error');
+    return null;
+  }
 }

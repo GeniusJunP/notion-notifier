@@ -359,8 +359,8 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	req, err := decodeNotificationRequest(r)
-	if err != nil {
+	var req notificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 		return
 	}
@@ -376,7 +376,7 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	from, to, err := parseNotificationRange(req, h.cfg)
+	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return
@@ -398,13 +398,13 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	req, err := decodeNotificationRequest(r)
-	if err != nil {
+	var req notificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 		return
 	}
 
-	from, to, err := parseNotificationRange(req, h.cfg)
+	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return
@@ -435,16 +435,4 @@ func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusOK, config.DefaultTemplates())
-}
-
-func decodeNotificationRequest(r *http.Request) (notificationRequest, error) {
-	var req notificationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return notificationRequest{}, err
-	}
-	return req, nil
-}
-
-func parseNotificationRange(req notificationRequest, cfg *config.Manager) (time.Time, time.Time, error) {
-	return parseDateRange(req.FromDate, req.ToDate, cfg)
 }

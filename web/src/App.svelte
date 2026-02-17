@@ -7,9 +7,9 @@
     addToast,
     darkMode,
     setDarkMode,
+    saveConfig as saveConfigState,
   } from "./lib/store";
   import { api, type Config, type DashboardData } from "./lib/api";
-  import { saveConfigWithStore } from "./lib/config-save";
   import {
     LayoutDashboard,
     Bell,
@@ -110,7 +110,7 @@
   }
 
   async function saveSnooze() {
-    await saveConfigWithStore(config, {
+    await saveConfigState(config, {
       errorMessage: "スヌーズ設定の保存に失敗しました",
       onSaved: async () => {
         await checkHealth();

@@ -1,8 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { api, type Config } from "../lib/api";
-    import { configStore, addToast } from "../lib/store";
-    import { saveConfigWithStore } from "../lib/config-save";
+    import { configStore, addToast, saveConfig as saveConfigState } from "../lib/store";
     import {
         Calendar,
         RefreshCw,
@@ -26,7 +25,7 @@
     };
 
     async function handleConfigUpdate() {
-        await saveConfigWithStore(config, {
+        await saveConfigState(config, {
             successMessage: "設定を保存しました",
             errorMessage: "保存に失敗しました",
         });
