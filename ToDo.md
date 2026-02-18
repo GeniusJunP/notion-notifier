@@ -78,4 +78,5 @@
 - [x] Consolidate `sync_records` scan and `IN`-query argument construction in `internal/db/db.go`.
 - [x] Merge duplicated default-template reset handlers in `web/src/routes/Notifications.svelte`.
 - [x] Consolidate Notion sync UI action flow between `web/src/App.svelte` and `web/src/routes/Dashboard.svelte`.
-- [ ] Consolidate manual notification request payload builders used in dashboard/notifications preview flows.
+- [x] Consolidate manual notification request payload builders used in dashboard/notifications preview flows.
+- [ ] Consolidate location loading strategy (`time.LoadLocation`) in scheduler loops and helpers.

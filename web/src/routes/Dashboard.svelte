@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import {
         api,
+        buildManualNotificationRequest,
         type Config,
         type DashboardData,
         type UpcomingEvent,
@@ -119,11 +120,12 @@
         }
         isPreviewLoading = true;
         try {
-            const res = await api.previewNotification({
-                template: manualTemplate,
-                from_date: manualFromDate,
-                to_date: manualToDate,
-            });
+            const req = buildManualNotificationRequest(
+                manualTemplate,
+                manualFromDate,
+                manualToDate,
+            );
+            const res = await api.previewNotification(req);
             openPreview("手動通知プレビュー", res.message);
         } catch (e: any) {
             addToast(`プレビュー失敗: ${e.error || "不明なエラー"}`, "error");
@@ -140,11 +142,12 @@
         if (!confirm("手動通知を送信しますか？")) return;
         isSending = true;
         try {
-            const res = await api.sendManualNotification({
-                template: manualTemplate,
-                from_date: manualFromDate,
-                to_date: manualToDate,
-            });
+            const req = buildManualNotificationRequest(
+                manualTemplate,
+                manualFromDate,
+                manualToDate,
+            );
+            const res = await api.sendManualNotification(req);
             addToast("通知を送信しました", "success");
             openPreview("送信メッセージ", res.message);
             try {

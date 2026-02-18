@@ -122,6 +122,62 @@ export interface ApiError {
   details?: Record<string, string>;
 }
 
+export interface NotificationPreviewRequest {
+  template: string;
+  from_date?: string;
+  to_date?: string;
+  minutes_before?: number;
+}
+
+export interface ManualNotificationRequest {
+  template: string;
+  from_date: string;
+  to_date: string;
+}
+
+export function buildManualNotificationRequest(
+  template: string,
+  fromDate: string,
+  toDate: string,
+): ManualNotificationRequest {
+  return {
+    template,
+    from_date: fromDate,
+    to_date: toDate,
+  };
+}
+
+export function buildPreviewNotificationRequest(
+  template: string,
+  options: {
+    minutesBefore?: number;
+    daysAhead?: number;
+    fromDate?: string;
+    toDate?: string;
+    now?: Date;
+  } = {},
+): NotificationPreviewRequest {
+  if (options.minutesBefore && options.minutesBefore > 0) {
+    return {
+      template,
+      minutes_before: options.minutesBefore,
+    };
+  }
+  if (options.fromDate && options.toDate) {
+    return buildManualNotificationRequest(template, options.fromDate, options.toDate);
+  }
+  if (options.daysAhead && options.daysAhead > 0) {
+    const now = options.now ?? new Date();
+    const to = new Date(now.getTime() + options.daysAhead * 24 * 60 * 60 * 1000);
+    return buildManualNotificationRequest(
+      template,
+      now.toISOString().split('T')[0],
+      to.toISOString().split('T')[0],
+    );
+  }
+  return { template };
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...options,
@@ -154,9 +210,9 @@ export const api = {
     request<{ count: number }>('/api/calendar/sync', { method: 'POST', body: JSON.stringify({ from_date: fromDate, to_date: toDate }) }),
   clearCalendarSync: () => request<void>('/api/calendar/clear', { method: 'POST' }),
   clearHistory: () => request<void>('/api/history/clear', { method: 'POST' }),
-  previewNotification: (req: { template: string; from_date?: string; to_date?: string; minutes_before?: number }) =>
+  previewNotification: (req: NotificationPreviewRequest) =>
     request<{ message: string }>('/api/notifications/preview', { method: 'POST', body: JSON.stringify(req) }),
-  sendManualNotification: (req: { template: string; from_date: string; to_date: string }) =>
+  sendManualNotification: (req: ManualNotificationRequest) =>
     request<{ message: string }>('/api/notifications/manual', { method: 'POST', body: JSON.stringify(req) }),
   getDefaultTemplates: () => request<Record<string, string>>('/api/templates/defaults'),
 };

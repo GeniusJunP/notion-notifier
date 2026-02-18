@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         api,
+        buildPreviewNotificationRequest,
         type Config,
         type AdvanceNotification,
         type PeriodicNotification,
@@ -96,24 +97,10 @@
         days_ahead?: number,
     ) {
         try {
-            const req: {
-                template: string;
-                minutes_before?: number;
-                from_date?: string;
-                to_date?: string;
-            } = {
-                template,
-            };
-            if (minutes_before && minutes_before > 0) {
-                req.minutes_before = minutes_before;
-            } else if (days_ahead && days_ahead > 0) {
-                const from = new Date();
-                const to = new Date(
-                    Date.now() + days_ahead * 24 * 60 * 60 * 1000,
-                );
-                req.from_date = from.toISOString().split("T")[0];
-                req.to_date = to.toISOString().split("T")[0];
-            }
+            const req = buildPreviewNotificationRequest(template, {
+                minutesBefore: minutes_before,
+                daysAhead: days_ahead,
+            });
             const res = await api.previewNotification(req);
             openPreview(title, res.message);
         } catch (e) {
