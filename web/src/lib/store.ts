@@ -70,3 +70,27 @@ export async function saveConfig(
     return null;
   }
 }
+
+interface SyncNotionOptions {
+  successMessage?: (count: number) => string;
+  errorMessage?: string;
+  onSynced?: (count: number) => Promise<void> | void;
+}
+
+export async function syncNotion(options: SyncNotionOptions = {}): Promise<number | null> {
+  try {
+    const res = await api.syncNotion();
+    const successMessage = options.successMessage
+      ? options.successMessage(res.count)
+      : `${res.count}件のイベントを同期しました`;
+    addToast(successMessage, 'success');
+    if (options.onSynced) {
+      await options.onSynced(res.count);
+    }
+    return res.count;
+  } catch (e: any) {
+    const detail = e?.error ? `: ${e.error}` : '';
+    addToast(`${options.errorMessage ?? '同期に失敗しました'}${detail}`, 'error');
+    return null;
+  }
+}

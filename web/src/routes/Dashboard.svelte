@@ -6,7 +6,7 @@
         type DashboardData,
         type UpcomingEvent,
     } from "../lib/api";
-    import { addToast, configStore } from "../lib/store";
+    import { addToast, configStore, syncNotion as syncNotionState } from "../lib/store";
     import PreviewModal from "../components/PreviewModal.svelte";
     import {
         RefreshCw,
@@ -102,11 +102,11 @@
     async function handleSync() {
         isSyncing = true;
         try {
-            const res = await api.syncNotion();
-            addToast(`${res.count}件の項目を同期しました`, "success");
-            await loadData();
-        } catch (e) {
-            addToast("同期に失敗しました", "error");
+            await syncNotionState({
+                successMessage: (count) => `${count}件の項目を同期しました`,
+                errorMessage: "同期に失敗しました",
+                onSynced: () => loadData(),
+            });
         } finally {
             isSyncing = false;
         }

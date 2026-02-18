@@ -8,6 +8,7 @@
     darkMode,
     setDarkMode,
     saveConfig as saveConfigState,
+    syncNotion as syncNotionState,
   } from "./lib/store";
   import { api, type Config, type DashboardData } from "./lib/api";
   import {
@@ -99,11 +100,11 @@
     if (isSyncing) return;
     isSyncing = true;
     try {
-      const res = await api.syncNotion();
-      addToast(`${res.count}件のイベントを同期しました`, "success");
-      await checkHealth();
-    } catch (e) {
-      addToast("同期に失敗しました", "error");
+      await syncNotionState({
+        successMessage: (count) => `${count}件のイベントを同期しました`,
+        errorMessage: "同期に失敗しました",
+        onSynced: () => checkHealth(),
+      });
     } finally {
       isSyncing = false;
     }
