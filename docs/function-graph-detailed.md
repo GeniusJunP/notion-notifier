@@ -3,9 +3,9 @@
 Generated: 2026-02-17 JST
 
 ## Coverage
-- total functions: 247
-- go functions (including tests): 201
-- frontend functions (ts+svelte): 45
+- total functions: 257
+- go functions (including tests): 209
+- frontend functions (ts+svelte): 47
 - script functions: 1
 - edge rule: static same-group call references (cross-group links are shown in the integrated graph).
 
@@ -15,24 +15,24 @@ Generated: 2026-02-17 JST
 | `fe:web/src/App.svelte` | 10 | 4 |
 | `fe:web/src/components/PreviewModal.svelte` | 3 | 1 |
 | `fe:web/src/components/TemplateGuideSidebar.svelte` | 1 | 0 |
-| `fe:web/src/lib/api.ts` | 1 | 0 |
-| `fe:web/src/lib/store.ts` | 4 | 1 |
+| `fe:web/src/lib/api.ts` | 3 | 0 |
+| `fe:web/src/lib/store.ts` | 5 | 1 |
 | `fe:web/src/routes/Calendar.svelte` | 3 | 0 |
 | `fe:web/src/routes/Dashboard.svelte` | 7 | 3 |
 | `fe:web/src/routes/History.svelte` | 3 | 0 |
-| `fe:web/src/routes/Notifications.svelte` | 10 | 1 |
+| `fe:web/src/routes/Notifications.svelte` | 9 | 1 |
 | `fe:web/src/routes/Settings.svelte` | 3 | 0 |
 | `go:api` | 31 | 50 |
 | `go:app` | 6 | 5 |
 | `go:calendar` | 15 | 8 |
 | `go:config` | 26 | 22 |
-| `go:db` | 28 | 11 |
+| `go:db` | 34 | 29 |
 | `go:logging` | 2 | 0 |
 | `go:main` | 1 | 0 |
 | `go:middleware` | 3 | 1 |
 | `go:notion` | 22 | 18 |
 | `go:retry` | 5 | 0 |
-| `go:scheduler` | 54 | 32 |
+| `go:scheduler` | 56 | 40 |
 | `go:static` | 1 | 0 |
 | `go:template` | 5 | 4 |
 | `go:webhook` | 2 | 1 |
@@ -79,7 +79,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  n1["web/src/lib/api.ts:request"]
+  n1["web/src/lib/api.ts:buildManualNotificationRequest"]
+  n2["web/src/lib/api.ts:buildPreviewNotificationRequest"]
+  n3["web/src/lib/api.ts:request"]
 ```
 
 ## fe:web/src/lib/store.ts
@@ -90,6 +92,7 @@ flowchart TD
   n2["web/src/lib/store.ts:navigate"]
   n3["web/src/lib/store.ts:saveConfig"]
   n4["web/src/lib/store.ts:setDarkMode"]
+  n5["web/src/lib/store.ts:syncNotion"]
   n3 --> n1
 ```
 
@@ -137,10 +140,9 @@ flowchart TD
   n4["web/src/routes/Notifications.svelte:previewTemplate"]
   n5["web/src/routes/Notifications.svelte:removeAdvanceRule"]
   n6["web/src/routes/Notifications.svelte:removePeriodicRule"]
-  n7["web/src/routes/Notifications.svelte:resetAdvanceTemplate"]
-  n8["web/src/routes/Notifications.svelte:resetPeriodicTemplate"]
-  n9["web/src/routes/Notifications.svelte:saveConfig"]
-  n10["web/src/routes/Notifications.svelte:toggleDay"]
+  n7["web/src/routes/Notifications.svelte:resetTemplate"]
+  n8["web/src/routes/Notifications.svelte:saveConfig"]
+  n9["web/src/routes/Notifications.svelte:toggleDay"]
   n4 --> n3
 ```
 
@@ -363,26 +365,50 @@ flowchart TD
   n17["internal/db/db.go:(Repository).UpsertEvents"]
   n18["internal/db/db.go:(Repository).UpsertSyncRecord"]
   n19["internal/db/db.go:Open"]
-  n20["internal/db/db.go:decodeStringSlice"]
-  n21["internal/db/db.go:encodeStringSlice"]
-  n22["internal/db/db.go:scanEvents"]
-  n23["internal/db/db_test.go:TestReplaceAdvanceSchedulesClearsAllWhenEmpty"]
-  n24["internal/db/db_test.go:TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt"]
-  n25["internal/db/db_test.go:TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale"]
-  n26["internal/db/db_test.go:TestUpsertEventsPersistsAttendees"]
-  n27["internal/db/db_test.go:TestUpsertSyncRecordPersistsAttempted"]
-  n28["internal/db/schema.go:initSchema"]
-  n6 --> n20
-  n9 --> n22
-  n17 --> n21
+  n20["internal/db/db.go:boolToInt"]
+  n21["internal/db/db.go:decodeStringSlice"]
+  n22["internal/db/db.go:encodeStringSlice"]
+  n23["internal/db/db.go:inPlaceholders"]
+  n24["internal/db/db.go:intToBool"]
+  n25["internal/db/db.go:parseRFC3339"]
+  n26["internal/db/db.go:scanEvents"]
+  n27["internal/db/db.go:scanSyncRecords"]
+  n28["internal/db/db.go:toAnySlice"]
+  n29["internal/db/db_test.go:TestReplaceAdvanceSchedulesClearsAllWhenEmpty"]
+  n30["internal/db/db_test.go:TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt"]
+  n31["internal/db/db_test.go:TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale"]
+  n32["internal/db/db_test.go:TestUpsertEventsPersistsAttendees"]
+  n33["internal/db/db_test.go:TestUpsertSyncRecordPersistsAttempted"]
+  n34["internal/db/schema.go:initSchema"]
+  n4 --> n23
+  n4 --> n28
+  n6 --> n21
+  n6 --> n24
+  n6 --> n25
+  n7 --> n23
+  n7 --> n27
+  n7 --> n28
+  n9 --> n26
+  n10 --> n25
+  n11 --> n27
+  n12 --> n24
+  n12 --> n25
+  n13 --> n27
+  n16 --> n20
+  n17 --> n20
+  n17 --> n22
+  n18 --> n20
   n19 --> n19
-  n19 --> n28
-  n22 --> n20
-  n23 --> n19
-  n24 --> n19
-  n25 --> n19
-  n26 --> n19
-  n27 --> n19
+  n19 --> n34
+  n26 --> n21
+  n26 --> n24
+  n26 --> n25
+  n27 --> n24
+  n29 --> n19
+  n30 --> n19
+  n31 --> n19
+  n32 --> n19
+  n33 --> n19
 ```
 
 ## go:logging
@@ -471,92 +497,102 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  n1["internal/scheduler/runtime.go:(Scheduler).NotionSyncStatus"]
-  n2["internal/scheduler/runtime.go:(Scheduler).cancelRuntime"]
-  n3["internal/scheduler/runtime.go:(Scheduler).clearAdvanceTimers"]
-  n4["internal/scheduler/runtime.go:(Scheduler).currentTimezone"]
-  n5["internal/scheduler/runtime.go:(Scheduler).markPeriodicSent"]
-  n6["internal/scheduler/runtime.go:(Scheduler).newRuntimeOpContext"]
-  n7["internal/scheduler/runtime.go:(Scheduler).periodicSent"]
-  n8["internal/scheduler/runtime.go:(Scheduler).runtimeContext"]
-  n9["internal/scheduler/runtime.go:(Scheduler).setNotionStatus"]
-  n10["internal/scheduler/runtime.go:(Scheduler).setRuntimeContext"]
-  n11["internal/scheduler/runtime.go:(Scheduler).withRuntimeOp"]
-  n12["internal/scheduler/worker.go:(Scheduler).PreviewAdvanceTemplate"]
-  n13["internal/scheduler/worker.go:(Scheduler).PreviewManualTemplate"]
-  n14["internal/scheduler/worker.go:(Scheduler).RebuildAdvanceSchedules"]
-  n15["internal/scheduler/worker.go:(Scheduler).Reload"]
-  n16["internal/scheduler/worker.go:(Scheduler).SchedulePendingFromDB"]
-  n17["internal/scheduler/worker.go:(Scheduler).SendManualNotification"]
-  n18["internal/scheduler/worker.go:(Scheduler).Start"]
-  n19["internal/scheduler/worker.go:(Scheduler).Stop"]
-  n20["internal/scheduler/worker.go:(Scheduler).SyncCalendar"]
-  n21["internal/scheduler/worker.go:(Scheduler).SyncNotion"]
-  n22["internal/scheduler/worker.go:(Scheduler).calendarLoop"]
-  n23["internal/scheduler/worker.go:(Scheduler).deleteCalendarEvents"]
-  n24["internal/scheduler/worker.go:(Scheduler).fireAdvance"]
-  n25["internal/scheduler/worker.go:(Scheduler).periodicLoop"]
-  n26["internal/scheduler/worker.go:(Scheduler).rebuildAdvanceSchedules"]
-  n27["internal/scheduler/worker.go:(Scheduler).renderListFromRange"]
-  n28["internal/scheduler/worker.go:(Scheduler).schedulePendingFromDB"]
-  n29["internal/scheduler/worker.go:(Scheduler).sendPeriodic"]
-  n30["internal/scheduler/worker.go:(Scheduler).sendWebhook"]
-  n31["internal/scheduler/worker.go:(Scheduler).syncCalendar"]
-  n32["internal/scheduler/worker.go:(Scheduler).syncLoop"]
-  n33["internal/scheduler/worker.go:(Scheduler).syncNotion"]
-  n34["internal/scheduler/worker.go:New"]
-  n35["internal/scheduler/worker.go:buildAdvanceSchedules"]
-  n36["internal/scheduler/worker.go:buildFilterValues"]
-  n37["internal/scheduler/worker.go:buildTemplateEvents"]
-  n38["internal/scheduler/worker.go:extractCustomValues"]
-  n39["internal/scheduler/worker.go:groupCalendarEvents"]
-  n40["internal/scheduler/worker.go:matchAdvanceConditions"]
-  n41["internal/scheduler/worker.go:matchFilter"]
-  n42["internal/scheduler/worker.go:matchesDays"]
-  n43["internal/scheduler/worker.go:notionOnOrAfterDate"]
-  n44["internal/scheduler/worker.go:parseEventStart"]
-  n45["internal/scheduler/worker.go:pickPrimaryCalendarEvent"]
-  n46["internal/scheduler/worker.go:scheduleKey"]
-  n47["internal/scheduler/worker.go:toTemplateEvent"]
-  n48["internal/scheduler/worker.go:weekdayToConfig"]
-  n49["internal/scheduler/worker_test.go:TestMatchAdvanceConditions"]
-  n50["internal/scheduler/worker_test.go:TestMatchesDays"]
-  n51["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_JSTEarlyMorningUsesPreviousUTCDate"]
-  n52["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_PSTUsesSameUTCDate"]
-  n53["internal/scheduler/worker_test.go:TestSendWebhookRecordsHistoryOnPayloadRenderError"]
-  n54["internal/scheduler/worker_test.go:TestToTemplateEvent_MapsEndDateAndTime"]
-  n12 --> n38
-  n12 --> n47
-  n24 --> n38
-  n24 --> n47
-  n25 --> n42
-  n25 --> n48
-  n26 --> n35
-  n27 --> n37
-  n28 --> n46
-  n30 --> n34
-  n31 --> n34
-  n31 --> n39
-  n31 --> n45
-  n33 --> n34
-  n33 --> n43
-  n35 --> n40
-  n35 --> n44
-  n36 --> n38
-  n37 --> n38
-  n37 --> n47
-  n40 --> n36
-  n40 --> n41
-  n40 --> n42
-  n40 --> n48
-  n49 --> n40
-  n49 --> n48
-  n50 --> n42
-  n50 --> n48
-  n51 --> n43
-  n52 --> n43
-  n53 --> n34
-  n54 --> n47
+  n1["internal/scheduler/helpers.go:buildAdvanceSchedules"]
+  n2["internal/scheduler/helpers.go:buildFilterValues"]
+  n3["internal/scheduler/helpers.go:buildTemplateEvents"]
+  n4["internal/scheduler/helpers.go:extractCustomValues"]
+  n5["internal/scheduler/helpers.go:groupCalendarEvents"]
+  n6["internal/scheduler/helpers.go:loadLocationOrLocal"]
+  n7["internal/scheduler/helpers.go:matchAdvanceConditions"]
+  n8["internal/scheduler/helpers.go:matchFilter"]
+  n9["internal/scheduler/helpers.go:matchesDays"]
+  n10["internal/scheduler/helpers.go:notionOnOrAfterDate"]
+  n11["internal/scheduler/helpers.go:parseEventStart"]
+  n12["internal/scheduler/helpers.go:pickPrimaryCalendarEvent"]
+  n13["internal/scheduler/helpers.go:scheduleKey"]
+  n14["internal/scheduler/helpers.go:toTemplateEvent"]
+  n15["internal/scheduler/helpers.go:weekdayToConfig"]
+  n16["internal/scheduler/runtime.go:(Scheduler).NotionSyncStatus"]
+  n17["internal/scheduler/runtime.go:(Scheduler).cancelRuntime"]
+  n18["internal/scheduler/runtime.go:(Scheduler).clearAdvanceTimers"]
+  n19["internal/scheduler/runtime.go:(Scheduler).currentTimezone"]
+  n20["internal/scheduler/runtime.go:(Scheduler).markPeriodicSent"]
+  n21["internal/scheduler/runtime.go:(Scheduler).newRuntimeOpContext"]
+  n22["internal/scheduler/runtime.go:(Scheduler).periodicSent"]
+  n23["internal/scheduler/runtime.go:(Scheduler).runtimeContext"]
+  n24["internal/scheduler/runtime.go:(Scheduler).setNotionStatus"]
+  n25["internal/scheduler/runtime.go:(Scheduler).setRuntimeContext"]
+  n26["internal/scheduler/runtime.go:(Scheduler).withRuntimeOp"]
+  n27["internal/scheduler/worker.go:(Scheduler).PreviewAdvanceTemplate"]
+  n28["internal/scheduler/worker.go:(Scheduler).PreviewManualTemplate"]
+  n29["internal/scheduler/worker.go:(Scheduler).RebuildAdvanceSchedules"]
+  n30["internal/scheduler/worker.go:(Scheduler).Reload"]
+  n31["internal/scheduler/worker.go:(Scheduler).SchedulePendingFromDB"]
+  n32["internal/scheduler/worker.go:(Scheduler).SendManualNotification"]
+  n33["internal/scheduler/worker.go:(Scheduler).Start"]
+  n34["internal/scheduler/worker.go:(Scheduler).Stop"]
+  n35["internal/scheduler/worker.go:(Scheduler).SyncCalendar"]
+  n36["internal/scheduler/worker.go:(Scheduler).SyncNotion"]
+  n37["internal/scheduler/worker.go:(Scheduler).calendarLoop"]
+  n38["internal/scheduler/worker.go:(Scheduler).deleteCalendarEvents"]
+  n39["internal/scheduler/worker.go:(Scheduler).fireAdvance"]
+  n40["internal/scheduler/worker.go:(Scheduler).periodicLoop"]
+  n41["internal/scheduler/worker.go:(Scheduler).rebuildAdvanceSchedules"]
+  n42["internal/scheduler/worker.go:(Scheduler).renderListFromRange"]
+  n43["internal/scheduler/worker.go:(Scheduler).schedulePendingFromDB"]
+  n44["internal/scheduler/worker.go:(Scheduler).sendPeriodic"]
+  n45["internal/scheduler/worker.go:(Scheduler).sendWebhook"]
+  n46["internal/scheduler/worker.go:(Scheduler).syncCalendar"]
+  n47["internal/scheduler/worker.go:(Scheduler).syncLoop"]
+  n48["internal/scheduler/worker.go:(Scheduler).syncNotion"]
+  n49["internal/scheduler/worker.go:New"]
+  n50["internal/scheduler/worker_test.go:TestMatchAdvanceConditions"]
+  n51["internal/scheduler/worker_test.go:TestMatchesDays"]
+  n52["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_JSTEarlyMorningUsesPreviousUTCDate"]
+  n53["internal/scheduler/worker_test.go:TestNotionOnOrAfterDate_PSTUsesSameUTCDate"]
+  n54["internal/scheduler/worker_test.go:TestSendManualNotificationRoutesByIsTest"]
+  n55["internal/scheduler/worker_test.go:TestSendWebhookRecordsHistoryOnPayloadRenderError"]
+  n56["internal/scheduler/worker_test.go:TestToTemplateEvent_MapsEndDateAndTime"]
+  n1 --> n7
+  n1 --> n11
+  n2 --> n4
+  n3 --> n4
+  n3 --> n14
+  n7 --> n2
+  n7 --> n8
+  n7 --> n9
+  n7 --> n15
+  n27 --> n4
+  n27 --> n6
+  n27 --> n14
+  n39 --> n4
+  n39 --> n14
+  n40 --> n6
+  n40 --> n9
+  n40 --> n15
+  n41 --> n1
+  n41 --> n6
+  n42 --> n3
+  n43 --> n6
+  n43 --> n13
+  n44 --> n6
+  n45 --> n49
+  n46 --> n5
+  n46 --> n6
+  n46 --> n12
+  n46 --> n49
+  n48 --> n6
+  n48 --> n10
+  n48 --> n49
+  n50 --> n7
+  n50 --> n15
+  n51 --> n9
+  n51 --> n15
+  n52 --> n10
+  n53 --> n10
+  n54 --> n49
+  n55 --> n49
+  n56 --> n14
 ```
 
 ## go:static
