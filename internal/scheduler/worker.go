@@ -148,7 +148,7 @@ func (s *Scheduler) periodicLoop() {
 			return
 		case <-ticker.C:
 			cfg := s.cfg.Config()
-			loc, _ := time.LoadLocation(cfg.Timezone)
+			loc := loadLocationOrLocal(cfg.Timezone)
 			now := time.Now().In(loc)
 			for i, rule := range cfg.Notifications.Periodic {
 				if !rule.Enabled {
@@ -223,7 +223,7 @@ func (s *Scheduler) SyncNotion() (int, error) {
 func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 	cfg, env := s.cfg.Snapshot()
 	logging.Info("SYNC", "notion sync started")
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	loc := loadLocationOrLocal(cfg.Timezone)
 	if env.Notion.APIKey != "" {
 		s.mu.Lock()
 		if s.notion == nil || s.notionKey != env.Notion.APIKey {
@@ -286,7 +286,7 @@ func (s *Scheduler) RebuildAdvanceSchedules() error {
 
 func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
 	cfg := s.cfg.Config()
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	loc := loadLocationOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {
@@ -305,7 +305,7 @@ func (s *Scheduler) SchedulePendingFromDB() error {
 
 func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
 	s.clearAdvanceTimers()
-	loc, _ := time.LoadLocation(s.currentTimezone())
+	loc := loadLocationOrLocal(s.currentTimezone())
 	now := time.Now().In(loc)
 	schedules, err := s.repo.ListPendingAdvanceSchedules(ctx)
 	if err != nil {
@@ -366,7 +366,7 @@ func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedul
 
 func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
 	cfg := s.cfg.Config()
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	loc := loadLocationOrLocal(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	to := from.AddDate(0, 0, rule.DaysAhead)
 	message, templateEvents, err := s.renderListFromRange(ctx, rule.Message, from, to)
@@ -389,7 +389,7 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 
 func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
 	cfg := s.cfg.Config()
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	loc := loadLocationOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {
@@ -471,7 +471,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")
 	}
-	loc, _ := time.LoadLocation(cfg.Timezone)
+	loc := loadLocationOrLocal(cfg.Timezone)
 
 	// 1. Fetch Notion cache from DB (source of truth data).
 	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
@@ -869,4 +869,15 @@ func matchesDays(days []int, weekday int) bool {
 		}
 	}
 	return false
+}
+
+func loadLocationOrLocal(name string) *time.Location {
+	if strings.TrimSpace(name) == "" {
+		return time.Local
+	}
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		return time.Local
+	}
+	return loc
 }

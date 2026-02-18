@@ -79,4 +79,4 @@
 - [x] Merge duplicated default-template reset handlers in `web/src/routes/Notifications.svelte`.
 - [x] Consolidate Notion sync UI action flow between `web/src/App.svelte` and `web/src/routes/Dashboard.svelte`.
 - [x] Consolidate manual notification request payload builders used in dashboard/notifications preview flows.
-- [ ] Consolidate location loading strategy (`time.LoadLocation`) in scheduler loops and helpers.
+- [x] Consolidate location loading strategy (`time.LoadLocation`) in scheduler loops and helpers.
