@@ -66,10 +66,6 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 	}
 	defer stmt.Close()
 	for _, ev := range events {
-		isAllDay := 0
-		if ev.IsAllDay {
-			isAllDay = 1
-		}
 		_, err := stmt.ExecContext(ctx,
 			ev.NotionPageID,
 			ev.Title,
@@ -77,7 +73,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 			ev.StartTime,
 			ev.EndDate,
 			ev.EndTime,
-			isAllDay,
+			boolToInt(ev.IsAllDay),
 			ev.Location,
 			ev.URL,
 			ev.Content,
@@ -126,13 +122,9 @@ func (r *Repository) GetEvent(ctx context.Context, notionPageID string) (models.
 		}
 		return ev, false, err
 	}
-	ev.IsAllDay = isAllDay == 1
+	ev.IsAllDay = intToBool(isAllDay)
 	ev.Attendees = decodeStringSlice(attendeesJSON)
-	if fetchedAt != "" {
-		if t, err := time.Parse(time.RFC3339, fetchedAt); err == nil {
-			ev.FetchedAt = t
-		}
-	}
+	ev.FetchedAt = parseRFC3339(fetchedAt)
 	return ev, true, nil
 }
 
@@ -146,13 +138,9 @@ func scanEvents(rows *sql.Rows) ([]models.Event, error) {
 		if err := rows.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &attendeesJSON, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
 			return nil, err
 		}
-		ev.IsAllDay = isAllDay == 1
+		ev.IsAllDay = intToBool(isAllDay)
 		ev.Attendees = decodeStringSlice(attendeesJSON)
-		if fetchedAt != "" {
-			if t, err := time.Parse(time.RFC3339, fetchedAt); err == nil {
-				ev.FetchedAt = t
-			}
-		}
+		ev.FetchedAt = parseRFC3339(fetchedAt)
 		events = append(events, ev)
 	}
 	return events, rows.Err()
@@ -206,11 +194,7 @@ func (r *Repository) ListNotificationHistory(ctx context.Context, limit int) ([]
 		if err := rows.Scan(&h.ID, &h.Type, &h.Status, &h.Message, &h.NotionPageID, &h.Error, &sentAt); err != nil {
 			return nil, err
 		}
-		if sentAt != "" {
-			if t, err := time.Parse(time.RFC3339, sentAt); err == nil {
-				h.SentAt = t
-			}
-		}
+		h.SentAt = parseRFC3339(sentAt)
 		out = append(out, h)
 	}
 	return out, rows.Err()
@@ -246,11 +230,7 @@ func (r *Repository) ReplaceAdvanceSchedules(ctx context.Context, schedules []mo
 	}
 	defer stmt.Close()
 	for _, sched := range schedules {
-		fired := 0
-		if sched.Fired {
-			fired = 1
-		}
-		_, err := stmt.ExecContext(ctx, sched.NotionPageID, sched.RuleIndex, sched.FireAt.Format(time.RFC3339), fired)
+		_, err := stmt.ExecContext(ctx, sched.NotionPageID, sched.RuleIndex, sched.FireAt.Format(time.RFC3339), boolToInt(sched.Fired))
 		if err != nil {
 			_ = tx.Rollback()
 			return err
@@ -285,10 +265,8 @@ func (r *Repository) ListPendingAdvanceSchedules(ctx context.Context) ([]models.
 		if err := rows.Scan(&sched.ID, &sched.NotionPageID, &sched.RuleIndex, &fireAt, &fired); err != nil {
 			return nil, err
 		}
-		sched.Fired = fired == 1
-		if t, err := time.Parse(time.RFC3339, fireAt); err == nil {
-			sched.FireAt = t
-		}
+		sched.Fired = intToBool(fired)
+		sched.FireAt = parseRFC3339(fireAt)
 		schedules = append(schedules, sched)
 	}
 	return schedules, rows.Err()
@@ -333,14 +311,6 @@ func (r *Repository) GetSyncRecordMap(ctx context.Context, notionPageIDs []strin
 }
 
 func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRecord) error {
-	attempted := 0
-	if record.Attempted {
-		attempted = 1
-	}
-	synced := 0
-	if record.Synced {
-		synced = 1
-	}
 	query := `INSERT INTO sync_records (notion_page_id, calendar_event_id, attempted, synced)
 	VALUES (?, ?, ?, ?)
 	ON CONFLICT(notion_page_id) DO UPDATE SET
@@ -350,8 +320,8 @@ func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRec
 	_, err := r.db.ExecContext(ctx, query,
 		record.NotionPageID,
 		record.CalendarEventID,
-		attempted,
-		synced,
+		boolToInt(record.Attempted),
+		boolToInt(record.Synced),
 	)
 	return err
 }
@@ -383,8 +353,8 @@ func scanSyncRecords(rows *sql.Rows) ([]models.SyncRecord, error) {
 		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &attempted, &synced); err != nil {
 			return nil, err
 		}
-		rec.Attempted = attempted == 1
-		rec.Synced = synced == 1
+		rec.Attempted = intToBool(attempted)
+		rec.Synced = intToBool(synced)
 		out = append(out, rec)
 	}
 	return out, rows.Err()
@@ -418,4 +388,23 @@ func toAnySlice(values []string) []any {
 		out[i] = v
 	}
 	return out
+}
+
+func boolToInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+func intToBool(value int) bool {
+	return value == 1
+}
+
+func parseRFC3339(value string) time.Time {
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}
+	}
+	return parsed
 }

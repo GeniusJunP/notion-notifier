@@ -76,6 +76,7 @@
 
 ## Integration Sweep (2026-02-18)
 - [x] Consolidate `sync_records` scan and `IN`-query argument construction in `internal/db/db.go`.
+- [x] Consolidate DB bool/int conversion and RFC3339 parse helpers in `internal/db/db.go`.
 - [x] Merge duplicated default-template reset handlers in `web/src/routes/Notifications.svelte`.
 - [x] Consolidate Notion sync UI action flow between `web/src/App.svelte` and `web/src/routes/Dashboard.svelte`.
 - [x] Consolidate manual notification request payload builders used in dashboard/notifications preview flows.
