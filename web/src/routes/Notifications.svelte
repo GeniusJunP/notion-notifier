@@ -121,25 +121,19 @@
         }
     }
 
-    async function resetAdvanceTemplate(index: number) {
+    async function resetTemplate(
+        type: "advance" | "periodic",
+        index: number,
+    ) {
         if (!config) return;
         try {
             const defaults = await api.getDefaultTemplates();
-            config.notifications.advance[index].message =
-                defaults.advance || "";
-            configStore.set(config);
-            addToast("デフォルトテンプレートを適用しました", "info");
-        } catch {
-            addToast("デフォルトテンプレートの取得に失敗しました", "error");
-        }
-    }
-
-    async function resetPeriodicTemplate(index: number) {
-        if (!config) return;
-        try {
-            const defaults = await api.getDefaultTemplates();
-            config.notifications.periodic[index].message =
-                defaults.periodic || "";
+            const message = defaults[type] || "";
+            if (type === "advance") {
+                config.notifications.advance[index].message = message;
+            } else {
+                config.notifications.periodic[index].message = message;
+            }
             configStore.set(config);
             addToast("デフォルトテンプレートを適用しました", "info");
         } catch {
@@ -275,7 +269,7 @@
                                         </button>
                                         <button
                                             on:click={() =>
-                                                resetAdvanceTemplate(i)}
+                                                resetTemplate("advance", i)}
                                             class="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-400"
                                         >
                                             <RotateCcw size={12} /> デフォルトに戻す
@@ -463,7 +457,7 @@
                                         </button>
                                         <button
                                             on:click={() =>
-                                                resetPeriodicTemplate(i)}
+                                                resetTemplate("periodic", i)}
                                             class="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-400"
                                         >
                                             <RotateCcw size={12} /> デフォルトに戻す

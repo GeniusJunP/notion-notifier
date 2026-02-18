@@ -73,3 +73,9 @@
 - [x] Sync config/API docs and sample config with non-compat-only schema.
 - [x] Verification: `go test ./...`
 - [x] Verification: `npm run check`
+
+## Integration Sweep (2026-02-18)
+- [x] Consolidate `sync_records` scan and `IN`-query argument construction in `internal/db/db.go`.
+- [x] Merge duplicated default-template reset handlers in `web/src/routes/Notifications.svelte`.
+- [ ] Consolidate Notion sync UI action flow between `web/src/App.svelte` and `web/src/routes/Dashboard.svelte`.
+- [ ] Consolidate manual notification request payload builders used in dashboard/notifications preview flows.

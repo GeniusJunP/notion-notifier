@@ -306,20 +306,7 @@ func (r *Repository) ListSyncRecords(ctx context.Context) ([]models.SyncRecord, 
 		return nil, err
 	}
 	defer rows.Close()
-
-	var records []models.SyncRecord
-	for rows.Next() {
-		var rec models.SyncRecord
-		var attempted int
-		var synced int
-		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &attempted, &synced); err != nil {
-			return nil, err
-		}
-		rec.Attempted = attempted == 1
-		rec.Synced = synced == 1
-		records = append(records, rec)
-	}
-	return records, rows.Err()
+	return scanSyncRecords(rows)
 }
 
 func (r *Repository) GetSyncRecordMap(ctx context.Context, notionPageIDs []string) (map[string]models.SyncRecord, error) {
@@ -327,30 +314,22 @@ func (r *Repository) GetSyncRecordMap(ctx context.Context, notionPageIDs []strin
 	if len(notionPageIDs) == 0 {
 		return records, nil
 	}
-	placeholders := strings.Repeat("?,", len(notionPageIDs))
-	placeholders = strings.TrimRight(placeholders, ",")
+	placeholders := inPlaceholders(len(notionPageIDs))
 	query := fmt.Sprintf("SELECT notion_page_id, calendar_event_id, attempted, synced FROM sync_records WHERE notion_page_id IN (%s);", placeholders)
-	args := make([]interface{}, len(notionPageIDs))
-	for i, id := range notionPageIDs {
-		args[i] = id
-	}
+	args := toAnySlice(notionPageIDs)
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return records, err
 	}
 	defer rows.Close()
-	for rows.Next() {
-		var rec models.SyncRecord
-		var attempted int
-		var synced int
-		if err := rows.Scan(&rec.NotionPageID, &rec.CalendarEventID, &attempted, &synced); err != nil {
-			return records, err
-		}
-		rec.Attempted = attempted == 1
-		rec.Synced = synced == 1
+	rowsRecords, err := scanSyncRecords(rows)
+	if err != nil {
+		return records, err
+	}
+	for _, rec := range rowsRecords {
 		records[rec.NotionPageID] = rec
 	}
-	return records, rows.Err()
+	return records, nil
 }
 
 func (r *Repository) UpsertSyncRecord(ctx context.Context, record models.SyncRecord) error {
@@ -392,6 +371,10 @@ func (r *Repository) ListOrphanedSyncRecords(ctx context.Context) ([]models.Sync
 		return nil, err
 	}
 	defer rows.Close()
+	return scanSyncRecords(rows)
+}
+
+func scanSyncRecords(rows *sql.Rows) ([]models.SyncRecord, error) {
 	var out []models.SyncRecord
 	for rows.Next() {
 		var rec models.SyncRecord
@@ -418,13 +401,21 @@ func (r *Repository) DeleteEventsNotIn(ctx context.Context, ids []string) error 
 		_, err := r.db.ExecContext(ctx, `DELETE FROM events;`)
 		return err
 	}
-	placeholders := strings.Repeat("?,", len(ids))
-	placeholders = strings.TrimRight(placeholders, ",")
+	placeholders := inPlaceholders(len(ids))
 	query := fmt.Sprintf("DELETE FROM events WHERE notion_page_id NOT IN (%s);", placeholders)
-	args := make([]interface{}, len(ids))
-	for i, id := range ids {
-		args[i] = id
-	}
+	args := toAnySlice(ids)
 	_, err := r.db.ExecContext(ctx, query, args...)
 	return err
+}
+
+func inPlaceholders(length int) string {
+	return strings.TrimRight(strings.Repeat("?,", length), ",")
+}
+
+func toAnySlice(values []string) []any {
+	out := make([]any, len(values))
+	for i, v := range values {
+		out[i] = v
+	}
+	return out
 }
