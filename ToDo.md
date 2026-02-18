@@ -48,7 +48,7 @@
 - [x] Align periodic preview with periodic send semantics (`days_ahead` must drive preview query range).
 - [x] Separate manual notification concerns (template persistence and webhook send) to avoid mixed responsibilities.
 - [x] Deduplicate frontend `saveConfig` flow across `App/Calendar/Notifications/Settings`.
-- [ ] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
+- [x] Split `internal/scheduler/worker.go` into domain-focused files while preserving behavior.
 
 ## Integration Execution Sprint (2026-02-17)
 - [x] Frontend: unify config save flow (`App/Calendar/Notifications/Settings`) into a shared helper.
