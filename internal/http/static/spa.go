@@ -9,6 +9,7 @@ import (
 // NewSPAHandler returns an http.Handler that serves an SPA from the given
 // filesystem. Non-API paths that don't match a real file are served index.html
 // so that client-side routing works correctly.
+
 func NewSPAHandler(distFS fs.FS) http.Handler {
 	fileServer := http.FileServer(http.FS(distFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +31,7 @@ func NewSPAHandler(distFS fs.FS) http.Handler {
 		}
 
 		// Fallback to index.html for SPA client-side routing.
+		// We must rewrite the URL path so http.FileServer serves the root index.html
 		r.URL.Path = "/"
 		fileServer.ServeHTTP(w, r)
 	})
