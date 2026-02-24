@@ -14,19 +14,19 @@ export interface SyncConfig {
 }
 
 export interface Notifications {
-  advance: AdvanceNotification[];
+  upcoming: UpcomingNotification[];
   periodic: PeriodicNotification[];
   manual: string;
 }
 
-export interface AdvanceNotification {
+export interface UpcomingNotification {
   enabled: boolean;
   minutes_before: number;
   message: string;
-  conditions: AdvanceConditions;
+  conditions: UpcomingConditions;
 }
 
-export interface AdvanceConditions {
+export interface UpcomingConditions {
   days_of_week: number[];
   property_filters: PropertyFilter[];
 }

@@ -3,7 +3,7 @@
         api,
         buildPreviewNotificationRequest,
         type Config,
-        type AdvanceNotification,
+        type UpcomingNotification,
         type PeriodicNotification,
     } from "../lib/api";
     import {
@@ -39,9 +39,9 @@
         isSaving = false;
     }
 
-    function addAdvanceRule() {
+    function addUpcomingRule() {
         if (!config) return;
-        const newRule: AdvanceNotification = {
+        const newRule: UpcomingNotification = {
             enabled: true,
             minutes_before: 30,
             message: "",
@@ -50,8 +50,8 @@
                 property_filters: [],
             },
         };
-        config.notifications.advance = [
-            ...config.notifications.advance,
+        config.notifications.upcoming = [
+            ...config.notifications.upcoming,
             newRule,
         ];
         configStore.set(config);
@@ -73,9 +73,9 @@
         configStore.set(config);
     }
 
-    function removeAdvanceRule(index: number) {
+    function removeUpcomingRule(index: number) {
         if (!config) return;
-        config.notifications.advance = config.notifications.advance.filter(
+        config.notifications.upcoming = config.notifications.upcoming.filter(
             (_, i) => i !== index,
         );
         configStore.set(config);
@@ -107,13 +107,13 @@
         }
     }
 
-    async function resetTemplate(type: "advance" | "periodic", index: number) {
+    async function resetTemplate(type: "upcoming" | "periodic", index: number) {
         if (!config) return;
         try {
             const defaults = await api.getDefaultTemplates();
             const message = defaults[type] || "";
-            if (type === "advance") {
-                config.notifications.advance[index].message = message;
+            if (type === "upcoming") {
+                config.notifications.upcoming[index].message = message;
             } else {
                 config.notifications.periodic[index].message = message;
             }
@@ -155,25 +155,25 @@
                         事前通知ルール
                     </h2>
                     <button
-                        on:click={addAdvanceRule}
+                        on:click={addUpcomingRule}
                         class="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-bold hover:underline"
                     >
                         <Plus size={16} /> ルールを追加
                     </button>
                 </div>
 
-                {#each config.notifications.advance as rule, i}
+                {#each config.notifications.upcoming as rule, i}
                     <UpcomingRuleCard
                         bind:rule
                         index={i}
-                        on:remove={(e) => removeAdvanceRule(e.detail)}
+                        on:remove={(e) => removeUpcomingRule(e.detail)}
                         on:preview={(e) =>
                             previewTemplate(
                                 e.detail.template,
                                 e.detail.title,
                                 e.detail.minutes_before,
                             )}
-                        on:reset={(e) => resetTemplate("advance", e.detail)}
+                        on:reset={(e) => resetTemplate("upcoming", e.detail)}
                     />
                 {/each}
             </div>

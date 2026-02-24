@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Trash2, Clock, Play, RotateCcw } from "lucide-svelte";
     import DayPicker from "./DayPicker.svelte";
-    import type { AdvanceNotification } from "../../lib/api"; // Note: Interface is still named AdvanceNotification in api.ts
+    import type { UpcomingNotification } from "../../lib/api";
     import { createEventDispatcher } from "svelte";
 
-    export let rule: AdvanceNotification;
+    export let rule: UpcomingNotification;
     export let index: number;
 
     const dispatch = createEventDispatcher<{

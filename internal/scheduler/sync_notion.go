@@ -94,7 +94,7 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 	}
 	if err := s.rebuildUpcomingSchedules(ctx); err != nil {
 		s.setNotionStatus(len(events), err)
-		logging.Error("SYNC", "rebuild advance schedules failed: %v", err)
+		logging.Error("SYNC", "rebuild upcoming schedules failed: %v", err)
 		return len(events), err
 	}
 	s.setNotionStatus(len(events), nil)

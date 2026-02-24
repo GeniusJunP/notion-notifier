@@ -69,7 +69,9 @@
                 <History size={24} />
             </div>
             <div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">通知履歴</h2>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    通知履歴
+                </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     最近の通知送信ログ（最新50件）
                 </p>
@@ -109,7 +111,7 @@
                     class="text-xs font-bold bg-transparent border-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 focus:outline-none rounded-md cursor-pointer text-gray-900 dark:text-gray-100"
                 >
                     <option value="all">全ての履歴</option>
-                    <option value="advance">事前通知</option>
+                    <option value="upcoming">事前通知</option>
                     <option value="periodic">定期通知</option>
                     <option value="manual">手動通知</option>
                 </select>
