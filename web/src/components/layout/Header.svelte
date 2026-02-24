@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, onDestroy } from "svelte";
-    import { Menu, Sun, Moon, Database, BellOff } from "lucide-svelte";
+    import { Menu, Sun, Moon } from "lucide-svelte";
     import { darkMode } from "../../lib/store";
     import { sidebarOpen } from "../../lib/uiStore";
     import type { DashboardData } from "../../lib/api";
@@ -70,80 +70,39 @@
         </h1>
     </div>
 
-    <div class="flex items-center gap-2 md:gap-4">
-        <div
-            class="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 tabular-nums"
+    <div class="flex items-center gap-3">
+        <!-- Date & Time -->
+        <span
+            class="hidden sm:inline text-sm font-medium tabular-nums text-gray-500 dark:text-gray-400"
             aria-label="現在日時"
         >
-            <span class="text-gray-700 dark:text-gray-200 font-semibold"
-                >{currentDate}（{currentWeekday}）{currentTime}</span
-            >
-        </div>
+            {currentDate}（{currentWeekday}）{currentTime}
+        </span>
 
+        <!-- Status Indicator -->
         <div
-            class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"
-        ></div>
-
-        {#if dashboardData}
-            <div class="hidden xl:flex items-center gap-4">
-                <div
-                    class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
-                >
-                    <Database
-                        size={14}
-                        class={dashboardData.last_sync_error
-                            ? "text-red-500"
-                            : ""}
-                    />
-                    <span class="tabular-nums">
-                        {dashboardData.last_sync
-                            ? new Date(
-                                  dashboardData.last_sync,
-                              ).toLocaleTimeString("ja-JP", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                              })
-                            : "--:--"}
-                    </span>
-                </div>
-
-                {#if dashboardData.snooze_active}
-                    <div
-                        class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400"
-                        title="スヌーズ中"
-                    >
-                        <BellOff size={14} />
-                        <span>SNOOZE</span>
-                    </div>
-                {/if}
-            </div>
+            class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full {isServiceActive
+                ? 'bg-green-50 dark:bg-green-900/30'
+                : 'bg-red-50 dark:bg-red-900/30'}"
+        >
             <div
-                class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden xl:block"
-            ></div>
-        {/if}
-
-        <div class="hidden sm:flex items-center gap-2 px-2 py-1">
-            <div
-                class="w-2 h-2 rounded-full {isServiceActive
-                    ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
-                    : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}"
+                class="w-1.5 h-1.5 rounded-full {isServiceActive
+                    ? 'bg-green-500'
+                    : 'bg-red-500'}"
             ></div>
             <span
-                class="text-[10px] font-bold tracking-wider {isServiceActive
+                class="text-[10px] font-semibold tracking-wide {isServiceActive
                     ? 'text-green-600 dark:text-green-400'
                     : 'text-red-600 dark:text-red-400'}"
             >
-                {isServiceActive ? "SYSTEM ACTIVE" : "SYSTEM OFFLINE"}
+                {isServiceActive ? "ACTIVE" : "OFFLINE"}
             </span>
         </div>
 
-        <div
-            class="h-4 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"
-        ></div>
-
+        <!-- Dark Mode Toggle -->
         <button
             on:click={toggleDarkMode}
-            class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             aria-label={$darkMode
                 ? "ライトモードに切り替え"
                 : "ダークモードに切り替え"}

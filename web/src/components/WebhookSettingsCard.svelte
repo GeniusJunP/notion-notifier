@@ -8,11 +8,15 @@
 <div
     class="p-6 bg-brand-50 dark:bg-brand-900 rounded-3xl border border-brand-100 dark:border-brand-700 space-y-5"
 >
-    <h4 class="font-bold text-brand-900 dark:text-brand-100 flex items-center gap-2">
+    <h4
+        class="font-bold text-brand-900 dark:text-brand-100 flex items-center gap-2"
+    >
         <Globe size={18} class="text-brand-600 dark:text-brand-400" />
         Webhook 設定
     </h4>
-    <p class="text-xs text-brand-700 dark:text-brand-300 leading-relaxed opacity-80">
+    <p
+        class="text-xs text-brand-700 dark:text-brand-300 leading-relaxed opacity-80"
+    >
         Webhook で送信される JSON ペイロードのテンプレートです。<code
             class="font-mono bg-white/50 dark:bg-gray-800/50 px-1 rounded"
             >{"{{"}.Message{"}}"}</code
@@ -24,10 +28,10 @@
     >
         <div class="space-y-1">
             <p class="text-sm font-bold text-gray-700 dark:text-gray-200">
-                IsTest モード
+                テストモード
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                ON のとき内部通知テンプレートと内部通知URLを使用します。
+                ON にすると、内部通知用のテンプレートと URL で送信します
             </p>
         </div>
         <label class="inline-flex items-center cursor-pointer">
@@ -45,7 +49,9 @@
     <div
         class="space-y-3 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-700"
     >
-        <h5 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <h5
+            class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+        >
             Notification Webhook
         </h5>
         <div>
@@ -78,7 +84,9 @@
     <div
         class="space-y-3 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-700"
     >
-        <h5 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <h5
+            class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+        >
             Internal Notification Webhook
         </h5>
         <div>
@@ -102,7 +110,9 @@
             >
             <textarea
                 id="wh-internal-notif-pt"
-                bind:value={config.webhook.internal_notification.payload_template}
+                bind:value={
+                    config.webhook.internal_notification.payload_template
+                }
                 class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-mono text-xs min-h-[80px] focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
             ></textarea>
         </div>
