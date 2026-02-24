@@ -68,7 +68,7 @@
 <div class="space-y-8 max-w-4xl">
     <!-- Status Header -->
     <div
-        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col md:flex-row items-center gap-8"
+        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center gap-8"
     >
         <div
             class="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400"

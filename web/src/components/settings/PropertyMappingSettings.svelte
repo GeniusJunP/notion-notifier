@@ -21,7 +21,7 @@
 </script>
 
 <section
-    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
+    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-6"
 >
     <div class="flex items-center justify-between">
         <h3

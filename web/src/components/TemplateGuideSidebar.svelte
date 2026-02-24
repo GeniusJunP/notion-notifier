@@ -102,7 +102,7 @@
     }
 </script>
 
-<div class="rounded-2xl border border-gray-100 bg-white px-3 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+<div class="rounded-2xl border border-gray-100 bg-white px-3 py-3 dark:border-gray-700 dark:bg-gray-800">
     <div class="mb-2 flex items-center justify-between gap-2">
         <h3 class="text-xs font-bold text-gray-800 dark:text-gray-100">使える変数</h3>
     </div>

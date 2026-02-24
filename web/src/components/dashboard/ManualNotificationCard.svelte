@@ -16,7 +16,7 @@
 </script>
 
 <div
-    class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-md overflow-hidden"
+    class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden"
 >
     <div
         class="p-6 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between bg-gray-50/50 dark:bg-gray-700/50"
@@ -112,7 +112,7 @@
             <button
                 on:click={() => dispatch("send")}
                 disabled={isSending}
-                class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50 shadow-lg dark:shadow-xl shadow-brand-100 dark:shadow-brand-900"
+                class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50"
             >
                 {#if isSending}
                     <div

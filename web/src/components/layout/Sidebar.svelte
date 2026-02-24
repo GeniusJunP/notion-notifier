@@ -119,7 +119,7 @@
             {#if config}
                 <div class="flex flex-col gap-4">
                     <div
-                        class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-start gap-3"
+                        class="flex-1 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col items-start gap-3"
                     >
                         <div class="flex items-center gap-3 mb-2">
                             <div

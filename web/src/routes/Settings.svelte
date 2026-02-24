@@ -33,7 +33,7 @@
         <button
             on:click={saveConfig}
             disabled={isSaving}
-            class="px-8 py-3 bg-brand-600 dark:bg-brand-500 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 shadow-xl shadow-brand-100 dark:shadow-brand-900 transition-all"
+            class="px-8 py-3 bg-brand-600 dark:bg-brand-500 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 transition-all"
         >
             {#if isSaving}
                 <div
@@ -59,7 +59,7 @@
                 <ContentRuleSettings bind:config />
 
                 <section
-                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-6"
                 >
                     <h3
                         class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"

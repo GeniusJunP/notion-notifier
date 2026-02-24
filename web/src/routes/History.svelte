@@ -97,7 +97,7 @@
     </div>
 
     <div
-        class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden min-h-[400px]"
+        class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden min-h-[400px]"
     >
         <div
             class="p-4 border-b border-gray-50 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/50 flex flex-wrap items-center gap-4"

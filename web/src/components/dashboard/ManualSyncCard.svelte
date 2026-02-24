@@ -12,7 +12,7 @@
 </script>
 
 <div
-    class="bg-brand-600 p-8 rounded-3xl shadow-xl shadow-brand-100 dark:shadow-brand-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
+    class="bg-brand-600 p-8 rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
 >
     <div class="relative z-10">
         <h2 class="text-2xl font-bold mb-2">手動同期を実行</h2>
@@ -24,7 +24,7 @@
     <button
         on:click={handleSync}
         disabled={isSyncing}
-        class="relative z-10 px-8 py-4 bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-300 rounded-2xl font-bold shadow-lg dark:shadow-xl hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+        class="relative z-10 px-8 py-4 bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-300 rounded-2xl font-bold hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
     >
         {#if isSyncing}
             <RefreshCw size={20} class="animate-spin" />

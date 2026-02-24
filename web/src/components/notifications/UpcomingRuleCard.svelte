@@ -15,7 +15,7 @@
 </script>
 
 <div
-    class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-300"
+    class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:border-brand-200 dark:hover:border-brand-300"
 >
     <div
         class="p-5 border-b border-gray-50 dark:border-gray-600 flex items-center justify-between bg-gray-50/50 dark:bg-gray-700/50"

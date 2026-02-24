@@ -22,7 +22,7 @@
             class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all {selectedDays.includes(
                 day,
             )
-                ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-lg shadow-brand-100 dark:shadow-brand-900 scale-105'
+                ? 'bg-brand-600 dark:bg-brand-500 text-white scale-105'
                 : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             aria-label={`${ariaLabelPrefix} ${daysLabels[idx]}`}
             aria-pressed={selectedDays.includes(day)}

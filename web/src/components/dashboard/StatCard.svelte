@@ -6,7 +6,7 @@
 </script>
 
 <div
-    class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm dark:shadow-md border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
+    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col justify-between"
 >
     <div class="flex items-center justify-between mb-4">
         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">

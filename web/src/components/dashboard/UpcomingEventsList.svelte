@@ -87,7 +87,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {#each upcoming as event}
                 <div
-                    class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-md hover:shadow-md dark:hover:shadow-lg transition-shadow group flex flex-col justify-between min-h-[140px]"
+                    class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 group flex flex-col justify-between min-h-[140px]"
                 >
                     <div>
                         <div
