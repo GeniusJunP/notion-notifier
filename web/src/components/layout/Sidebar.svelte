@@ -5,8 +5,7 @@
     import TemplateGuideSidebar from "../TemplateGuideSidebar.svelte";
     import { navigate } from "../../lib/store";
     import type { Config, DashboardData } from "../../lib/api";
-
-    export let isSidebarOpen: boolean;
+    import { sidebarOpen, guideModal } from "../../lib/uiStore";
     export let navItems: { path: string; label: string; icon: any }[];
     export let activeRouteValue: string;
     export let isSyncing: boolean;
@@ -16,16 +15,14 @@
     export let mainNavId: string;
 
     const dispatch = createEventDispatcher<{
-        close: void;
         sync: void;
         saveSnooze: void;
         clearSnooze: void;
-        openGuide: { title: string; content: string };
     }>();
 </script>
 
 <aside
-    class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 lg:relative lg:translate-x-0 {isSidebarOpen
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 lg:relative lg:translate-x-0 {$sidebarOpen
         ? 'translate-x-0'
         : '-translate-x-full'}"
     aria-label="サイドバー"
@@ -45,7 +42,7 @@
         </div>
         <button
             class="lg:hidden text-gray-500"
-            on:click={() => dispatch("close")}
+            on:click={() => sidebarOpen.close()}
             aria-label="サイドバーを閉じる"
         >
             <X size={20} />
@@ -65,7 +62,7 @@
                     : undefined}
                 on:click={() => {
                     navigate(item.path);
-                    if (window.innerWidth < 1024) dispatch("close");
+                    if (window.innerWidth < 1024) sidebarOpen.close();
                 }}
             >
                 <div
@@ -167,7 +164,8 @@
 
             {#if showTemplateGuide}
                 <TemplateGuideSidebar
-                    on:openGuide={(e) => dispatch("openGuide", e.detail)}
+                    on:openGuide={(e) =>
+                        guideModal.open(e.detail.title, e.detail.content)}
                 />
             {/if}
         </div>

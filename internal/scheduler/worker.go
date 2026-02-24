@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -85,7 +84,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 	go s.calendarLoop()
 
 	if err := s.SchedulePendingFromDB(); err != nil {
-		log.Printf("schedule pending failed: %v", err)
+		logging.Error("SCHED", "schedule pending failed: %v", err)
 	}
 }
 

@@ -12,3 +12,7 @@ func Info(category, format string, args ...interface{}) {
 func Error(category, format string, args ...interface{}) {
 	log.Printf("[ERROR][%s] %s", category, fmt.Sprintf(format, args...))
 }
+
+func Fatal(category, format string, args ...interface{}) {
+	log.Fatalf("[FATAL][%s] %s", category, fmt.Sprintf(format, args...))
+}

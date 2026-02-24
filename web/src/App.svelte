@@ -12,6 +12,7 @@
     dashboardStore,
     serviceActiveStore,
   } from "./lib/store";
+  import { sidebarOpen, guideModal } from "./lib/uiStore";
   import { api, type Config, type DashboardData } from "./lib/api";
   import {
     LayoutDashboard,
@@ -45,25 +46,13 @@
   let isSyncing = false;
   let config: Config | null = null;
   const mainNavId = "main-navigation";
-  let guideModalOpen = false;
-  let guideModalTitle = "";
-  let guideModalContent = "";
-  let isSidebarOpen = true;
   let unsubscribeDarkMode: () => void;
 
   configStore.subscribe((v) => (config = v));
 
-  function closeSidebar() {
-    isSidebarOpen = false;
-  }
-
-  function openSidebar() {
-    isSidebarOpen = true;
-  }
-
   function handleGlobalKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape" && window.innerWidth < 1024 && isSidebarOpen) {
-      closeSidebar();
+    if (event.key === "Escape" && window.innerWidth < 1024 && $sidebarOpen) {
+      sidebarOpen.close();
     }
   }
 
@@ -105,19 +94,7 @@
     });
   }
 
-  function openGuideModal(
-    event: CustomEvent<{ title: string; content: string }>,
-  ) {
-    guideModalTitle = event.detail.title;
-    guideModalContent = event.detail.content;
-    guideModalOpen = true;
-  }
-
   onMount(async () => {
-    if (window.innerWidth < 1024) {
-      isSidebarOpen = false;
-    }
-
     try {
       const cfg = await api.getConfig();
       configStore.set(cfg);
@@ -178,7 +155,6 @@
 >
   <!-- Sidebar -->
   <Sidebar
-    {isSidebarOpen}
     {navItems}
     activeRouteValue={$activeRoute}
     {isSyncing}
@@ -186,17 +162,15 @@
     {config}
     {showTemplateGuide}
     {mainNavId}
-    on:close={closeSidebar}
     on:sync={handleSync}
     on:saveSnooze={saveSnooze}
     on:clearSnooze={clearSnooze}
-    on:openGuide={openGuideModal}
   />
 
-  {#if isSidebarOpen}
+  {#if $sidebarOpen}
     <button
       class="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
-      on:click={closeSidebar}
+      on:click={() => sidebarOpen.close()}
       aria-label="サイドバーを閉じる"
     ></button>
   {/if}
@@ -204,13 +178,11 @@
   <!-- Main Content -->
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <Header
-      {isSidebarOpen}
       activeRouteLabel={navItems.find((n) => n.path === $activeRoute)?.label ||
         "Dashboard"}
       {dashboardData}
       {isServiceActive}
       {mainNavId}
-      on:openSidebar={openSidebar}
     />
 
     <main
@@ -224,11 +196,11 @@
   </div>
 
   <PreviewModal
-    open={guideModalOpen}
-    title={guideModalTitle}
-    content={guideModalContent}
+    open={$guideModal.isOpen}
+    title={$guideModal.title}
+    content={$guideModal.content}
     mode="guide"
-    on:close={() => (guideModalOpen = false)}
+    on:close={() => guideModal.close()}
   />
 
   <ToastContainer />

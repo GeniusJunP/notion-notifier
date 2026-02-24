@@ -2,9 +2,9 @@
     import { createEventDispatcher, onMount, onDestroy } from "svelte";
     import { Menu, Sun, Moon, Database, BellOff } from "lucide-svelte";
     import { darkMode } from "../../lib/store";
+    import { sidebarOpen } from "../../lib/uiStore";
     import type { DashboardData } from "../../lib/api";
 
-    export let isSidebarOpen: boolean;
     export let activeRouteLabel: string;
     export let dashboardData: DashboardData | null;
     export let isServiceActive: boolean;
@@ -32,9 +32,7 @@
     $: currentWeekday = weekdayFormatter.format(now);
     $: currentTime = timeFormatter.format(now);
 
-    const dispatch = createEventDispatcher<{
-        openSidebar: void;
-    }>();
+    const dispatch = createEventDispatcher();
 
     function toggleDarkMode() {
         darkMode.update((current) => !current);
@@ -60,8 +58,8 @@
     <div class="flex items-center gap-4">
         <button
             class="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            on:click={() => dispatch("openSidebar")}
-            aria-expanded={isSidebarOpen}
+            on:click={() => sidebarOpen.open()}
+            aria-expanded={$sidebarOpen}
             aria-controls={mainNavId}
             aria-label="サイドバーを開く"
         >

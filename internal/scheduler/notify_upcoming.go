@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -59,10 +58,10 @@ func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
 			defer cancel()
 			if err := s.fireUpcoming(fireCtx, sched); err != nil {
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-					logging.Info("SCHED", "upcoming notification skipped: %v", err)
+					logging.Info("UPCOMING", "upcoming notification skipped: %v", err)
 					return
 				}
-				log.Printf("upcoming notification failed: %v", err)
+				logging.Error("UPCOMING", "upcoming notification failed: %v", err)
 			}
 		})
 		s.mu.Lock()

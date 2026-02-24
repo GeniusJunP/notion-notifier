@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"notion-notifier/internal/calendar"
@@ -36,7 +35,7 @@ func (s *Scheduler) calendarLoop() {
 				lookahead = 30
 			}
 			if _, err := s.SyncCalendar(time.Now(), time.Now().AddDate(0, 0, lookahead)); err != nil {
-				log.Printf("calendar sync failed: %v", err)
+				logging.Error("CALENDAR", "calendar sync failed: %v", err)
 			}
 		}
 	}

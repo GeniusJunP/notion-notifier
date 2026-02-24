@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"notion-notifier/internal/logging"
@@ -73,7 +72,7 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 		for i := range events {
 			content, err := s.notion.FetchContent(ctx, events[i].NotionPageID, cfg.ContentRules)
 			if err != nil {
-				log.Printf("content extract failed for %s: %v", events[i].NotionPageID, err)
+				logging.Error("SYNC", "content extract failed for %s: %v", events[i].NotionPageID, err)
 				continue
 			}
 			events[i].Content = content

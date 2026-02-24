@@ -2,10 +2,10 @@ package scheduler
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"notion-notifier/internal/config"
+	"notion-notifier/internal/logging"
 )
 
 func (s *Scheduler) periodicLoop() {
@@ -46,7 +46,7 @@ func (s *Scheduler) periodicLoop() {
 				err = s.sendPeriodic(opCtx, now, rule)
 				cancel()
 				if err != nil {
-					log.Printf("periodic notification failed: %v", err)
+					logging.Error("PERIODIC", "periodic notification failed: %v", err)
 				}
 				s.markPeriodicSent(i, key)
 			}

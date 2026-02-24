@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"notion-notifier/internal/app"
+	"notion-notifier/internal/logging"
 )
 
 func main() {
@@ -24,15 +24,15 @@ func main() {
 
 	application, err := app.New(*cfgPath, *envPath, *dbPath)
 	if err != nil {
-		log.Fatalf("init failed: %v", err)
+		logging.Fatal("MAIN", "init failed: %v", err)
 	}
 	defer func() {
 		if err := application.Close(); err != nil {
-			log.Printf("shutdown error: %v", err)
+			logging.Error("MAIN", "shutdown error: %v", err)
 		}
 	}()
 
 	if err := application.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("server failed: %v", err)
+		logging.Fatal("MAIN", "server failed: %v", err)
 	}
 }
