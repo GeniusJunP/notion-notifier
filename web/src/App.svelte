@@ -180,7 +180,6 @@
     <Header
       activeRouteLabel={navItems.find((n) => n.path === $activeRoute)?.label ||
         "Dashboard"}
-      {dashboardData}
       {isServiceActive}
       {mainNavId}
     />

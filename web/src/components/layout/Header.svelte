@@ -3,10 +3,8 @@
     import { Menu, Sun, Moon } from "lucide-svelte";
     import { darkMode } from "../../lib/store";
     import { sidebarOpen } from "../../lib/uiStore";
-    import type { DashboardData } from "../../lib/api";
 
     export let activeRouteLabel: string;
-    export let dashboardData: DashboardData | null;
     export let isServiceActive: boolean;
     export let mainNavId: string;
 
