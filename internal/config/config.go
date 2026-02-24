@@ -27,7 +27,7 @@ type SyncConfig struct {
 }
 
 type Notifications struct {
-	Advance  []AdvanceNotification  `yaml:"advance" json:"advance"`
+	Upcoming  []UpcomingNotification  `yaml:"upcoming" json:"upcoming"`
 	Periodic []PeriodicNotification `yaml:"periodic" json:"periodic"`
 	Manual   string                 `yaml:"manual" json:"manual"`
 }
@@ -43,14 +43,14 @@ type WebhookTarget struct {
 	PayloadTemplate string `yaml:"payload_template" json:"payload_template"`
 }
 
-type AdvanceNotification struct {
+type UpcomingNotification struct {
 	Enabled       bool              `yaml:"enabled" json:"enabled"`
 	MinutesBefore int               `yaml:"minutes_before" json:"minutes_before"`
 	Message       string            `yaml:"message" json:"message"`
-	Conditions    AdvanceConditions `yaml:"conditions" json:"conditions"`
+	Conditions    UpcomingConditions `yaml:"conditions" json:"conditions"`
 }
 
-type AdvanceConditions struct {
+type UpcomingConditions struct {
 	DaysOfWeek      []int            `yaml:"days_of_week" json:"days_of_week"`
 	PropertyFilters []PropertyFilter `yaml:"property_filters" json:"property_filters"`
 }
@@ -238,9 +238,9 @@ func ValidateConfig(cfg Config) error {
 	if cfg.CalendarSync.LookaheadDays <= 0 {
 		return errors.New("calendar_sync.lookahead_days must be > 0")
 	}
-	for i, adv := range cfg.Notifications.Advance {
+	for i, adv := range cfg.Notifications.Upcoming {
 		if adv.MinutesBefore <= 0 {
-			return fmt.Errorf("notifications.advance[%d].minutes_before must be > 0", i)
+			return fmt.Errorf("notifications.upcoming[%d].minutes_before must be > 0", i)
 		}
 	}
 	for i, periodic := range cfg.Notifications.Periodic {
@@ -256,10 +256,10 @@ func ValidateConfig(cfg Config) error {
 			}
 		}
 	}
-	for i, adv := range cfg.Notifications.Advance {
+	for i, adv := range cfg.Notifications.Upcoming {
 		for _, d := range adv.Conditions.DaysOfWeek {
 			if d < 1 || d > 7 {
-				return fmt.Errorf("notifications.advance[%d].conditions.days_of_week must be 1-7", i)
+				return fmt.Errorf("notifications.upcoming[%d].conditions.days_of_week must be 1-7", i)
 			}
 		}
 	}
@@ -350,8 +350,8 @@ func SanitizeTemplate(input string) string {
 	return strings.ReplaceAll(input, "\r\n", "\n")
 }
 
-// DefaultAdvanceMessage is the default message template for advance notifications.
-const DefaultAdvanceMessage = "## 予定リマインド！⏰\n" +
+// DefaultUpcomingMessage is the default message template for upcoming notifications.
+const DefaultUpcomingMessage = "## 予定リマインド！⏰\n" +
 	"@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！\n\n" +
 	"### 詳細\n" +
 	"- **日時:** {{.Date}} {{if .IsAllDay}}(終日){{else}}`{{.Time}}`{{end}}{{if .EndDate}} 〜 {{.EndDate}} {{if .EndTime}}`{{.EndTime}}`{{end}}{{end}}\n" +
@@ -381,7 +381,7 @@ const DefaultManualMessage = DefaultPeriodicMessage
 // DefaultTemplates returns the default message templates keyed by type.
 func DefaultTemplates() map[string]string {
 	return map[string]string{
-		"advance":  DefaultAdvanceMessage,
+		"upcoming": DefaultUpcomingMessage,
 		"periodic": DefaultPeriodicMessage,
 		"manual":   DefaultManualMessage,
 	}

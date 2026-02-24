@@ -38,7 +38,7 @@ func TestMatchesDays(t *testing.T) {
 	}
 }
 
-func TestMatchAdvanceConditions(t *testing.T) {
+func TestMatchUpcomingConditions(t *testing.T) {
 	start := time.Date(2026, 2, 16, 9, 0, 0, 0, time.UTC)
 	event := models.Event{
 		Title:        "Weekly Review",
@@ -56,13 +56,13 @@ func TestMatchAdvanceConditions(t *testing.T) {
 
 	tests := []struct {
 		name string
-		rule config.AdvanceNotification
+		rule config.UpcomingNotification
 		want bool
 	}{
 		{
 			name: "days empty and filters empty",
-			rule: config.AdvanceNotification{
-				Conditions: config.AdvanceConditions{
+			rule: config.UpcomingNotification{
+				Conditions: config.UpcomingConditions{
 					DaysOfWeek:      nil,
 					PropertyFilters: nil,
 				},
@@ -71,8 +71,8 @@ func TestMatchAdvanceConditions(t *testing.T) {
 		},
 		{
 			name: "days mismatch",
-			rule: config.AdvanceNotification{
-				Conditions: config.AdvanceConditions{
+			rule: config.UpcomingNotification{
+				Conditions: config.UpcomingConditions{
 					DaysOfWeek: []int{otherDay},
 				},
 			},
@@ -80,8 +80,8 @@ func TestMatchAdvanceConditions(t *testing.T) {
 		},
 		{
 			name: "one filter mismatched",
-			rule: config.AdvanceNotification{
-				Conditions: config.AdvanceConditions{
+			rule: config.UpcomingNotification{
+				Conditions: config.UpcomingConditions{
 					DaysOfWeek: []int{weekday},
 					PropertyFilters: []config.PropertyFilter{
 						{Property: "location", Operator: "eq", Value: "Room A"},
@@ -93,8 +93,8 @@ func TestMatchAdvanceConditions(t *testing.T) {
 		},
 		{
 			name: "all filters matched",
-			rule: config.AdvanceNotification{
-				Conditions: config.AdvanceConditions{
+			rule: config.UpcomingNotification{
+				Conditions: config.UpcomingConditions{
 					DaysOfWeek: []int{weekday},
 					PropertyFilters: []config.PropertyFilter{
 						{Property: "location", Operator: "eq", Value: "Room A"},
@@ -108,9 +108,9 @@ func TestMatchAdvanceConditions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := matchAdvanceConditions(event, start, tc.rule, cfg)
+			got := matchUpcomingConditions(event, start, tc.rule, cfg)
 			if got != tc.want {
-				t.Fatalf("matchAdvanceConditions() = %v, want %v", got, tc.want)
+				t.Fatalf("matchUpcomingConditions() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -167,7 +167,7 @@ func TestSendWebhookRecordsHistoryOnPayloadRenderError(t *testing.T) {
 			CheckInterval: 15,
 		},
 		Notifications: config.Notifications{
-			Advance:  []config.AdvanceNotification{},
+			Upcoming:  []config.UpcomingNotification{},
 			Periodic: []config.PeriodicNotification{},
 		},
 		Webhook: config.WebhookConfig{
@@ -323,7 +323,7 @@ func TestSendManualNotificationRoutesByIsTest(t *testing.T) {
 					CheckInterval: 15,
 				},
 				Notifications: config.Notifications{
-					Advance:  []config.AdvanceNotification{},
+					Upcoming:  []config.UpcomingNotification{},
 					Periodic: []config.PeriodicNotification{},
 				},
 				Webhook: config.WebhookConfig{

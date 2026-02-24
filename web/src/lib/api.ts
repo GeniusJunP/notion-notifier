@@ -179,16 +179,31 @@ export function buildPreviewNotificationRequest(
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+  let response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+  } catch (networkError) {
+    if (api.onError) api.onError('ネットワークエラー: サーバーに接続できません');
+    throw { error: 'ネットワークエラー' } as ApiError;
+  }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = { error: `HTTP ${response.status} エラー` };
+    }
+    
+    const errorMessage = errorData.error || '不明なエラーが発生しました';
+    if (api.onError) api.onError(errorMessage);
+    
     throw errorData as ApiError;
   }
 
@@ -200,6 +215,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  onError: ((msg: string) => {}) as ((msg: string) => void),
   getConfig: () => request<Config>('/api/config'),
   updateConfig: (cfg: Config) => request<Config>('/api/config', { method: 'PUT', body: JSON.stringify(cfg) }),
   getDashboard: () => request<DashboardData>('/api/dashboard'),

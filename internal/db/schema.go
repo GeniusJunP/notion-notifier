@@ -37,7 +37,7 @@ func initSchema(db *sql.DB) error {
 			attempted INTEGER NOT NULL DEFAULT 0,
 			synced INTEGER NOT NULL DEFAULT 0
 		);`,
-		`CREATE TABLE IF NOT EXISTS advance_schedules (
+		`CREATE TABLE IF NOT EXISTS upcoming_schedules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			notion_page_id TEXT NOT NULL,
 			rule_index INTEGER NOT NULL,

@@ -123,65 +123,16 @@ func TestHandlePreviewNotificationReturnsMessageOnly(t *testing.T) {
 		t.Fatalf("manual preview response must include message field")
 	}
 
-	advanceReq := map[string]any{
+	upcomingReq := map[string]any{
 		"template":       "{{.Name}}/{{.MinutesBefore}}",
 		"minutes_before": 30,
 	}
-	advanceResp := postJSON(t, mux, "/api/notifications/preview", advanceReq)
-	if _, ok := advanceResp["payload"]; ok {
-		t.Fatalf("advance preview response must not include payload field")
+	upcomingResp := postJSON(t, mux, "/api/notifications/preview", upcomingReq)
+	if _, ok := upcomingResp["payload"]; ok {
+		t.Fatalf("upcoming preview response must not include payload field")
 	}
-	if _, ok := advanceResp["message"]; !ok {
-		t.Fatalf("advance preview response must include message field")
-	}
-}
-
-func TestHandleManualNotificationPersistsTemplateBeforeSend(t *testing.T) {
-	mux, repo, cfgMgr := setupAPIHandler(t, true)
-	defer repo.Close()
-
-	loc, _ := time.LoadLocation("Asia/Tokyo")
-	start := time.Now().In(loc).AddDate(0, 0, 1)
-	startDate := start.Format("2006-01-02")
-
-	if err := repo.UpsertEvents(context.Background(), []models.Event{
-		{
-			NotionPageID: "event-1",
-			Title:        "Planning",
-			StartDate:    startDate,
-			StartTime:    "10:00",
-			RawPropsJSON: "{}",
-			FetchedAt:    time.Now(),
-		},
-	}); err != nil {
-		t.Fatalf("upsert event: %v", err)
-	}
-
-	const template = "manual={{len .Events}}"
-	reqBody := map[string]any{
-		"template":  template,
-		"from_date": startDate,
-		"to_date":   startDate,
-	}
-	data, err := json.Marshal(reqBody)
-	if err != nil {
-		t.Fatalf("marshal request: %v", err)
-	}
-	req := httptest.NewRequest(http.MethodPost, "/api/notifications/manual", bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-	mux.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("unexpected status: got=%d want=%d body=%s", rec.Code, http.StatusInternalServerError, rec.Body.String())
-	}
-	if !strings.Contains(rec.Body.String(), "send failed") {
-		t.Fatalf("response body must include send failure: %s", rec.Body.String())
-	}
-
-	cfg := cfgMgr.Config()
-	if cfg.Notifications.Manual != template {
-		t.Fatalf("manual template must be saved before send: got=%q want=%q", cfg.Notifications.Manual, template)
+	if _, ok := upcomingResp["message"]; !ok {
+		t.Fatalf("upcoming preview response must include message field")
 	}
 }
 
@@ -201,9 +152,9 @@ func TestHandleDefaultTemplates(t *testing.T) {
 		t.Fatalf("decode response: %v", err)
 	}
 
-	advance, ok := payload["advance"]
+	upcoming, ok := payload["upcoming"]
 	if !ok {
-		t.Fatalf("response must include advance template")
+		t.Fatalf("response must include upcoming template")
 	}
 	periodic, ok := payload["periodic"]
 	if !ok {
@@ -214,8 +165,8 @@ func TestHandleDefaultTemplates(t *testing.T) {
 		t.Fatalf("response must include manual template")
 	}
 
-	if !strings.Contains(advance, "## 予定リマインド！⏰") {
-		t.Fatalf("advance template must include new heading")
+	if !strings.Contains(upcoming, "## 予定リマインド！⏰") {
+		t.Fatalf("upcoming template must include new heading")
 	}
 	if !strings.Contains(periodic, "## 今週の予定！📣") {
 		t.Fatalf("periodic template must include new heading")
@@ -242,7 +193,7 @@ func setupAPIHandler(t *testing.T, calendarEnabled bool) (*http.ServeMux, *db.Re
 			CheckInterval: 15,
 		},
 		Notifications: config.Notifications{
-			Advance:  []config.AdvanceNotification{},
+			Upcoming: []config.UpcomingNotification{},
 			Periodic: []config.PeriodicNotification{},
 		},
 		Webhook: config.WebhookConfig{

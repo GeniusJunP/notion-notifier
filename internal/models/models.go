@@ -30,7 +30,7 @@ type NotificationHistory struct {
 	SentAt       time.Time
 }
 
-type AdvanceSchedule struct {
+type UpcomingSchedule struct {
 	ID           int64
 	NotionPageID string
 	RuleIndex    int

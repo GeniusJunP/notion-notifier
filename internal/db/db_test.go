@@ -47,7 +47,7 @@ func TestUpsertEventsPersistsAttendees(t *testing.T) {
 	}
 }
 
-func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
+func TestReplaceUpcomingSchedulesPreservesFiredForSameFireAt(t *testing.T) {
 	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
@@ -56,30 +56,30 @@ func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
 
 	ctx := context.Background()
 	fireAt := time.Date(2026, 2, 12, 13, 59, 0, 0, time.UTC)
-	sched := models.AdvanceSchedule{
+	sched := models.UpcomingSchedule{
 		NotionPageID: "page-1",
 		RuleIndex:    0,
 		FireAt:       fireAt,
 	}
 
-	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{sched}); err != nil {
+	if err := repo.ReplaceUpcomingSchedules(ctx, []models.UpcomingSchedule{sched}); err != nil {
 		t.Fatalf("replace schedules (initial): %v", err)
 	}
-	pending, err := repo.ListPendingAdvanceSchedules(ctx)
+	pending, err := repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
 		t.Fatalf("list pending (initial): %v", err)
 	}
 	if len(pending) != 1 {
 		t.Fatalf("unexpected pending len (initial): got=%d want=1", len(pending))
 	}
-	if err := repo.MarkAdvanceScheduleFired(ctx, pending[0].ID); err != nil {
+	if err := repo.MarkUpcomingScheduleFired(ctx, pending[0].ID); err != nil {
 		t.Fatalf("mark fired: %v", err)
 	}
 
-	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{sched}); err != nil {
+	if err := repo.ReplaceUpcomingSchedules(ctx, []models.UpcomingSchedule{sched}); err != nil {
 		t.Fatalf("replace schedules (same fire_at): %v", err)
 	}
-	pending, err = repo.ListPendingAdvanceSchedules(ctx)
+	pending, err = repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
 		t.Fatalf("list pending (same fire_at): %v", err)
 	}
@@ -88,7 +88,7 @@ func TestReplaceAdvanceSchedulesPreservesFiredForSameFireAt(t *testing.T) {
 	}
 }
 
-func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *testing.T) {
+func TestReplaceUpcomingSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *testing.T) {
 	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
@@ -98,14 +98,14 @@ func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *t
 	ctx := context.Background()
 	fireAtA := time.Date(2026, 2, 12, 13, 59, 0, 0, time.UTC)
 	fireAtB := time.Date(2026, 2, 12, 14, 30, 0, 0, time.UTC)
-	schedules := []models.AdvanceSchedule{
+	schedules := []models.UpcomingSchedule{
 		{NotionPageID: "page-a", RuleIndex: 0, FireAt: fireAtA},
 		{NotionPageID: "page-b", RuleIndex: 1, FireAt: fireAtB},
 	}
-	if err := repo.ReplaceAdvanceSchedules(ctx, schedules); err != nil {
+	if err := repo.ReplaceUpcomingSchedules(ctx, schedules); err != nil {
 		t.Fatalf("replace schedules (initial): %v", err)
 	}
-	pending, err := repo.ListPendingAdvanceSchedules(ctx)
+	pending, err := repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
 		t.Fatalf("list pending (initial): %v", err)
 	}
@@ -123,20 +123,20 @@ func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *t
 	if pageAID == 0 {
 		t.Fatalf("page-a schedule id not found")
 	}
-	if err := repo.MarkAdvanceScheduleFired(ctx, pageAID); err != nil {
+	if err := repo.MarkUpcomingScheduleFired(ctx, pageAID); err != nil {
 		t.Fatalf("mark fired (page-a): %v", err)
 	}
 
-	updatedA := models.AdvanceSchedule{
+	updatedA := models.UpcomingSchedule{
 		NotionPageID: "page-a",
 		RuleIndex:    0,
 		FireAt:       fireAtA.Add(1 * time.Minute),
 	}
-	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{updatedA}); err != nil {
+	if err := repo.ReplaceUpcomingSchedules(ctx, []models.UpcomingSchedule{updatedA}); err != nil {
 		t.Fatalf("replace schedules (updated): %v", err)
 	}
 
-	pending, err = repo.ListPendingAdvanceSchedules(ctx)
+	pending, err = repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
 		t.Fatalf("list pending (updated): %v", err)
 	}
@@ -151,7 +151,7 @@ func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *t
 	}
 
 	var count int
-	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM advance_schedules WHERE notion_page_id = ?;`, "page-b")
+	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM upcoming_schedules WHERE notion_page_id = ?;`, "page-b")
 	if err := row.Scan(&count); err != nil {
 		t.Fatalf("count stale schedules: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestReplaceAdvanceSchedulesResetsFiredWhenFireAtChangesAndDeletesStale(t *t
 	}
 }
 
-func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
+func TestReplaceUpcomingSchedulesClearsAllWhenEmpty(t *testing.T) {
 	repo, err := Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
@@ -169,17 +169,17 @@ func TestReplaceAdvanceSchedulesClearsAllWhenEmpty(t *testing.T) {
 
 	ctx := context.Background()
 	fireAt := time.Date(2026, 2, 12, 10, 0, 0, 0, time.UTC)
-	if err := repo.ReplaceAdvanceSchedules(ctx, []models.AdvanceSchedule{
+	if err := repo.ReplaceUpcomingSchedules(ctx, []models.UpcomingSchedule{
 		{NotionPageID: "page-1", RuleIndex: 0, FireAt: fireAt},
 	}); err != nil {
 		t.Fatalf("replace schedules (initial): %v", err)
 	}
-	if err := repo.ReplaceAdvanceSchedules(ctx, nil); err != nil {
+	if err := repo.ReplaceUpcomingSchedules(ctx, nil); err != nil {
 		t.Fatalf("replace schedules (empty): %v", err)
 	}
 
 	var count int
-	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM advance_schedules;`)
+	row := repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM upcoming_schedules;`)
 	if err := row.Scan(&count); err != nil && err != sql.ErrNoRows {
 		t.Fatalf("count schedules: %v", err)
 	}

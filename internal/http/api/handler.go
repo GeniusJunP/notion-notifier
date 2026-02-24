@@ -45,41 +45,37 @@ func (h *Handler) Register(mux *http.ServeMux) {
 func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		h.getConfig(w, r)
+		respondJSON(w, http.StatusOK, h.cfg.Config())
 	case http.MethodPut:
-		h.putConfig(w, r)
+		var incoming config.Config
+		if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
+			respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+
+		saved, err := h.cfg.UpdateConfig(incoming)
+		if err == nil && h.sched != nil {
+			err = h.sched.Reload()
+		}
+
+		if err != nil {
+			var vErr config.ValidationError
+			if errors.As(err, &vErr) {
+				respondValidationError(w, "validation failed", map[string]string{
+					"config": vErr.Error(),
+				})
+				return
+			}
+			logging.Error("CONF", "update failed: %v", err)
+			respondError(w, http.StatusInternalServerError, "failed to save config")
+			return
+		}
+
+		logging.Info("CONF", "config updated from %s", r.RemoteAddr)
+		respondJSON(w, http.StatusOK, saved)
 	default:
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
-}
-
-func (h *Handler) getConfig(w http.ResponseWriter, _ *http.Request) {
-	respondJSON(w, http.StatusOK, h.cfg.Config())
-}
-
-func (h *Handler) putConfig(w http.ResponseWriter, r *http.Request) {
-	var incoming config.Config
-	if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
-		return
-	}
-
-	saved, err := h.saveConfig(incoming)
-	if err != nil {
-		var vErr config.ValidationError
-		if errors.As(err, &vErr) {
-			respondValidationError(w, "validation failed", map[string]string{
-				"config": vErr.Error(),
-			})
-			return
-		}
-		logging.Error("CONF", "update failed: %v", err)
-		respondError(w, http.StatusInternalServerError, "failed to save config")
-		return
-	}
-
-	logging.Info("CONF", "config updated from %s", r.RemoteAddr)
-	respondJSON(w, http.StatusOK, saved)
 }
 
 // --- GET /api/dashboard ---
@@ -365,9 +361,9 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Advance template preview
+	// Upcoming template preview
 	if req.MinutesBefore > 0 {
-		message, err := h.sched.PreviewAdvanceTemplate(r.Context(), req.Template, req.MinutesBefore)
+		message, err := h.sched.PreviewUpcomingTemplate(r.Context(), req.Template, req.MinutesBefore)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "preview failed: "+err.Error())
 			return
@@ -411,13 +407,6 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 	}
 
 	template := config.SanitizeTemplate(req.Template)
-	cfg := h.cfg.Config()
-	cfg.Notifications.Manual = template
-	if _, err := h.saveConfig(cfg); err != nil {
-		logging.Error("CONF", "manual template save failed: %v", err)
-		respondError(w, http.StatusInternalServerError, "failed to save manual template")
-		return
-	}
 
 	message, err := h.sched.SendManualNotification(r.Context(), template, from, to)
 	if err != nil {
@@ -435,17 +424,4 @@ func (h *Handler) handleDefaultTemplates(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusOK, config.DefaultTemplates())
-}
-
-func (h *Handler) saveConfig(next config.Config) (config.Config, error) {
-	saved, err := h.cfg.UpdateConfig(next)
-	if err != nil {
-		return config.Config{}, err
-	}
-	if h.sched != nil {
-		if err := h.sched.Reload(); err != nil {
-			return config.Config{}, err
-		}
-	}
-	return saved, nil
 }

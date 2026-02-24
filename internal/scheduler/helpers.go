@@ -53,15 +53,15 @@ func pickPrimaryCalendarEvent(events []calendar.CalendarEvent, record models.Syn
 	return primary, duplicates
 }
 
-func buildAdvanceSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.AdvanceSchedule {
-	var schedules []models.AdvanceSchedule
+func buildUpcomingSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.UpcomingSchedule {
+	var schedules []models.UpcomingSchedule
 	for _, ev := range events {
 		startTime := parseEventStart(ev, loc)
-		for idx, rule := range cfg.Notifications.Advance {
+		for idx, rule := range cfg.Notifications.Upcoming {
 			if !rule.Enabled {
 				continue
 			}
-			if !matchAdvanceConditions(ev, startTime, rule, cfg) {
+			if !matchUpcomingConditions(ev, startTime, rule, cfg) {
 				continue
 			}
 			fireAt := startTime.Add(-time.Duration(rule.MinutesBefore) * time.Minute)
@@ -71,7 +71,7 @@ func buildAdvanceSchedules(events []models.Event, cfg config.Config, now time.Ti
 			if fireAt.Before(now.Add(-5 * time.Minute)) {
 				continue
 			}
-			schedules = append(schedules, models.AdvanceSchedule{
+			schedules = append(schedules, models.UpcomingSchedule{
 				NotionPageID: ev.NotionPageID,
 				RuleIndex:    idx,
 				FireAt:       fireAt,
@@ -113,7 +113,7 @@ func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
 	return localMidnight.UTC().Format("2006-01-02")
 }
 
-func matchAdvanceConditions(ev models.Event, start time.Time, rule config.AdvanceNotification, cfg config.Config) bool {
+func matchUpcomingConditions(ev models.Event, start time.Time, rule config.UpcomingNotification, cfg config.Config) bool {
 	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
 		return false
 	}

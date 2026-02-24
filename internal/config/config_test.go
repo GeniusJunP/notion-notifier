@@ -8,9 +8,9 @@ import (
 func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
 	templates := DefaultTemplates()
 
-	advance, ok := templates["advance"]
+	upcoming, ok := templates["upcoming"]
 	if !ok {
-		t.Fatalf("advance template is missing")
+		t.Fatalf("upcoming template is missing")
 	}
 	periodic, ok := templates["periodic"]
 	if !ok {
@@ -21,14 +21,14 @@ func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
 		t.Fatalf("manual template is missing")
 	}
 
-	advanceTokens := []string{
+	upcomingTokens := []string{
 		"## 予定リマインド！⏰",
 		"{{.MinutesBefore}}",
 		"{{.Name}}",
 	}
-	for _, token := range advanceTokens {
-		if !strings.Contains(advance, token) {
-			t.Fatalf("advance template must contain %q", token)
+	for _, token := range upcomingTokens {
+		if !strings.Contains(upcoming, token) {
+			t.Fatalf("upcoming template must contain %q", token)
 		}
 	}
 

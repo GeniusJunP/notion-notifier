@@ -69,13 +69,13 @@ func (s *Scheduler) markPeriodicSent(idx int, key string) {
 	s.periodicLastSent[idx] = key
 }
 
-func (s *Scheduler) clearAdvanceTimers() {
+func (s *Scheduler) clearUpcomingTimers() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, timer := range s.advanceTimers {
+	for _, timer := range s.upcomingTimers {
 		timer.Stop()
 	}
-	s.advanceTimers = map[string]*time.Timer{}
+	s.upcomingTimers = map[string]*time.Timer{}
 }
 
 func (s *Scheduler) currentTimezone() string {

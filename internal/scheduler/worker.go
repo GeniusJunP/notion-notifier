@@ -14,19 +14,18 @@ import (
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
 	"notion-notifier/internal/notion"
-	"notion-notifier/internal/retry"
 	tpl "notion-notifier/internal/template"
 	"notion-notifier/internal/webhook"
 )
 
 const (
-	notificationTypeAdvance  = "advance"
+	notificationTypeUpcoming = "upcoming"
 	notificationTypePeriodic = "periodic"
 	notificationTypeManual   = "manual"
 	syncOpTimeout            = 2 * time.Minute
 	calendarOpTimeout        = 3 * time.Minute
 	rebuildOpTimeout         = 30 * time.Second
-	advanceFireTimeout       = 30 * time.Second
+	upcomingFireTimeout      = 30 * time.Second
 )
 
 var errSchedulerNotRunning = errors.New("scheduler runtime is not running")
@@ -40,7 +39,7 @@ type Scheduler struct {
 	renderer *tpl.Renderer
 
 	mu                  sync.Mutex
-	advanceTimers       map[string]*time.Timer
+	upcomingTimers      map[string]*time.Timer
 	periodicLastSent    map[int]string
 	notionKey           string
 	calendarFingerprint string
@@ -68,7 +67,7 @@ func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, 
 		webhook:          webhookClient,
 		calendar:         calendarClient,
 		renderer:         renderer,
-		advanceTimers:    map[string]*time.Timer{},
+		upcomingTimers:   map[string]*time.Timer{},
 		periodicLastSent: map[int]string{},
 	}
 }
@@ -93,7 +92,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 func (s *Scheduler) Stop() {
 	s.cancelRuntime()
 	s.wg.Wait()
-	s.clearAdvanceTimers()
+	s.clearUpcomingTimers()
 }
 
 func (s *Scheduler) Reload() error {
@@ -106,272 +105,7 @@ func (s *Scheduler) Reload() error {
 		}
 		return err
 	}
-	return s.RebuildAdvanceSchedules()
-}
-
-func (s *Scheduler) syncLoop() {
-	defer s.wg.Done()
-	runtimeCtx, err := s.runtimeContext()
-	if err != nil {
-		return
-	}
-	_, _ = s.SyncNotion()
-	for {
-		cfg := s.cfg.Config()
-		interval := time.Duration(cfg.Sync.CheckInterval) * time.Minute
-		ticker := time.NewTicker(interval)
-		select {
-		case <-runtimeCtx.Done():
-			ticker.Stop()
-			return
-		case <-ticker.C:
-			_, _ = s.SyncNotion()
-		}
-		ticker.Stop()
-	}
-}
-
-func (s *Scheduler) periodicLoop() {
-	defer s.wg.Done()
-	runtimeCtx, err := s.runtimeContext()
-	if err != nil {
-		return
-	}
-
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-runtimeCtx.Done():
-			return
-		case <-ticker.C:
-			cfg := s.cfg.Config()
-			loc := loadLocationOrLocal(cfg.Timezone)
-			now := time.Now().In(loc)
-			for i, rule := range cfg.Notifications.Periodic {
-				if !rule.Enabled {
-					continue
-				}
-				if now.Format("15:04") != rule.Time {
-					continue
-				}
-				if !matchesDays(rule.DaysOfWeek, weekdayToConfig(now.Weekday())) {
-					continue
-				}
-				key := now.Format("2006-01-02")
-				if s.periodicSent(i, key) {
-					continue
-				}
-				opCtx, cancel, err := s.newRuntimeOpContext(advanceFireTimeout)
-				if err != nil {
-					return
-				}
-				err = s.sendPeriodic(opCtx, now, rule)
-				cancel()
-				if err != nil {
-					log.Printf("periodic notification failed: %v", err)
-				}
-				s.markPeriodicSent(i, key)
-			}
-		}
-	}
-}
-
-func (s *Scheduler) calendarLoop() {
-	defer s.wg.Done()
-	runtimeCtx, err := s.runtimeContext()
-	if err != nil {
-		return
-	}
-
-	ticker := time.NewTicker(30 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-runtimeCtx.Done():
-			return
-		case <-ticker.C:
-			cfg := s.cfg.Config()
-			if !cfg.CalendarSync.Enabled {
-				continue
-			}
-			interval := time.Duration(cfg.CalendarSync.IntervalHours) * time.Hour
-			ticker.Reset(interval)
-			lookahead := cfg.CalendarSync.LookaheadDays
-			if lookahead <= 0 {
-				lookahead = 30
-			}
-			if _, err := s.SyncCalendar(time.Now(), time.Now().AddDate(0, 0, lookahead)); err != nil {
-				log.Printf("calendar sync failed: %v", err)
-			}
-		}
-	}
-}
-
-func (s *Scheduler) SyncNotion() (int, error) {
-	count := 0
-	err := s.withRuntimeOp(syncOpTimeout, func(ctx context.Context) error {
-		var err error
-		count, err = s.syncNotion(ctx)
-		return err
-	})
-	return count, err
-}
-
-func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
-	cfg, env := s.cfg.Snapshot()
-	logging.Info("SYNC", "notion sync started")
-	loc := loadLocationOrLocal(cfg.Timezone)
-	if env.Notion.APIKey != "" {
-		s.mu.Lock()
-		if s.notion == nil || s.notionKey != env.Notion.APIKey {
-			s.notion = notion.New(nil, env.Notion.APIKey, retry.Config{})
-			s.notionKey = env.Notion.APIKey
-		}
-		s.mu.Unlock()
-	}
-	if s.notion == nil {
-		err := errors.New("notion client not configured")
-		s.setNotionStatus(0, err)
-		logging.Error("SYNC", "notion client not configured")
-		return 0, err
-	}
-	fromDate := notionOnOrAfterDate(time.Now(), loc)
-	pages, err := s.notion.QueryDatabaseOnOrAfter(ctx, env.Notion.DatabaseID, cfg.PropertyMap.Date, fromDate)
-	if err != nil {
-		s.setNotionStatus(0, err)
-		logging.Error("SYNC", "notion query failed: %v", err)
-		return 0, err
-	}
-	events := notion.MapPagesToEvents(pages, cfg.PropertyMap, loc)
-	if cfg.ContentRules.StartHeading != "" && s.notion != nil {
-		for i := range events {
-			content, err := s.notion.FetchContent(ctx, events[i].NotionPageID, cfg.ContentRules)
-			if err != nil {
-				log.Printf("content extract failed for %s: %v", events[i].NotionPageID, err)
-				continue
-			}
-			events[i].Content = content
-		}
-	}
-	if err := s.repo.UpsertEvents(ctx, events); err != nil {
-		s.setNotionStatus(0, err)
-		logging.Error("SYNC", "upsert events failed: %v", err)
-		return 0, err
-	}
-	ids := make([]string, 0, len(events))
-	for _, ev := range events {
-		ids = append(ids, ev.NotionPageID)
-	}
-	if err := s.repo.DeleteEventsNotIn(ctx, ids); err != nil {
-		s.setNotionStatus(len(events), err)
-		logging.Error("SYNC", "cleanup stale events failed: %v", err)
-		return len(events), err
-	}
-	if err := s.rebuildAdvanceSchedules(ctx); err != nil {
-		s.setNotionStatus(len(events), err)
-		logging.Error("SYNC", "rebuild advance schedules failed: %v", err)
-		return len(events), err
-	}
-	s.setNotionStatus(len(events), nil)
-	logging.Info("SYNC", "notion sync finished (count=%d)", len(events))
-	return len(events), nil
-}
-
-func (s *Scheduler) RebuildAdvanceSchedules() error {
-	return s.withRuntimeOp(rebuildOpTimeout, s.rebuildAdvanceSchedules)
-}
-
-func (s *Scheduler) rebuildAdvanceSchedules(ctx context.Context) error {
-	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
-	now := time.Now().In(loc)
-	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
-	if err != nil {
-		return err
-	}
-	schedules := buildAdvanceSchedules(events, cfg, now, loc)
-	if err := s.repo.ReplaceAdvanceSchedules(ctx, schedules); err != nil {
-		return err
-	}
-	return s.schedulePendingFromDB(ctx)
-}
-
-func (s *Scheduler) SchedulePendingFromDB() error {
-	return s.withRuntimeOp(rebuildOpTimeout, s.schedulePendingFromDB)
-}
-
-func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
-	s.clearAdvanceTimers()
-	loc := loadLocationOrLocal(s.currentTimezone())
-	now := time.Now().In(loc)
-	schedules, err := s.repo.ListPendingAdvanceSchedules(ctx)
-	if err != nil {
-		return err
-	}
-	for _, sched := range schedules {
-		delay := sched.FireAt.Sub(now)
-		if delay < 0 {
-			delay = 1 * time.Second
-		}
-		key := scheduleKey(sched.NotionPageID, sched.RuleIndex)
-		sched := sched
-		timer := time.AfterFunc(delay, func() {
-			fireCtx, cancel, err := s.newRuntimeOpContext(advanceFireTimeout)
-			if err != nil {
-				return
-			}
-			defer cancel()
-			if err := s.fireAdvance(fireCtx, sched); err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-					logging.Info("SCHED", "advance notification skipped: %v", err)
-					return
-				}
-				log.Printf("advance notification failed: %v", err)
-			}
-		})
-		s.mu.Lock()
-		s.advanceTimers[key] = timer
-		s.mu.Unlock()
-	}
-	return nil
-}
-
-func (s *Scheduler) fireAdvance(ctx context.Context, sched models.AdvanceSchedule) error {
-	cfg := s.cfg.Config()
-	event, ok, err := s.repo.GetEvent(ctx, sched.NotionPageID)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = s.repo.MarkAdvanceScheduleFired(ctx, sched.ID)
-	}()
-	if !ok {
-		return nil
-	}
-	custom := extractCustomValues(event.RawPropsJSON, cfg.PropertyMap)
-	templateEvent := toTemplateEvent(event, custom)
-	rule := cfg.Notifications.Advance[sched.RuleIndex]
-	message, err := s.renderer.RenderSingle(rule.Message, templateEvent, rule.MinutesBefore)
-	if err != nil {
-		return err
-	}
-	if err := s.sendWebhook(ctx, notificationTypeAdvance, message, []models.TemplateEvent{templateEvent}, rule.MinutesBefore, event.NotionPageID); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
-	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
-	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	to := from.AddDate(0, 0, rule.DaysAhead)
-	message, templateEvents, err := s.renderListFromRange(ctx, rule.Message, from, to)
-	if err != nil {
-		return err
-	}
-	return s.sendWebhook(ctx, notificationTypePeriodic, message, templateEvents, 0, "")
+	return s.RebuildUpcomingSchedules()
 }
 
 func (s *Scheduler) SendManualNotification(ctx context.Context, template string, from, to time.Time) (string, error) {
@@ -383,22 +117,6 @@ func (s *Scheduler) SendManualNotification(ctx context.Context, template string,
 		return message, err
 	}
 	return message, nil
-}
-
-func (s *Scheduler) PreviewAdvanceTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
-	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
-	now := time.Now().In(loc)
-	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
-	if err != nil {
-		return "", err
-	}
-	if len(events) == 0 {
-		return "（プレビュー対象の予定がありません）", nil
-	}
-	custom := extractCustomValues(events[0].RawPropsJSON, cfg.PropertyMap)
-	templateEvent := toTemplateEvent(events[0], custom)
-	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
 }
 
 func (s *Scheduler) PreviewManualTemplate(ctx context.Context, template string, from, to time.Time) (string, error) {
@@ -418,202 +136,6 @@ func (s *Scheduler) renderListFromRange(ctx context.Context, template string, fr
 		return "", nil, err
 	}
 	return message, templateEvents, nil
-}
-
-func (s *Scheduler) SyncCalendar(from, to time.Time) (int, error) {
-	count := 0
-	err := s.withRuntimeOp(calendarOpTimeout, func(ctx context.Context) error {
-		var err error
-		count, err = s.syncCalendar(ctx, from, to)
-		return err
-	})
-	return count, err
-}
-
-func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, error) {
-	cfg, env := s.cfg.Snapshot()
-	logging.Info("CALENDAR", "calendar sync started")
-	if !cfg.CalendarSync.Enabled {
-		logging.Info("CALENDAR", "calendar sync skipped (disabled)")
-		return 0, nil
-	}
-	calendarOpts := calendar.ClientOptions{
-		CalendarID:        env.Google.CalendarID,
-		OAuthClientID:     env.Google.OAuthClientID,
-		OAuthClientSecret: env.Google.OAuthClientSecret,
-		OAuthRefreshToken: env.Google.OAuthRefreshToken,
-	}
-	if err := calendarOpts.Validate(); err != nil {
-		s.mu.Lock()
-		s.calendar = nil
-		s.calendarFingerprint = ""
-		s.mu.Unlock()
-		logging.Error("CALENDAR", "calendar oauth config invalid: %v", err)
-		return 0, err
-	}
-	fingerprint := calendarOpts.Fingerprint()
-
-	s.mu.Lock()
-	if s.calendar == nil || s.calendarFingerprint != fingerprint {
-		client, err := calendar.NewClient(ctx, calendarOpts)
-		if err != nil {
-			s.mu.Unlock()
-			logging.Error("CALENDAR", "calendar client init failed: %v", err)
-			return 0, err
-		}
-		s.calendar = client
-		s.calendarFingerprint = fingerprint
-	}
-	s.mu.Unlock()
-	if s.calendar == nil {
-		logging.Error("CALENDAR", "calendar client not configured")
-		return 0, errors.New("calendar client not configured")
-	}
-	loc := loadLocationOrLocal(cfg.Timezone)
-
-	// 1. Fetch Notion cache from DB (source of truth data).
-	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
-	if err != nil {
-		logging.Error("CALENDAR", "list db events failed: %v", err)
-		return 0, err
-	}
-	dbMap := make(map[string]models.Event, len(dbEvents))
-	for _, ev := range dbEvents {
-		dbMap[ev.NotionPageID] = ev
-	}
-
-	// 2. Load sync_records once and index by Notion page ID.
-	syncRecords, err := s.repo.ListSyncRecords(ctx)
-	if err != nil {
-		logging.Error("CALENDAR", "list sync records failed: %v", err)
-		return 0, err
-	}
-	syncMap := make(map[string]models.SyncRecord, len(syncRecords))
-	for _, rec := range syncRecords {
-		syncMap[rec.NotionPageID] = rec
-	}
-
-	// 3. Fetch tracked Calendar events in range.
-	logging.Info("CALENDAR", "fetching calendar events from Google API (range: %s ~ %s)", from.Format("2006-01-02"), to.Format("2006-01-02"))
-	calEvents, err := s.calendar.ListEvents(ctx, from, to)
-	if err != nil {
-		logging.Error("CALENDAR", "list calendar events failed: %v", err)
-		return 0, err
-	}
-	logging.Info("CALENDAR", "fetched %d calendar events from Google API", len(calEvents))
-	calGrouped := groupCalendarEvents(calEvents)
-
-	count := 0
-
-	// 4. Calendar-first pass: reverse lookup each tracked Calendar event into DB.
-	for notionID, grouped := range calGrouped {
-		ev, existsInDB := dbMap[notionID]
-		if !existsInDB {
-			// No Notion event in cache: this tracked Calendar event must be removed.
-			count += s.deleteCalendarEvents(ctx, notionID, grouped)
-			if err := s.repo.DeleteSyncRecord(ctx, notionID); err != nil {
-				logging.Error("CALENDAR", "sync record delete failed for %s: %v", notionID, err)
-			}
-			delete(syncMap, notionID)
-			continue
-		}
-
-		record, hasRecord := syncMap[notionID]
-		primary, duplicates := pickPrimaryCalendarEvent(grouped, record, hasRecord)
-		if len(duplicates) > 0 {
-			count += s.deleteCalendarEvents(ctx, notionID, duplicates)
-		}
-
-		needsUpsert := !hasRecord ||
-			!record.Attempted ||
-			!record.Synced ||
-			record.CalendarEventID != primary.ID ||
-			!calendar.EventMatchesNotion(primary, ev, loc)
-
-		if !needsUpsert {
-			continue
-		}
-
-		newID, _, err := s.calendar.UpsertEvent(ctx, ev, primary.ID, loc)
-		if err != nil {
-			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", notionID, err)
-			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
-				NotionPageID:    notionID,
-				CalendarEventID: primary.ID,
-				Attempted:       true,
-				Synced:          false,
-			})
-			continue
-		}
-
-		record = models.SyncRecord{
-			NotionPageID:    notionID,
-			CalendarEventID: newID,
-			Attempted:       true,
-			Synced:          true,
-		}
-		_ = s.repo.UpsertSyncRecord(ctx, record)
-		syncMap[notionID] = record
-		count++
-	}
-
-	// 5. DB-first pass: create/fix events missing from fetched Calendar list.
-	for _, ev := range dbEvents {
-		if _, exists := calGrouped[ev.NotionPageID]; exists {
-			continue
-		}
-		existingCalID := ""
-		if rec, ok := syncMap[ev.NotionPageID]; ok {
-			existingCalID = rec.CalendarEventID
-		}
-		newID, _, err := s.calendar.UpsertEvent(ctx, ev, existingCalID, loc)
-		if err != nil {
-			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", ev.NotionPageID, err)
-			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
-				NotionPageID:    ev.NotionPageID,
-				CalendarEventID: existingCalID,
-				Attempted:       true,
-				Synced:          false,
-			})
-			continue
-		}
-		record := models.SyncRecord{
-			NotionPageID:    ev.NotionPageID,
-			CalendarEventID: newID,
-			Attempted:       true,
-			Synced:          true,
-		}
-		_ = s.repo.UpsertSyncRecord(ctx, record)
-		syncMap[ev.NotionPageID] = record
-		count++
-	}
-
-	// 6. Clean up orphaned sync_records (no DB event and no fetched Calendar event).
-	orphans, err := s.repo.ListOrphanedSyncRecords(ctx)
-	if err == nil {
-		for _, rec := range orphans {
-			if _, inCal := calGrouped[rec.NotionPageID]; !inCal {
-				// Calendar event already gone, just clean up the record
-				_ = s.repo.DeleteSyncRecord(ctx, rec.NotionPageID)
-			}
-		}
-	}
-
-	logging.Info("CALENDAR", "calendar sync finished (synced=%d, db_events=%d, cal_events=%d)", count, len(dbEvents), len(calEvents))
-	return count, nil
-}
-
-func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, events []calendar.CalendarEvent) int {
-	deleted := 0
-	for _, ev := range events {
-		if err := s.calendar.DeleteEvent(ctx, ev.ID); err != nil {
-			logging.Error("CALENDAR", "calendar delete failed for %s: %v", ev.ID, err)
-			continue
-		}
-		logging.Info("CALENDAR", "deleted orphaned/duplicate calendar event %s (notion: %s)", ev.ID, notionID)
-		deleted++
-	}
-	return deleted
 }
 
 func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string) error {

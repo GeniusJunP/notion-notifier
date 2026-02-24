@@ -1,7 +1,38 @@
 import { writable } from 'svelte/store';
-import { api, type Config } from './api';
+import { api, type Config, type DashboardData } from './api';
 
 export const configStore = writable<Config | null>(null);
+
+export const dashboardStore = writable<DashboardData | null>(null);
+export const serviceActiveStore = writable<boolean>(true);
+
+export function createHealthPoller() {
+  let interval: ReturnType<typeof setInterval>;
+  
+  const check = async () => {
+    try {
+      const data = await api.getDashboard();
+      dashboardStore.set(data);
+      serviceActiveStore.set(true);
+    } catch {
+      serviceActiveStore.set(false);
+      dashboardStore.set(null);
+    }
+  };
+  
+  return {
+    start: () => {
+      check();
+      interval = setInterval(check, 30000);
+    },
+    stop: () => {
+      if (interval) clearInterval(interval);
+    },
+    forceCheck: check
+  };
+}
+
+export const healthPoller = createHealthPoller();
 
 export interface Toast {
   id: string;
@@ -19,6 +50,9 @@ export function addToast(message: string, type: Toast['type'] = 'info') {
   }, 5000);
 }
 
+// Hook api errors to the toast system
+api.onError = (msg: string) => addToast(msg, 'error');
+
 export const activeRoute = writable<string>(window.location.pathname);
 
 // Sync browser back/forward buttons
@@ -31,14 +65,48 @@ export function navigate(path: string) {
   activeRoute.set(path);
 }
 
-export const darkMode = writable<boolean>(false);
-
-// Function to update dark mode and apply to DOM
-export function setDarkMode(value: boolean) {
-  darkMode.set(value);
-  localStorage.setItem('darkMode', value.toString());
-  document.documentElement.classList.toggle('dark', value);
+function createDarkModeStore() {
+  const { subscribe, set, update } = writable<boolean>(false);
+  return {
+    subscribe,
+    set: (value: boolean) => {
+      localStorage.setItem('darkMode', value.toString());
+      document.documentElement.classList.toggle('dark', value);
+      set(value);
+    },
+    update: (updater: (v: boolean) => boolean) => {
+      update((current) => {
+        const value = updater(current);
+        localStorage.setItem('darkMode', value.toString());
+        document.documentElement.classList.toggle('dark', value);
+        return value;
+      });
+    },
+    init: () => {
+      const saved = localStorage.getItem('darkMode');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialDark = saved !== null ? saved === 'true' : prefersDark;
+      
+      const applyTheme = (v: boolean) => {
+        document.documentElement.classList.toggle('dark', v);
+        set(v);
+      };
+      
+      applyTheme(initialDark);
+      
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = (e: MediaQueryListEvent) => {
+        if (localStorage.getItem('darkMode') === null) {
+          applyTheme(e.matches);
+        }
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  };
 }
+
+export const darkMode = createDarkModeStore();
 
 interface SaveConfigOptions {
   successMessage?: string;
