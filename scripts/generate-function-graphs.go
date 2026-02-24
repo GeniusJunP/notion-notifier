@@ -78,9 +78,7 @@ func scanGo(root string) ([]FuncNode, []Edge, error) {
 	files := []string{}
 	for _, dir := range []string{"cmd", "internal"} {
 		base := filepath.Join(root, dir)
-		for _, f := range walkFiles(base, ".go") {
-			files = append(files, f)
-		}
+		files = append(files, walkFiles(base, ".go")...)
 	}
 	sort.Strings(files)
 
@@ -251,9 +249,7 @@ func collectGoCalls(body *ast.BlockStmt) ([]string, []goSelCall) {
 func scanFrontend(root string) ([]FuncNode, []Edge, error) {
 	base := filepath.Join(root, "web", "src")
 	files := []string{}
-	for _, f := range walkFiles(base, ".ts", ".svelte") {
-		files = append(files, f)
-	}
+	files = append(files, walkFiles(base, ".ts", ".svelte")...)
 	sort.Strings(files)
 
 	declRe := regexp.MustCompile(`(?m)^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:<[^\n\r>]*>)?\s*\(`)
