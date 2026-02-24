@@ -27,7 +27,7 @@ type SyncConfig struct {
 }
 
 type Notifications struct {
-	Upcoming  []UpcomingNotification  `yaml:"upcoming" json:"upcoming"`
+	Upcoming []UpcomingNotification `yaml:"upcoming" json:"upcoming"`
 	Periodic []PeriodicNotification `yaml:"periodic" json:"periodic"`
 	Manual   string                 `yaml:"manual" json:"manual"`
 }
@@ -44,9 +44,9 @@ type WebhookTarget struct {
 }
 
 type UpcomingNotification struct {
-	Enabled       bool              `yaml:"enabled" json:"enabled"`
-	MinutesBefore int               `yaml:"minutes_before" json:"minutes_before"`
-	Message       string            `yaml:"message" json:"message"`
+	Enabled       bool               `yaml:"enabled" json:"enabled"`
+	MinutesBefore int                `yaml:"minutes_before" json:"minutes_before"`
+	Message       string             `yaml:"message" json:"message"`
 	Conditions    UpcomingConditions `yaml:"conditions" json:"conditions"`
 }
 
@@ -343,6 +343,18 @@ func NormalizeConfig(cfg Config) Config {
 	}
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
 	cfg.Webhook.InternalNotification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.InternalNotification.PayloadTemplate)
+
+	// Fix zero-value slices so JSON marshals as [] instead of null
+	if cfg.Notifications.Upcoming == nil {
+		cfg.Notifications.Upcoming = make([]UpcomingNotification, 0)
+	}
+	if cfg.Notifications.Periodic == nil {
+		cfg.Notifications.Periodic = make([]PeriodicNotification, 0)
+	}
+	if cfg.PropertyMap.Custom == nil {
+		cfg.PropertyMap.Custom = make([]CustomMapping, 0)
+	}
+
 	return cfg
 }
 

@@ -51,7 +51,7 @@
             },
         };
         config.notifications.upcoming = [
-            ...config.notifications.upcoming,
+            ...(config.notifications.upcoming || []),
             newRule,
         ];
         configStore.set(config);
@@ -67,7 +67,7 @@
             message: "",
         };
         config.notifications.periodic = [
-            ...config.notifications.periodic,
+            ...(config.notifications.periodic || []),
             newRule,
         ];
         configStore.set(config);
@@ -75,17 +75,17 @@
 
     function removeUpcomingRule(index: number) {
         if (!config) return;
-        config.notifications.upcoming = config.notifications.upcoming.filter(
-            (_, i) => i !== index,
-        );
+        config.notifications.upcoming = (
+            config.notifications.upcoming || []
+        ).filter((_, i) => i !== index);
         configStore.set(config);
     }
 
     function removePeriodicRule(index: number) {
         if (!config) return;
-        config.notifications.periodic = config.notifications.periodic.filter(
-            (_, i) => i !== index,
-        );
+        config.notifications.periodic = (
+            config.notifications.periodic || []
+        ).filter((_, i) => i !== index);
         configStore.set(config);
     }
 
@@ -162,7 +162,7 @@
                     </button>
                 </div>
 
-                {#each config.notifications.upcoming as rule, i}
+                {#each config.notifications.upcoming || [] as rule, i}
                     <UpcomingRuleCard
                         bind:rule
                         index={i}
@@ -194,7 +194,7 @@
                     </button>
                 </div>
 
-                {#each config.notifications.periodic as rule, i}
+                {#each config.notifications.periodic || [] as rule, i}
                     <PeriodicRuleCard
                         bind:rule
                         index={i}
