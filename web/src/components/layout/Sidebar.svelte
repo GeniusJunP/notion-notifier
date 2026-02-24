@@ -84,7 +84,7 @@
         {/each}
 
         <div
-            class="border-t border-gray-100 dark:border-gray-700 mt-6 pt-5 space-y-5"
+            class="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 space-y-4"
         >
             <SidebarButton
                 justifyBetween

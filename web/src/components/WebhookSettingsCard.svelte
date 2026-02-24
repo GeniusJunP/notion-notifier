@@ -19,7 +19,7 @@
     >
         Webhook で送信される JSON ペイロードのテンプレートです。<code
             class="font-mono bg-white/50 dark:bg-gray-800/50 px-1 rounded"
-            >{"{{"}.Message{"}}"}</code
+            >{"{{.Message}}"}</code
         >
         変数が通知内容に置き換わります。
     </p>
@@ -52,7 +52,7 @@
         <h5
             class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
         >
-            Notification Webhook
+            通知 Webhook
         </h5>
         <div>
             <label
@@ -71,7 +71,7 @@
             <label
                 for="wh-notification-pt"
                 class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
-                >Payload Template</label
+                >ペイロードテンプレート</label
             >
             <textarea
                 id="wh-notification-pt"
@@ -87,7 +87,7 @@
         <h5
             class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
         >
-            Internal Notification Webhook
+            内部通知 Webhook
         </h5>
         <div>
             <label
@@ -106,7 +106,7 @@
             <label
                 for="wh-internal-notif-pt"
                 class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1"
-                >Payload Template</label
+                >ペイロードテンプレート</label
             >
             <textarea
                 id="wh-internal-notif-pt"
