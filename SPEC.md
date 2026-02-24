@@ -446,13 +446,14 @@ notion-notifier/
 │   │   └── worker.go              # 定期実行、事前通知スケジューリング
 │   ├── template/
 │   │   └── renderer.go            # 通知テンプレートのレンダリング
-│   └── server/
-│       ├── server.go              # HTTPサーバー、ルーティング
-│       ├── middleware.go          # Basic認証、Content-Type判定
-│       ├── dashboard.go
-│       ├── settings.go
-│       ├── calendar_handler.go
-│       └── history.go
+│   └── http/
+│       ├── api/
+│       │   ├── handler.go         # APIハンドラ、ルーティング
+│       │   ├── handler_test.go    # APIテスト
+│       │   ├── helpers.go
+│       │   └── timeutil.go
+│       ├── middleware/            # Basic認証などのミドルウェア
+│       └── static/                # 静的ファイル配信用ハンドラ
 ├── web/
 │   ├── templates/
 │   │   ├── layout.html
