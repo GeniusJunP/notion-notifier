@@ -51,7 +51,7 @@
   "timezone": "Asia/Tokyo",
   "sync": { "check_interval": 15 },
   "notifications": {
-    "advance": [...],
+    "upcoming": [...],
     "periodic": [...],
     "manual": "{{if .Events}}..."
   },
@@ -181,7 +181,7 @@ Notion同期を手動実行。
 
 ### POST /api/notifications/preview
 
-テンプレートをプレビュー。`minutes_before > 0` の場合は事前通知テンプレートとしてプレビュー。
+テンプレートをプレビュー。`minutes_before > 0` の場合は事前通知（upcoming）のテンプレートとしてプレビュー。
 
 **Request Body:**
 ```json
@@ -227,7 +227,7 @@ Notion同期を手動実行。
 **Response 200:**
 ```json
 {
-  "advance": "## 予定リマインド！⏰\n@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！...",
+  "upcoming": "## 予定リマインド！⏰\n@everyone **{{.Name}}** が **{{.MinutesBefore}}分後** に始まります！...",
   "periodic": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！...",
   "manual": "{{if .Events}}\n## 今週の予定！📣\n@everyone **今週は {{len .Events}} 件** あります！..."
 }
