@@ -4,7 +4,7 @@ set -euo pipefail
 HOST="example-server"
 REMOTE_BASE="~/.local/share/notion-notifier"
 MODE="install"
-TARGET_ARCH="amd64"
+TARGET_ARCH="arm64"
 
 usage() {
   cat <<'USAGE'
@@ -13,7 +13,7 @@ usage: deploy-mac.sh [-h host] [-m install|update] [-a arch]
   -h host   SSH host (default: example-server)
   -m mode   install: full install (binary + config/env/db + service setup)
             update : binary-only rollout (switch release + restart service)
-  -a arch   target architecture (default: amd64) (e.g., amd64, arm64)
+  -a arch   target architecture (default: arm64) (e.g., amd64, arm64)
 USAGE
 }
 
