@@ -65,8 +65,6 @@ ssh "$HOST" "
     [ -f \"$REMOTE_DATA/shared/config.yaml\" ] && mv \"$REMOTE_DATA/shared/config.yaml\" \"$REMOTE_CONFIG/\"
     [ -f \"$REMOTE_DATA/shared/env.yaml\" ] && mv \"$REMOTE_DATA/shared/env.yaml\" \"$REMOTE_CONFIG/\"
     [ -f \"$REMOTE_DATA/shared/data.db\" ] && mv \"$REMOTE_DATA/shared/data.db\" \"$REMOTE_DATA/\"
-    # Safely move any remaining custom user files (like TLS custom certificates) to data dir before deletion
-    mv \"$REMOTE_DATA/shared/\"* \"$REMOTE_DATA/\" 2>/dev/null || true
     rm -rf \"$REMOTE_DATA/shared\"
   fi
 
