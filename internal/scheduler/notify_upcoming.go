@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
+	"notion-notifier/internal/config"
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
 )
@@ -108,4 +111,120 @@ func (s *Scheduler) PreviewUpcomingTemplate(ctx context.Context, template string
 	custom := extractCustomValues(events[0].RawPropsJSON, cfg.PropertyMap)
 	templateEvent := toTemplateEvent(events[0], custom)
 	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
+}
+
+func buildUpcomingSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.UpcomingSchedule {
+	var schedules []models.UpcomingSchedule
+	for _, ev := range events {
+		startTime := parseEventStart(ev, loc)
+		for idx, rule := range cfg.Notifications.Upcoming {
+			if !rule.Enabled {
+				continue
+			}
+			if !matchUpcomingConditions(ev, startTime, rule, cfg) {
+				continue
+			}
+			fireAt := startTime.Add(-time.Duration(rule.MinutesBefore) * time.Minute)
+			if fireAt.After(startTime) {
+				continue
+			}
+			if fireAt.Before(now.Add(-5 * time.Minute)) {
+				continue
+			}
+			schedules = append(schedules, models.UpcomingSchedule{
+				NotionPageID: ev.NotionPageID,
+				RuleIndex:    idx,
+				FireAt:       fireAt,
+			})
+		}
+	}
+	return schedules
+}
+
+func parseEventStart(ev models.Event, loc *time.Location) time.Time {
+	if loc == nil {
+		loc = time.Local
+	}
+	if ev.StartDate == "" {
+		return time.Now().In(loc)
+	}
+	if ev.StartTime == "" {
+		t, err := time.ParseInLocation("2006-01-02", ev.StartDate, loc)
+		if err != nil {
+			return time.Now().In(loc)
+		}
+		return t
+	}
+	t, err := time.ParseInLocation("2006-01-02 15:04", ev.StartDate+" "+ev.StartTime, loc)
+	if err != nil {
+		return time.Now().In(loc)
+	}
+	return t
+}
+
+func matchUpcomingConditions(ev models.Event, start time.Time, rule config.UpcomingNotification, cfg config.Config) bool {
+	if !matchesDays(rule.Conditions.DaysOfWeek, weekdayToConfig(start.Weekday())) {
+		return false
+	}
+	if len(rule.Conditions.PropertyFilters) == 0 {
+		return true
+	}
+	values := buildFilterValues(ev, cfg)
+	for _, filter := range rule.Conditions.PropertyFilters {
+		val := values[filter.Property]
+		if !matchFilter(val, filter.Operator, filter.Value) {
+			return false
+		}
+	}
+	return true
+}
+
+func buildFilterValues(ev models.Event, cfg config.Config) map[string]string {
+	values := map[string]string{
+		"title":    ev.Title,
+		"location": ev.Location,
+	}
+	custom := extractCustomValues(ev.RawPropsJSON, cfg.PropertyMap)
+	for k, v := range custom {
+		values[k] = v
+	}
+	return values
+}
+
+func matchFilter(value, operator, expected string) bool {
+	switch strings.ToLower(operator) {
+	case "eq", "equals", "=":
+		return value == expected
+	case "neq", "not_equals", "!=":
+		return value != expected
+	case "contains":
+		return strings.Contains(value, expected)
+	case "not_contains":
+		return !strings.Contains(value, expected)
+	default:
+		return false
+	}
+}
+
+func scheduleKey(notionPageID string, ruleIndex int) string {
+	return notionPageID + ":" + strconv.Itoa(ruleIndex)
+}
+
+func weekdayToConfig(day time.Weekday) int {
+	if day == time.Sunday {
+		return 7
+	}
+	return int(day)
+}
+
+func matchesDays(days []int, weekday int) bool {
+	if len(days) == 0 {
+		return true
+	}
+	for _, day := range days {
+		if day == weekday {
+			return true
+		}
+	}
+	return false
 }

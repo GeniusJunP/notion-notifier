@@ -102,3 +102,14 @@ func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 	logging.Info("SYNC", "notion sync finished (count=%d)", len(events))
 	return len(events), nil
 }
+
+func notionOnOrAfterDate(now time.Time, loc *time.Location) string {
+	if loc == nil {
+		loc = time.Local
+	}
+	localNow := now.In(loc)
+	localMidnight := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, loc)
+	// Notion date-only filter is effectively compared at UTC day granularity.
+	// Convert local day start to UTC day so early local-time events are included.
+	return localMidnight.UTC().Format("2006-01-02")
+}

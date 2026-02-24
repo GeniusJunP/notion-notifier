@@ -229,3 +229,44 @@ func (s *Scheduler) deleteCalendarEvents(ctx context.Context, notionID string, e
 	}
 	return deleted
 }
+
+func groupCalendarEvents(events []calendar.CalendarEvent) map[string][]calendar.CalendarEvent {
+	grouped := make(map[string][]calendar.CalendarEvent, len(events))
+	for _, ev := range events {
+		grouped[ev.NotionPageID] = append(grouped[ev.NotionPageID], ev)
+	}
+	return grouped
+}
+
+func pickPrimaryCalendarEvent(events []calendar.CalendarEvent, record models.SyncRecord, hasRecord bool) (calendar.CalendarEvent, []calendar.CalendarEvent) {
+	if len(events) == 0 {
+		return calendar.CalendarEvent{}, nil
+	}
+	primaryIndex := 0
+	if hasRecord && record.CalendarEventID != "" {
+		for i, ev := range events {
+			if ev.ID == record.CalendarEventID {
+				primaryIndex = i
+				break
+			}
+		}
+	} else {
+		latest, _ := time.Parse(time.RFC3339, events[0].Updated)
+		for i := 1; i < len(events); i++ {
+			updated, _ := time.Parse(time.RFC3339, events[i].Updated)
+			if updated.After(latest) {
+				latest = updated
+				primaryIndex = i
+			}
+		}
+	}
+	primary := events[primaryIndex]
+	duplicates := make([]calendar.CalendarEvent, 0, len(events)-1)
+	for i, ev := range events {
+		if i == primaryIndex {
+			continue
+		}
+		duplicates = append(duplicates, ev)
+	}
+	return primary, duplicates
+}
