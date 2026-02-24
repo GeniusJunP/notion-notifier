@@ -4,21 +4,24 @@ set -euo pipefail
 HOST="example-server"
 REMOTE_BASE="~/.local/share/notion-notifier"
 MODE="install"
+TARGET_ARCH="arm64"
 
 usage() {
   cat <<'USAGE'
-usage: deploy-mac.sh [-h host] [-m install|update]
+usage: deploy-mac.sh [-h host] [-m install|update] [-a arch]
 
   -h host   SSH host (default: example-server)
   -m mode   install: full install (binary + config/env/db + service setup)
             update : binary-only rollout (switch release + restart service)
+  -a arch   target architecture (default: arm64) (e.g., amd64, arm64)
 USAGE
 }
 
-while getopts "h:m:" opt; do
+while getopts "h:m:a:" opt; do
   case "$opt" in
     h) HOST="$OPTARG" ;;
     m) MODE="$OPTARG" ;;
+    a) TARGET_ARCH="$OPTARG" ;;
     *)
       usage
       exit 1
@@ -40,10 +43,10 @@ cd "$ROOT_DIR/web"
 npm ci
 npm run build
 
-echo "[2/6] Build linux/arm64 binary"
+echo "[2/6] Build linux/${TARGET_ARCH} binary"
 cd "$ROOT_DIR"
 mkdir -p build
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o build/notion-notifier ./cmd/notion-notifier
+GOOS=linux GOARCH=${TARGET_ARCH} CGO_ENABLED=0 go build -o build/notion-notifier ./cmd/notion-notifier
 
 echo "[3/6] Prepare remote directories"
 if [[ "$MODE" == "install" ]]; then
