@@ -2,8 +2,6 @@ package scheduler
 
 import (
 	"encoding/json"
-	"strings"
-	"time"
 
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/models"
@@ -47,15 +45,4 @@ func toTemplateEvent(ev models.Event, custom map[string]string) models.TemplateE
 		Content:  ev.Content,
 		Custom:   custom,
 	}
-}
-
-func loadLocationOrLocal(name string) *time.Location {
-	if strings.TrimSpace(name) == "" {
-		return time.Local
-	}
-	loc, err := time.LoadLocation(name)
-	if err != nil {
-		return time.Local
-	}
-	return loc
 }

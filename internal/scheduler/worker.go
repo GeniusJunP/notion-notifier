@@ -174,7 +174,9 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 		Error:        errStr,
 		SentAt:       time.Now(),
 	}
-	_ = s.repo.InsertNotificationHistory(ctx, history)
+	if err := s.repo.InsertNotificationHistory(ctx, history); err != nil {
+		logging.Error("WBHK", "save notification history failed: %v", err)
+	}
 	if status == "failed" {
 		logging.Error("WBHK", "send failed (%s): %s", typ, errStr)
 		return errors.New(errStr)

@@ -242,6 +242,11 @@ func ValidateConfig(cfg Config) error {
 		if adv.MinutesBefore <= 0 {
 			return fmt.Errorf("notifications.upcoming[%d].minutes_before must be > 0", i)
 		}
+		for _, d := range adv.Conditions.DaysOfWeek {
+			if d < 1 || d > 7 {
+				return fmt.Errorf("notifications.upcoming[%d].conditions.days_of_week must be 1-7", i)
+			}
+		}
 	}
 	for i, periodic := range cfg.Notifications.Periodic {
 		if periodic.DaysAhead <= 0 {
@@ -253,13 +258,6 @@ func ValidateConfig(cfg Config) error {
 		for _, d := range periodic.DaysOfWeek {
 			if d < 1 || d > 7 {
 				return fmt.Errorf("notifications.periodic[%d].days_of_week must be 1-7", i)
-			}
-		}
-	}
-	for i, adv := range cfg.Notifications.Upcoming {
-		for _, d := range adv.Conditions.DaysOfWeek {
-			if d < 1 || d > 7 {
-				return fmt.Errorf("notifications.upcoming[%d].conditions.days_of_week must be 1-7", i)
 			}
 		}
 	}

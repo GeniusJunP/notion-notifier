@@ -6,6 +6,7 @@ import (
 
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/timezone"
 )
 
 func (s *Scheduler) periodicLoop() {
@@ -23,7 +24,7 @@ func (s *Scheduler) periodicLoop() {
 			return
 		case <-ticker.C:
 			cfg := s.cfg.Config()
-			loc := loadLocationOrLocal(cfg.Timezone)
+			loc := timezone.LoadOrLocal(cfg.Timezone)
 			now := time.Now().In(loc)
 			for i, rule := range cfg.Notifications.Periodic {
 				if !rule.Enabled {
@@ -56,7 +57,7 @@ func (s *Scheduler) periodicLoop() {
 
 func (s *Scheduler) sendPeriodic(ctx context.Context, now time.Time, rule config.PeriodicNotification) error {
 	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
+	loc := timezone.LoadOrLocal(cfg.Timezone)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	to := from.AddDate(0, 0, rule.DaysAhead)
 	message, templateEvents, err := s.renderListFromRange(ctx, rule.Message, from, to)

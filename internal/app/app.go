@@ -23,6 +23,7 @@ import (
 	httpapi "notion-notifier/internal/http/api"
 	"notion-notifier/internal/http/middleware"
 	"notion-notifier/internal/http/static"
+	"notion-notifier/internal/logging"
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
 	"notion-notifier/internal/scheduler"
@@ -186,15 +187,15 @@ func (a *App) Start(ctx context.Context) error {
 	a.scheduler.Start(ctx)
 
 	go func() {
-		fmt.Printf("Starting server on %s\n", a.server.Addr)
+		logging.Info("MAIN", "starting server on %s", a.server.Addr)
 		run := func() error { return a.server.ListenAndServeTLS(a.tls.certFile, a.tls.keyFile) }
 		if a.tls.selfSign {
-			fmt.Println("TLS: using generated self-signed certificate for localhost")
+			logging.Info("MAIN", "TLS: using generated self-signed certificate for localhost")
 			run = func() error { return a.server.ListenAndServeTLS("", "") }
 		}
-		fmt.Printf("URL: https://localhost%s\n", a.server.Addr)
+		logging.Info("MAIN", "URL: https://localhost%s", a.server.Addr)
 		if err := run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			fmt.Printf("HTTP server error: %v\n", err)
+			logging.Error("MAIN", "HTTP server error: %v", err)
 		}
 	}()
 
@@ -207,6 +208,8 @@ func (a *App) Close() error {
 	a.scheduler.Stop()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_ = a.server.Shutdown(ctx)
+	if err := a.server.Shutdown(ctx); err != nil {
+		logging.Error("MAIN", "http shutdown error: %v", err)
+	}
 	return a.repo.Close()
 }

@@ -7,8 +7,7 @@
     import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
     import { Settings, Save, Hash } from "lucide-svelte";
 
-    let config: Config | null = null;
-    configStore.subscribe((v) => (config = v));
+    $: config = $configStore;
 
     let isSaving = false;
 

@@ -1,7 +1,11 @@
 config.yaml
 env.yaml
 data.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.log
 .DS_Store
 web/node_modules/*
+web/dist/
 build/

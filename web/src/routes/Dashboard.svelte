@@ -3,6 +3,7 @@
     import {
         api,
         buildManualNotificationRequest,
+        getErrorMessage,
         type Config,
         type DashboardData,
         type UpcomingEvent,
@@ -26,7 +27,7 @@
 
     let dashboard: DashboardData | null = null;
     let upcoming: UpcomingEvent[] = [];
-    let config: Config | null = null;
+    $: config = $configStore;
     let isLoading = true;
     let isSyncing = false;
 
@@ -41,7 +42,6 @@
     let previewOpen = false;
     let previewTitle = "";
     let previewContent = "";
-    configStore.subscribe((v) => (config = v));
     $: if (config && manualTemplate === "") {
         manualTemplate = config.notifications.manual || "";
     }
@@ -61,7 +61,7 @@
             ]);
             dashboard = d;
             upcoming = u;
-        } catch (e) {
+        } catch {
             addToast("データの取得に失敗しました", "error");
         } finally {
             isLoading = false;
@@ -99,8 +99,8 @@
             );
             const res = await api.previewNotification(req);
             openPreview("手動通知プレビュー", res.message);
-        } catch (e: any) {
-            addToast(`プレビュー失敗: ${e.error || "不明なエラー"}`, "error");
+        } catch (e: unknown) {
+            addToast(`プレビュー失敗: ${getErrorMessage(e)}`, "error");
         } finally {
             isPreviewLoading = false;
         }
@@ -125,8 +125,8 @@
             try {
                 configStore.set(await api.getConfig());
             } catch {}
-        } catch (e: any) {
-            addToast(`送信失敗: ${e.error || "不明なエラー"}`, "error");
+        } catch (e: unknown) {
+            addToast(`送信失敗: ${getErrorMessage(e)}`, "error");
         } finally {
             isSending = false;
         }

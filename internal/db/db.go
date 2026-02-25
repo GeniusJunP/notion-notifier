@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -117,7 +118,7 @@ func (r *Repository) GetEvent(ctx context.Context, notionPageID string) (models.
 	var attendeesJSON string
 	var fetchedAt string
 	if err := row.Scan(&ev.NotionPageID, &ev.Title, &ev.StartDate, &ev.StartTime, &ev.EndDate, &ev.EndTime, &isAllDay, &ev.Location, &ev.URL, &ev.Content, &attendeesJSON, &ev.RawPropsJSON, &ev.NotionUpdatedAt, &fetchedAt); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return ev, false, nil
 		}
 		return ev, false, err

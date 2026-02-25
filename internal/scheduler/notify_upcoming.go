@@ -10,6 +10,7 @@ import (
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
+	"notion-notifier/internal/timezone"
 )
 
 func (s *Scheduler) RebuildUpcomingSchedules() error {
@@ -18,7 +19,7 @@ func (s *Scheduler) RebuildUpcomingSchedules() error {
 
 func (s *Scheduler) rebuildUpcomingSchedules(ctx context.Context) error {
 	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
+	loc := timezone.LoadOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {
@@ -37,7 +38,7 @@ func (s *Scheduler) SchedulePendingFromDB() error {
 
 func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
 	s.clearUpcomingTimers()
-	loc := loadLocationOrLocal(s.currentTimezone())
+	loc := timezone.LoadOrLocal(s.currentTimezone())
 	now := time.Now().In(loc)
 	schedules, err := s.repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
@@ -78,7 +79,9 @@ func (s *Scheduler) fireUpcoming(ctx context.Context, sched models.UpcomingSched
 		return err
 	}
 	defer func() {
-		_ = s.repo.MarkUpcomingScheduleFired(ctx, sched.ID)
+		if err := s.repo.MarkUpcomingScheduleFired(ctx, sched.ID); err != nil {
+			logging.Error("SCHED", "mark upcoming schedule fired failed (id=%d): %v", sched.ID, err)
+		}
 	}()
 	if !ok {
 		return nil
@@ -98,7 +101,7 @@ func (s *Scheduler) fireUpcoming(ctx context.Context, sched models.UpcomingSched
 
 func (s *Scheduler) PreviewUpcomingTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
 	cfg := s.cfg.Config()
-	loc := loadLocationOrLocal(cfg.Timezone)
+	loc := timezone.LoadOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {

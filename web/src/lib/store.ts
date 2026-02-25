@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { api, type Config, type DashboardData } from './api';
+import { api, getErrorMessage, type Config, type DashboardData } from './api';
 
 export const configStore = writable<Config | null>(null);
 
@@ -132,9 +132,9 @@ export async function saveConfig(
       addToast(options.successMessage, 'success');
     }
     return saved;
-  } catch (e: any) {
-    const detail = e?.error ? `: ${e.error}` : '';
-    addToast(`${options.errorMessage}${detail}`, 'error');
+  } catch (e: unknown) {
+    const detail = getErrorMessage(e);
+    addToast(`${options.errorMessage}: ${detail}`, 'error');
     return null;
   }
 }
@@ -156,9 +156,9 @@ export async function syncNotion(options: SyncNotionOptions = {}): Promise<numbe
       await options.onSynced(res.count);
     }
     return res.count;
-  } catch (e: any) {
-    const detail = e?.error ? `: ${e.error}` : '';
-    addToast(`${options.errorMessage ?? '同期に失敗しました'}${detail}`, 'error');
+  } catch (e: unknown) {
+    const detail = getErrorMessage(e);
+    addToast(`${options.errorMessage ?? '同期に失敗しました'}: ${detail}`, 'error');
     return null;
   }
 }

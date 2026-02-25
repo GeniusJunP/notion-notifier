@@ -1,7 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { api, type Config } from "../lib/api";
-    import { configStore, addToast, saveConfig as saveConfigState } from "../lib/store";
+    import { api, getErrorMessage, type Config } from "../lib/api";
+    import {
+        configStore,
+        addToast,
+        saveConfig as saveConfigState,
+    } from "../lib/store";
     import {
         Calendar,
         RefreshCw,
@@ -12,8 +16,7 @@
         Search,
     } from "lucide-svelte";
 
-    let config: Config | null = null;
-    configStore.subscribe((v) => (config = v));
+    $: config = $configStore;
 
     let isSyncing = false;
     let isClearing = false;
@@ -39,8 +42,8 @@
                 `${res.count}件の予定をカレンダーに同期しました`,
                 "success",
             );
-        } catch (e: any) {
-            addToast(`同期失敗: ${e.error || "不明なエラー"}`, "error");
+        } catch (e: unknown) {
+            addToast(`同期失敗: ${getErrorMessage(e)}`, "error");
         } finally {
             isSyncing = false;
         }
@@ -57,7 +60,7 @@
         try {
             await api.clearCalendarSync();
             addToast("同期記録を削除しました", "success");
-        } catch (e) {
+        } catch {
             addToast("削除に失敗しました", "error");
         } finally {
             isClearing = false;
@@ -76,7 +79,9 @@
             <Calendar size={32} />
         </div>
         <div class="flex-1 text-center md:text-left">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h2
+                class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2"
+            >
                 Google カレンダー同期
             </h2>
             <p class="text-gray-500 dark:text-gray-400">
@@ -85,7 +90,9 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-gray-400 dark:text-gray-500">同期有効化</span>
+            <span class="text-sm font-bold text-gray-400 dark:text-gray-500"
+                >同期有効化</span
+            >
             {#if config}
                 <button
                     on:click={() => {
@@ -119,7 +126,10 @@
                 <h3
                     class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                 >
-                    <Settings size={20} class="text-gray-400 dark:text-gray-500" />
+                    <Settings
+                        size={20}
+                        class="text-gray-400 dark:text-gray-500"
+                    />
                     同期設定
                 </h3>
 
@@ -169,7 +179,10 @@
                 <h3
                     class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
                 >
-                    <RefreshCw size={20} class="text-gray-400 dark:text-gray-500" />
+                    <RefreshCw
+                        size={20}
+                        class="text-gray-400 dark:text-gray-500"
+                    />
                     手動同期・管理
                 </h3>
 
@@ -219,7 +232,9 @@
                         {/if}
                     </button>
 
-                    <div class="pt-6 border-t border-gray-100 dark:border-gray-600">
+                    <div
+                        class="pt-6 border-t border-gray-100 dark:border-gray-600"
+                    >
                         <button
                             on:click={handleClear}
                             disabled={isClearing}
@@ -228,7 +243,9 @@
                             <Trash2 size={16} />
                             同期記録をリセット
                         </button>
-                        <p class="mt-2 text-[11px] text-gray-400 dark:text-gray-500 text-center">
+                        <p
+                            class="mt-2 text-[11px] text-gray-400 dark:text-gray-500 text-center"
+                        >
                             カレンダーで重複が発生する場合や、再同期したい場合に実行してください。
                         </p>
                     </div>
@@ -238,12 +255,17 @@
     {/if}
 
     <!-- Help Section -->
-    <div class="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl flex items-start gap-4">
+    <div
+        class="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl flex items-start gap-4"
+    >
         <CalendarDays size={70} class="h-8 items-center justify-center" />
         <div>
-            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">同期の仕組み</h4>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">
+                同期の仕組み
+            </h4>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                Calendar APIの追跡イベント（notion_page_id付き）を起点にDBへ逆引きし、差分があれば統一ロジックで更新します。
+                Calendar
+                APIの追跡イベント（notion_page_id付き）を起点にDBへ逆引きし、差分があれば統一ロジックで更新します。
                 Notionにない追跡イベントは削除し、重複イベントは1件に整理します。設定の「Notion
                 プロパティマッピング」で、タイトル・日付・場所・参加者（メールアドレス）を紐付けてください。
             </p>

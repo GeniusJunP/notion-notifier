@@ -1,16 +1,18 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"notion-notifier/internal/config"
+	"notion-notifier/internal/timezone"
 )
 
 func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
 	current := cfg.Config()
-	loc := loadLocationOrLocal(current.Timezone)
+	loc := timezone.LoadOrLocal(current.Timezone)
 	now := time.Now().In(loc)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	to := from
@@ -84,16 +86,8 @@ func formatDurationShort(d time.Duration) string {
 	return fmt.Sprintf("%dh%dm", h, rm)
 }
 
-func loadLocationOrLocal(name string) *time.Location {
-	loc, err := time.LoadLocation(name)
-	if err != nil {
-		return time.Local
-	}
-	return loc
-}
-
 var (
-	errToBeforeFrom      = fmt.Errorf("to_date must be after from_date")
-	errDateRequired      = fmt.Errorf("date is required")
-	errInvalidDateFormat = fmt.Errorf("invalid date format")
+	errToBeforeFrom      = errors.New("to_date must be after from_date")
+	errDateRequired      = errors.New("date is required")
+	errInvalidDateFormat = errors.New("invalid date format")
 )

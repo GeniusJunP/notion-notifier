@@ -16,8 +16,7 @@
     import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
     import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
 
-    let config: Config | null = null;
-    configStore.subscribe((v) => (config = v));
+    $: config = $configStore;
 
     let isSaving = false;
     let previewOpen = false;
@@ -102,7 +101,7 @@
             });
             const res = await api.previewNotification(req);
             openPreview(title, res.message);
-        } catch (e) {
+        } catch {
             addToast("プレビューに失敗しました", "error");
         }
     }

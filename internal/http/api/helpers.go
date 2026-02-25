@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"notion-notifier/internal/logging"
 )
 
 // respondJSON writes a JSON response with the given status code.
@@ -10,7 +12,9 @@ func respondJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			logging.Error("HTTP", "json encode failed: %v", err)
+		}
 	}
 }
 

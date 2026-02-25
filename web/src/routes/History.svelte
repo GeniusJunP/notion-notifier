@@ -21,7 +21,7 @@
         isLoading = true;
         try {
             items = await api.getHistory();
-        } catch (e) {
+        } catch {
             addToast("履歴の取得に失敗しました", "error");
         } finally {
             isLoading = false;
@@ -36,7 +36,7 @@
             await api.clearHistory();
             items = [];
             addToast("履歴を削除しました", "success");
-        } catch (e) {
+        } catch {
             addToast("削除に失敗しました", "error");
         }
     }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import {
-    navigate,
     activeRoute,
     configStore,
     addToast,
@@ -13,20 +12,13 @@
     serviceActiveStore,
   } from "./lib/store";
   import { sidebarOpen, guideModal } from "./lib/uiStore";
-  import { api, type Config, type DashboardData } from "./lib/api";
+  import { api, type Config } from "./lib/api";
   import {
     LayoutDashboard,
     Bell,
     Calendar,
     Settings,
     History,
-    Menu,
-    X,
-    Sun,
-    Moon,
-    RefreshCcw,
-    Database,
-    BellOff,
   } from "lucide-svelte";
 
   // Routes
@@ -44,11 +36,9 @@
   $: dashboardData = $dashboardStore;
   $: isServiceActive = $serviceActiveStore;
   let isSyncing = false;
-  let config: Config | null = null;
+  $: config = $configStore;
   const mainNavId = "main-navigation";
   let unsubscribeDarkMode: () => void;
-
-  configStore.subscribe((v) => (config = v));
 
   function handleGlobalKeydown(event: KeyboardEvent) {
     if (event.key === "Escape" && window.innerWidth < 1024 && $sidebarOpen) {
@@ -86,20 +76,12 @@
     await saveSnooze();
   }
 
-  function toggleDarkMode() {
-    darkMode.update((current) => {
-      const newValue = !current;
-      darkMode.set(newValue); // Use darkMode.set instead of setDarkMode
-      return newValue;
-    });
-  }
-
   onMount(async () => {
     try {
       const cfg = await api.getConfig();
       configStore.set(cfg);
       await healthPoller.forceCheck();
-    } catch (e) {
+    } catch {
       addToast("設定の読み込みに失敗しました", "error");
     }
 

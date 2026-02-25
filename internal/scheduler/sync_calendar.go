@@ -8,6 +8,7 @@ import (
 	"notion-notifier/internal/calendar"
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
+	"notion-notifier/internal/timezone"
 )
 
 func (s *Scheduler) calendarLoop() {
@@ -90,7 +91,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")
 	}
-	loc := loadLocationOrLocal(cfg.Timezone)
+	loc := timezone.LoadOrLocal(cfg.Timezone)
 
 	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {
@@ -153,12 +154,14 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		newID, _, err := s.calendar.UpsertEvent(ctx, ev, primary.ID, loc)
 		if err != nil {
 			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", notionID, err)
-			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
+			if err := s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    notionID,
 				CalendarEventID: primary.ID,
 				Attempted:       true,
 				Synced:          false,
-			})
+			}); err != nil {
+				logging.Error("CALENDAR", "upsert sync record failed for %s: %v", notionID, err)
+			}
 			continue
 		}
 
@@ -168,7 +171,9 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			Attempted:       true,
 			Synced:          true,
 		}
-		_ = s.repo.UpsertSyncRecord(ctx, record)
+		if err := s.repo.UpsertSyncRecord(ctx, record); err != nil {
+			logging.Error("CALENDAR", "upsert sync record failed for %s: %v", notionID, err)
+		}
 		syncMap[notionID] = record
 		count++
 	}
@@ -184,12 +189,14 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		newID, _, err := s.calendar.UpsertEvent(ctx, ev, existingCalID, loc)
 		if err != nil {
 			logging.Error("CALENDAR", "calendar upsert failed for %s: %v", ev.NotionPageID, err)
-			_ = s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
+			if err := s.repo.UpsertSyncRecord(ctx, models.SyncRecord{
 				NotionPageID:    ev.NotionPageID,
 				CalendarEventID: existingCalID,
 				Attempted:       true,
 				Synced:          false,
-			})
+			}); err != nil {
+				logging.Error("CALENDAR", "upsert sync record failed for %s: %v", ev.NotionPageID, err)
+			}
 			continue
 		}
 		record := models.SyncRecord{
@@ -198,7 +205,9 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 			Attempted:       true,
 			Synced:          true,
 		}
-		_ = s.repo.UpsertSyncRecord(ctx, record)
+		if err := s.repo.UpsertSyncRecord(ctx, record); err != nil {
+			logging.Error("CALENDAR", "upsert sync record failed for %s: %v", ev.NotionPageID, err)
+		}
 		syncMap[ev.NotionPageID] = record
 		count++
 	}
@@ -207,7 +216,9 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 	if err == nil {
 		for _, rec := range orphans {
 			if _, inCal := calGrouped[rec.NotionPageID]; !inCal {
-				_ = s.repo.DeleteSyncRecord(ctx, rec.NotionPageID)
+				if err := s.repo.DeleteSyncRecord(ctx, rec.NotionPageID); err != nil {
+					logging.Error("CALENDAR", "delete orphaned sync record failed for %s: %v", rec.NotionPageID, err)
+				}
 			}
 		}
 	}

@@ -122,6 +122,14 @@ export interface ApiError {
   details?: Record<string, string>;
 }
 
+/** Extract error message from a caught value (typically ApiError). */
+export function getErrorMessage(e: unknown): string {
+  if (e && typeof e === 'object' && 'error' in e) {
+    return (e as ApiError).error;
+  }
+  return '不明なエラー';
+}
+
 export interface NotificationPreviewRequest {
   template: string;
   from_date?: string;
@@ -189,7 +197,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       },
     });
   } catch (networkError) {
-    if (api.onError) api.onError('ネットワークエラー: サーバーに接続できません');
+    api.onError?.('ネットワークエラー: サーバーに接続できません');
     throw { error: 'ネットワークエラー' } as ApiError;
   }
 
@@ -202,7 +210,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     }
     
     const errorMessage = errorData.error || '不明なエラーが発生しました';
-    if (api.onError) api.onError(errorMessage);
+    api.onError?.(errorMessage);
     
     throw errorData as ApiError;
   }
@@ -215,7 +223,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  onError: ((msg: string) => {}) as ((msg: string) => void),
+  onError: null as ((msg: string) => void) | null,
   getConfig: () => request<Config>('/api/config'),
   updateConfig: (cfg: Config) => request<Config>('/api/config', { method: 'PUT', body: JSON.stringify(cfg) }),
   getDashboard: () => request<DashboardData>('/api/dashboard'),

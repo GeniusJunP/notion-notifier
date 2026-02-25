@@ -427,7 +427,9 @@ CREATE TABLE upcoming_schedules (
 
 ```
 notion-notifier/
-├── main.go                        # エントリーポイント、embed宣言
+├── cmd/
+│   └── notion-notifier/
+│       └── main.go                # エントリーポイント
 ├── internal/
 │   ├── config/
 │   │   └── config.go              # YAML読み込み、環境変数上書き
@@ -466,8 +468,8 @@ notion-notifier/
 
 ```go
 import (
-    // HTTPルーティング
-    "github.com/go-chi/chi/v5"
+    // HTTPルーティング（標準ライブラリ）
+    "net/http"
 
     // テンプレート
     "html/template"  // Web UI用
