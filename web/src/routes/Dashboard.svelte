@@ -183,11 +183,13 @@
                 ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300"
                 : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300"}
         >
-            {#if dashboard?.last_sync_error}
-                <AlertTriangle size={20} slot="icon" />
-            {:else}
-                <CheckCircle size={20} slot="icon" />
-            {/if}
+            <svelte:fragment slot="icon">
+                {#if dashboard?.last_sync_error}
+                    <AlertTriangle size={20} />
+                {:else}
+                    <CheckCircle size={20} />
+                {/if}
+            </svelte:fragment>
         </StatCard>
     </div>
 

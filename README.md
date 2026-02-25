@@ -1,87 +1,91 @@
 # Notion Notifier
 
-Notion Notifier is a highly customizable, self-hosted automation tool that bridges the gap between your **Notion databases**, **Google Calendar**, and **Webhook Services** (Discord, Slack, Microsoft Teams, etc.).
+Notion Notifier は、**Notion データベース**、**Google Calendar**、および **Webhook サービス** (Discord, Slack, Microsoft Teams など) を連携させる、プロアクティブなセルフホスト自動化ツールです。
 
-It provides a beautiful, built-in **Svelte SPA Dashboard** to monitor sync status, configure notification rules, and trigger manual events directly from your browser.
+定期的な同期状況、通知ルールの設定、カレンダー連携の管理などをブラウザから直接行える、美しく高速な **Svelte SPA ダッシュボード**を内蔵しています。
 
 ![Dashboard Preview](https://via.placeholder.com/800x450.png?text=Notion+Notifier+Dashboard)
 
-## 🌟 Features
+## 🌟 主な機能
 
-* **Bi-directional Google Calendar Sync:**
-  Automatically tracks events in your Notion database and syncs them to Google Calendar. Supports custom property mapping and automatically extracts attendees from Notion's `people` property.
-* **Flexible Webhook Notifications:**
-  Send messages to any Webhook URL (e.g., Discord, Slack) based on upcoming Notion events.
-  * **Upcoming Rules:** Notify a specific number of days before an event starts.
-  * **Periodic Rules:** Send aggregated summaries on specific days at specific times.
-* **Modern Web Interface:**
-  A built-in Svelte SPA that bundles directly into the Go binary. You can manage templates, test webhooks, map Notion properties, and pause rules without editing configuration files manually.
-* **Cross-Platform Background Service:**
-  Installs seamlessly as a native background service across Linux (`systemd`), macOS (`launchd`), and Windows (`Task Scheduler`).
+* **Google カレンダーへの一方向/双方向同期:**
+  Notion データベースの予定を監視し、自動的に Google カレンダーへ同期します。Notion の `people` プロパティから参加者を抽出し、連携することも可能です。
+* **柔軟な Webhook 通知管理:**
+  今後の Notion の予定に基づいて、任意の Webhook URL にメッセージを送信します。
+  * **Upcoming ルール (直前通知):** 予定開始の「○日前」「○分前」に個別に通知します。
+  * **Periodic ルール (サマリー通知):** 特定の曜日・時間に、今後の予定をまとめて通知します。
+* **モダンな Web インターフェース:**
+  Go のバイナリに直接バンドルされた Svelte SPA です。設定ファイルの直接編集なしに、ブラウザからテンプレートの管理、Webhook のテスト、同期状況の確認が可能です。
+* **クロスプラットフォーム OS サービス:**
+  Linux (`systemd`), macOS (`launchd`), Windows のネイティブなバックグラウンドサービスとして、コマンド一発でインストール・永続稼働が可能です。
 
-## 🚀 Quick Start (Installation)
+## 🚀 クイックスタート (インストール)
 
-We provide official auto-installation scripts that automatically fetch the latest release binary from GitHub and install it as a background service.
+事前ビルドされたシングルバイナリをダウンロードして配置するだけで動作します。
 
-### Linux & macOS
-Run the following curl command in your terminal. It will install the service using XDG Base Directory standards (`~/.local/bin`, `~/.config/notion-notifier`).
+1. [Releases ページ](https://github.com/GeniusJunP/notion-notifier/releases) から最新の OS/アーキテクチャに合った圧縮ファイルをダウンロードし、解凍します。
+2. ターミナル（またはコマンドプロンプト/PowerShell）で、解凍した `notion-notifier` 実行ファイルがある場所に移動します。
+
+### OSサービスとしてインストール・起動
+
+以下のコマンドを実行すると、適切な場所に設定ファイルが生成され、バックグラウンドサービスとして自動起動・自動再起動（PC起動時含む）するようになります。
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/notion-notifier/main/scripts/install.sh | bash
+# インストールとOSサービスへの登録
+./notion-notifier install
+# サービスの開始
+./notion-notifier start
+
+# ※ サービスを停止する場合は stop、登録解除は uninstall
 ```
 
-### Windows
-Run the following inside a **PowerShell** prompt. It will install the application to `%LOCALAPPDATA%\notion-notifier` and set up a Logon Scheduled Task.
+*(Linux環境での留意点: システム全体ではなく、現在ログインしているユーザーのサービス (`systemd --user`) として登録したい場合は、`./notion-notifier --user install` を使用してください。)*
 
-```powershell
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/notion-notifier/main/scripts/install.ps1 -OutFile install.ps1
-.\install.ps1
-```
+## ⚙️ 設定と使い方
 
-## ⚙️ Configuration & Usage
+サービスが起動したら、ブラウザで Web ダッシュボードにアクセスしてください：
+**http://localhost:18080** (デフォルトポート)
 
-Once the service starts, you can access the powerful Web Dashboard by navigating to:
-**http://localhost:18080** (default port)
+* **デフォルトユーザー名:** `admin`
+* **デフォルトパスワード:** `password`
 
-* **Default Username:** `admin`
-* **Default Password:** `password`
+ダッシュボードの **システム設定** タブから、Notion の API キー、Webhook URL などを入力し、安全に保存・適用できます。
 
-From the Dashboard's **Settings** tab, you can input your Notion API Keys, Google Credentials, and Discord/Slack Webhook URLs safely.
+### 設定ファイル・データベースの物理パス
+デフォルトでは、設定ファイル(`config.yaml`, `env.yaml`) と SQLite データベースファイルは、OS標準のユーザーディレクトリに配置されます。
 
-### Physical File Locations
-If you need to edit the database or configuration manually, they are located at:
-* **Linux:** `~/.config/notion-notifier/config.yaml` / `~/.local/share/notion-notifier/data.db`
-* **macOS:** `~/.config/notion-notifier/config.yaml` / `~/.local/share/notion-notifier/data.db`
-* **Windows:** `%LOCALAPPDATA%\notion-notifier\config\` / `%LOCALAPPDATA%\notion-notifier\data\`
+* **Linux:** `~/.config/notion-notifier/` / データファイルは `~/.local/share/notion-notifier/`
+* **macOS:** `~/Library/Application Support/notion-notifier/`
+* **Windows:** `%APPDATA%\notion-notifier\` / データファイルは `%LOCALAPPDATA%\notion-notifier\`
 
-## 🛠️ Development & Building from Source
+## 🛠️ ソースからのビルドと開発
 
-This project consists of a Go backend and a Svelte frontend.
+このプロジェクトは Go バックエンドと Svelte フロントエンドで構成されています。
 
-1. Clone the repository
+1. リポジトリのクローン
    ```bash
-   git clone https://github.com/YOUR_GITHUB_USERNAME/notion-notifier.git
+   git clone https://github.com/GeniusJunP/notion-notifier.git
    cd notion-notifier
    ```
-2. Build the Svelte Frontend
+2. Svelte フロントエンドのビルド
    ```bash
    cd web
    npm install
    npm run build
    cd ..
    ```
-3. Run the Go Server
+3. Go サーバーの開発実行
    ```bash
    go run cmd/notion-notifier/main.go
    ```
 
-## 📚 Documentation
+## 📚 ドキュメント
 
-For complete technical specifications, database schema diagrams, and API design, see the detailed documents located in the `/docs` folder:
+技術仕様、機能設計、APIの詳細は以下のドキュメント（主に日本語）を参照してください。
 - [Technical Specification & Architecture](docs/specification.md)
 - [Feature Details](docs/features.md)
 - [API Reference](docs/api.md)
 
-## 📄 License
+## 📄 ライセンス
 
-This project is open-source. See the LICENSE file for more information.
+MIT License
