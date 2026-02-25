@@ -63,6 +63,7 @@ func main() {
 	cfgPath := flag.String("config", filepath.Join(cfgDir, "config.yaml"), "path to config.yaml")
 	envPath := flag.String("env", filepath.Join(cfgDir, "env.yaml"), "path to env.yaml")
 	dbPath := flag.String("db", filepath.Join(dataDir, "data.db"), "path to sqlite db")
+	userSvc := flag.Bool("user", false, "install as user-level service (no root required)")
 	flag.Parse()
 
 	// Ensure default directories and starter config files exist.
@@ -75,6 +76,9 @@ func main() {
 		DisplayName: "Notion Notifier",
 		Description: "Syncs Notion database and sends webhook notifications.",
 		Arguments:   []string{"-config", *cfgPath, "-env", *envPath, "-db", *dbPath},
+	}
+	if *userSvc {
+		svcConfig.Option = service.KeyValue{"UserService": true}
 	}
 
 	prg := &program{
