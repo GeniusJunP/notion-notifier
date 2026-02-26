@@ -11,6 +11,13 @@ import (
 
 	"notion-notifier/internal/app"
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/updater"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 // program implements service.Interface for kardianos/service.
@@ -92,9 +99,19 @@ func main() {
 		logging.Fatal("MAIN", "service init failed: %v", err)
 	}
 
-	// Handle service control commands: install, start, stop, uninstall
-	if cmd := flag.Arg(0); cmd != "" {
+	// Handle commands
+	if len(flag.Args()) > 0 {
+		cmd := flag.Arg(0)
 		switch cmd {
+		case "version":
+			fmt.Printf("notion-notifier version %s, commit %s, built at %s\n", version, commit, date)
+			return
+		case "update":
+			if err := updater.Run(version, "GeniusJunP/notion-notifier"); err != nil {
+				fmt.Fprintf(os.Stderr, "Update failed: %v\n", err)
+				os.Exit(1)
+			}
+			return
 		case "install", "start", "stop", "restart", "uninstall":
 			if err := service.Control(s, cmd); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -103,7 +120,7 @@ func main() {
 			fmt.Printf("notion-notifier: %s succeeded\n", cmd)
 			return
 		default:
-			fmt.Fprintf(os.Stderr, "Unknown command: %s\nUsage: notion-notifier [install|start|stop|restart|uninstall]\n", cmd)
+			fmt.Fprintf(os.Stderr, "Unknown command: %s\nUsage: notion-notifier [version|update|install|start|stop|restart|uninstall]\n", cmd)
 			os.Exit(1)
 		}
 	}
