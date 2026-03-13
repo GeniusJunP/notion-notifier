@@ -15,7 +15,6 @@ import (
 	"notion-notifier/internal/db"
 	"notion-notifier/internal/models"
 	"notion-notifier/internal/retry"
-	tpl "notion-notifier/internal/template"
 	"notion-notifier/internal/webhook"
 
 	"gopkg.in/yaml.v3"
@@ -77,7 +76,7 @@ func TestSendWebhookRecordsHistoryOnPayloadRenderError(t *testing.T) {
 	}
 	defer repo.Close()
 
-	sched := New(cfgMgr, repo, nil, webhook.New(nil, retry.Config{}), nil, tpl.New())
+	sched := New(cfgMgr, repo, nil, webhook.New(nil, retry.Config{}), nil)
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	day := time.Now().In(loc).AddDate(0, 0, 1)
 	from := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, loc)
@@ -235,7 +234,7 @@ func TestSendManualNotificationRoutesByIsTest(t *testing.T) {
 			}
 			defer repo.Close()
 
-			sched := New(cfgMgr, repo, nil, webhook.New(nil, retry.Config{}), nil, tpl.New())
+			sched := New(cfgMgr, repo, nil, webhook.New(nil, retry.Config{}), nil)
 			loc, _ := time.LoadLocation("Asia/Tokyo")
 			day := time.Now().In(loc).AddDate(0, 0, 1)
 			from := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, loc)

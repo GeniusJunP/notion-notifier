@@ -27,7 +27,6 @@ import (
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
 	"notion-notifier/internal/scheduler"
-	tpl "notion-notifier/internal/template"
 	"notion-notifier/internal/webhook"
 	"notion-notifier/web"
 )
@@ -73,8 +72,7 @@ func New(cfgPath, envPath, dbPath string) (*App, error) {
 	notionClient := notion.New(httpClient, env.Notion.APIKey, retryCfg)
 	webhookClient := webhook.New(httpClient, retryCfg)
 
-	renderer := tpl.New()
-	sched := scheduler.New(manager, repo, notionClient, webhookClient, nil, renderer)
+	sched := scheduler.New(manager, repo, notionClient, webhookClient, nil)
 
 	// HTTP Router
 	handler := buildRouter(manager, repo, sched)

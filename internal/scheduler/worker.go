@@ -35,7 +35,6 @@ type Scheduler struct {
 	notion   *notion.Client
 	webhook  *webhook.Client
 	calendar *calendar.Client
-	renderer *tpl.Renderer
 
 	mu                  sync.Mutex
 	upcomingTimers      map[string]*time.Timer
@@ -45,7 +44,8 @@ type Scheduler struct {
 	statusMu            sync.RWMutex
 	notionStatus        SyncStatus
 	periodicMu          sync.Mutex
-	opsMu               sync.Mutex
+	syncMu              sync.Mutex // guards Notion sync operations
+	calendarMu          sync.Mutex // guards Calendar sync operations
 	runtimeMu           sync.RWMutex
 	runtimeCtx          context.Context
 	runtimeCancel       context.CancelFunc
@@ -58,14 +58,13 @@ type SyncStatus struct {
 	LastError    string
 }
 
-func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, webhookClient *webhook.Client, calendarClient *calendar.Client, renderer *tpl.Renderer) *Scheduler {
+func New(cfg *config.Manager, repo *db.Repository, notionClient *notion.Client, webhookClient *webhook.Client, calendarClient *calendar.Client) *Scheduler {
 	return &Scheduler{
 		cfg:              cfg,
 		repo:             repo,
 		notion:           notionClient,
 		webhook:          webhookClient,
 		calendar:         calendarClient,
-		renderer:         renderer,
 		upcomingTimers:   map[string]*time.Timer{},
 		periodicLastSent: map[int]string{},
 	}
@@ -130,7 +129,7 @@ func (s *Scheduler) renderListFromRange(ctx context.Context, template string, fr
 		return "", nil, err
 	}
 	templateEvents := buildTemplateEvents(events, cfg.PropertyMap)
-	message, err := s.renderer.RenderList(template, templateEvents)
+	message, err := tpl.RenderList(template, templateEvents)
 	if err != nil {
 		return "", nil, err
 	}
@@ -161,7 +160,7 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 		status, errStr = "failed", "webhook url is empty"
 	} else if s.webhook == nil {
 		status, errStr = "failed", "webhook client not configured"
-	} else if payload, err := s.renderer.RenderPayload(payloadTarget.PayloadTemplate, payloadCtx); err != nil {
+	} else if payload, err := tpl.RenderPayload(payloadTarget.PayloadTemplate, payloadCtx); err != nil {
 		status, errStr = "failed", err.Error()
 	} else if err := s.webhook.Send(ctx, url, payloadTarget.ContentType, []byte(payload)); err != nil {
 		status, errStr = "failed", err.Error()

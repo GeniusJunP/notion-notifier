@@ -16,7 +16,6 @@ import (
 	"notion-notifier/internal/db"
 	"notion-notifier/internal/models"
 	"notion-notifier/internal/scheduler"
-	tpl "notion-notifier/internal/template"
 )
 
 func TestHandleUpcomingEventsCalendarState(t *testing.T) {
@@ -242,7 +241,7 @@ func setupAPIHandler(t *testing.T, calendarEnabled bool) (*http.ServeMux, *db.Re
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
-	sched := scheduler.New(cfgMgr, repo, nil, nil, nil, tpl.New())
+	sched := scheduler.New(cfgMgr, repo, nil, nil, nil)
 	handler := NewHandler(cfgMgr, repo, sched)
 
 	mux := http.NewServeMux()

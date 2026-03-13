@@ -1,4 +1,4 @@
-package api
+package timeutil
 
 import (
 	"errors"
@@ -7,12 +7,25 @@ import (
 	"time"
 
 	"notion-notifier/internal/config"
-	"notion-notifier/internal/timezone"
 )
 
-func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
+// LoadOrLocal loads the named timezone, falling back to time.Local
+// if the name is empty or invalid.
+func LoadOrLocal(name string) *time.Location {
+	if strings.TrimSpace(name) == "" {
+		return time.Local
+	}
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		return time.Local
+	}
+	return loc
+}
+
+// ParseDateRange parses fromStr and toStr using the timezone configured in cfg.
+func ParseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time.Time, error) {
 	current := cfg.Config()
-	loc := timezone.LoadOrLocal(current.Timezone)
+	loc := LoadOrLocal(current.Timezone)
 	now := time.Now().In(loc)
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	to := from
@@ -21,7 +34,7 @@ func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time
 	toStr = strings.TrimSpace(toStr)
 
 	if fromStr != "" {
-		parsed, err := parseDateInput(fromStr, loc)
+		parsed, err := ParseDateInput(fromStr, loc)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
@@ -29,7 +42,7 @@ func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time
 	}
 
 	if toStr != "" {
-		parsed, err := parseDateInput(toStr, loc)
+		parsed, err := ParseDateInput(toStr, loc)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
@@ -39,16 +52,17 @@ func parseDateRange(fromStr, toStr string, cfg *config.Manager) (time.Time, time
 	}
 
 	if to.Before(from) {
-		return time.Time{}, time.Time{}, errToBeforeFrom
+		return time.Time{}, time.Time{}, ErrToBeforeFrom
 	}
 
 	return from, to, nil
 }
 
-func parseDateInput(value string, loc *time.Location) (time.Time, error) {
+// ParseDateInput parses a date input string in various formats in the given location.
+func ParseDateInput(value string, loc *time.Location) (time.Time, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
-		return time.Time{}, errDateRequired
+		return time.Time{}, ErrDateRequired
 	}
 	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
 		return parsed.In(loc), nil
@@ -64,10 +78,11 @@ func parseDateInput(value string, loc *time.Location) (time.Time, error) {
 			return parsed, nil
 		}
 	}
-	return time.Time{}, errInvalidDateFormat
+	return time.Time{}, ErrInvalidDateFormat
 }
 
-func formatDurationShort(d time.Duration) string {
+// FormatDurationShort formats a duration into a short string (e.g., "1h30m", "< 1m").
+func FormatDurationShort(d time.Duration) string {
 	if d < 0 {
 		d = -d
 	}
@@ -86,8 +101,9 @@ func formatDurationShort(d time.Duration) string {
 	return fmt.Sprintf("%dh%dm", h, rm)
 }
 
+// Exported errors
 var (
-	errToBeforeFrom      = errors.New("to_date must be after from_date")
-	errDateRequired      = errors.New("date is required")
-	errInvalidDateFormat = errors.New("invalid date format")
+	ErrToBeforeFrom      = errors.New("to_date must be after from_date")
+	ErrDateRequired      = errors.New("date is required")
+	ErrInvalidDateFormat = errors.New("invalid date format")
 )

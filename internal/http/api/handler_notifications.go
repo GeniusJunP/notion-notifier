@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"notion-notifier/internal/config"
+	"notion-notifier/internal/timeutil"
 )
 
 // --- POST /api/notifications/preview ---
@@ -42,7 +43,7 @@ func (h *Handler) handlePreviewNotification(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
+	from, to, err := timeutil.ParseDateRange(req.FromDate, req.ToDate, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return
@@ -70,7 +71,7 @@ func (h *Handler) handleManualNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
+	from, to, err := timeutil.ParseDateRange(req.FromDate, req.ToDate, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return

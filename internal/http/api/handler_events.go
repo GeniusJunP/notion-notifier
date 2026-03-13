@@ -6,7 +6,7 @@ import (
 
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
-	"notion-notifier/internal/timezone"
+	"notion-notifier/internal/timeutil"
 )
 
 // --- GET /api/events/upcoming ---
@@ -30,7 +30,7 @@ func (h *Handler) handleUpcomingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := h.cfg.Config()
-	loc := timezone.LoadOrLocal(cfg.Timezone)
+	loc := timeutil.LoadOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 
 	events, err := h.repo.ListUpcomingEvents(r.Context(), 14, now)

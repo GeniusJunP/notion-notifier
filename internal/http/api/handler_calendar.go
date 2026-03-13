@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/timeutil"
 )
 
 // --- POST /api/calendar/sync ---
@@ -25,7 +26,7 @@ func (h *Handler) handleCalendarSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	from, to, err := parseDateRange(req.FromDate, req.ToDate, h.cfg)
+	from, to, err := timeutil.ParseDateRange(req.FromDate, req.ToDate, h.cfg)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid date: "+err.Error())
 		return

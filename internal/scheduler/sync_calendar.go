@@ -8,7 +8,7 @@ import (
 	"notion-notifier/internal/calendar"
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
-	"notion-notifier/internal/timezone"
+	"notion-notifier/internal/timeutil"
 )
 
 func (s *Scheduler) calendarLoop() {
@@ -44,7 +44,7 @@ func (s *Scheduler) calendarLoop() {
 
 func (s *Scheduler) SyncCalendar(from, to time.Time) (int, error) {
 	count := 0
-	err := s.withRuntimeOp(calendarOpTimeout, func(ctx context.Context) error {
+	err := s.withCalendarOp(calendarOpTimeout, func(ctx context.Context) error {
 		var err error
 		count, err = s.syncCalendar(ctx, from, to)
 		return err
@@ -77,7 +77,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 
 	s.mu.Lock()
 	if s.calendar == nil || s.calendarFingerprint != fingerprint {
-		client, err := calendar.NewClient(ctx, calendarOpts)
+		client, err := calendar.NewClient(calendarOpts)
 		if err != nil {
 			s.mu.Unlock()
 			logging.Error("CALENDAR", "calendar client init failed: %v", err)
@@ -91,7 +91,7 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		logging.Error("CALENDAR", "calendar client not configured")
 		return 0, errors.New("calendar client not configured")
 	}
-	loc := timezone.LoadOrLocal(cfg.Timezone)
+	loc := timeutil.LoadOrLocal(cfg.Timezone)
 
 	dbEvents, err := s.repo.ListEventsBetween(ctx, from, to)
 	if err != nil {

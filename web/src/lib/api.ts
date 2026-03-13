@@ -22,6 +22,7 @@ export interface Notifications {
 export interface UpcomingNotification {
   enabled: boolean;
   minutes_before: number;
+  allday_base_time: string;
   message: string;
   conditions: UpcomingConditions;
 }

@@ -9,11 +9,8 @@ import (
 	"notion-notifier/internal/models"
 )
 
-type Renderer struct{}
+// Renderer functions
 
-func New() *Renderer {
-	return &Renderer{}
-}
 
 func newTemplate(name string) *template.Template {
 	return template.New(name).Funcs(template.FuncMap{
@@ -24,7 +21,7 @@ func newTemplate(name string) *template.Template {
 	})
 }
 
-func (r *Renderer) RenderSingle(tmpl string, event models.TemplateEvent, minutesBefore int) (string, error) {
+func RenderSingle(tmpl string, event models.TemplateEvent, minutesBefore int) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
 	t, err := newTemplate("message").Parse(tmpl)
 	if err != nil {
@@ -47,7 +44,7 @@ func (r *Renderer) RenderSingle(tmpl string, event models.TemplateEvent, minutes
 	return buf.String(), nil
 }
 
-func (r *Renderer) RenderList(tmpl string, events []models.TemplateEvent) (string, error) {
+func RenderList(tmpl string, events []models.TemplateEvent) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
 	t, err := newTemplate("message").Parse(tmpl)
 	if err != nil {
@@ -61,7 +58,7 @@ func (r *Renderer) RenderList(tmpl string, events []models.TemplateEvent) (strin
 	return buf.String(), nil
 }
 
-func (r *Renderer) RenderPayload(tmpl string, ctx any) (string, error) {
+func RenderPayload(tmpl string, ctx any) (string, error) {
 	tmpl = config.SanitizeTemplate(tmpl)
 	t, err := newTemplate("payload").Parse(tmpl)
 	if err != nil {

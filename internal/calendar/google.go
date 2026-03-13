@@ -64,7 +64,11 @@ func (o ClientOptions) Fingerprint() string {
 	return hex.EncodeToString(sum[:])
 }
 
-func NewClient(ctx context.Context, opts ClientOptions) (*Client, error) {
+// NewClient creates a long-lived Calendar API client.
+// context.Background() is used for OAuth TokenSource and service construction
+// because the client outlives any single operation context. Per-request contexts
+// are passed via .Context(ctx) in each API method (ListEvents, UpsertEvent, etc.).
+func NewClient(opts ClientOptions) (*Client, error) {
 	opts = opts.normalize()
 	if err := opts.Validate(); err != nil {
 		return nil, err
@@ -75,8 +79,9 @@ func NewClient(ctx context.Context, opts ClientOptions) (*Client, error) {
 		Endpoint:     googleoauth.Endpoint,
 		Scopes:       []string{calendarapi.CalendarScope},
 	}
-	tokenSource := oauthCfg.TokenSource(ctx, &oauth2.Token{RefreshToken: opts.OAuthRefreshToken})
-	srv, err := calendarapi.NewService(ctx, option.WithTokenSource(tokenSource))
+	bgCtx := context.Background()
+	tokenSource := oauthCfg.TokenSource(bgCtx, &oauth2.Token{RefreshToken: opts.OAuthRefreshToken})
+	srv, err := calendarapi.NewService(bgCtx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		return nil, err
 	}

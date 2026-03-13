@@ -69,6 +69,29 @@
 
             <div>
                 <label
+                    for="adv-allday-base-{index}"
+                    class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
+                    >終日予定の基準時刻</label
+                >
+                <div class="relative">
+                    <Clock
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={16}
+                    />
+                    <input
+                        id="adv-allday-base-{index}"
+                        type="time"
+                        bind:value={rule.allday_base_time}
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
+                    />
+                </div>
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                    終日予定の通知基準として使用（デフォルト: 09:00）
+                </p>
+            </div>
+
+            <div>
+                <label
                     for="adv-message-{index}"
                     class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
                     >メッセージテンプレート</label

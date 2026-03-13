@@ -43,6 +43,7 @@
         const newRule: UpcomingNotification = {
             enabled: true,
             minutes_before: 30,
+            allday_base_time: "09:00",
             message: "",
             conditions: {
                 days_of_week: [],

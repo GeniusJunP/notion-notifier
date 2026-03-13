@@ -8,7 +8,7 @@ import (
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/notion"
 	"notion-notifier/internal/retry"
-	"notion-notifier/internal/timezone"
+	"notion-notifier/internal/timeutil"
 )
 
 func (s *Scheduler) syncLoop() {
@@ -31,7 +31,7 @@ func (s *Scheduler) syncLoop() {
 
 func (s *Scheduler) SyncNotion() (int, error) {
 	count := 0
-	err := s.withRuntimeOp(syncOpTimeout, func(ctx context.Context) error {
+	err := s.withSyncOp(syncOpTimeout, func(ctx context.Context) error {
 		var err error
 		count, err = s.syncNotion(ctx)
 		return err
@@ -42,7 +42,7 @@ func (s *Scheduler) SyncNotion() (int, error) {
 func (s *Scheduler) syncNotion(ctx context.Context) (int, error) {
 	cfg, env := s.cfg.Snapshot()
 	logging.Info("SYNC", "notion sync started")
-	loc := timezone.LoadOrLocal(cfg.Timezone)
+	loc := timeutil.LoadOrLocal(cfg.Timezone)
 	if env.Notion.APIKey != "" {
 		s.mu.Lock()
 		if s.notion == nil || s.notionKey != env.Notion.APIKey {

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
@@ -46,15 +47,23 @@ func (s *Scheduler) newRuntimeOpContext(timeout time.Duration) (context.Context,
 	return ctx, cancel, nil
 }
 
-func (s *Scheduler) withRuntimeOp(timeout time.Duration, fn func(context.Context) error) error {
-	s.opsMu.Lock()
-	defer s.opsMu.Unlock()
+func (s *Scheduler) runWithTimeout(mu *sync.Mutex, timeout time.Duration, fn func(context.Context) error) error {
+	mu.Lock()
+	defer mu.Unlock()
 	opCtx, cancel, err := s.newRuntimeOpContext(timeout)
 	if err != nil {
 		return err
 	}
 	defer cancel()
 	return fn(opCtx)
+}
+
+func (s *Scheduler) withSyncOp(timeout time.Duration, fn func(context.Context) error) error {
+	return s.runWithTimeout(&s.syncMu, timeout, fn)
+}
+
+func (s *Scheduler) withCalendarOp(timeout time.Duration, fn func(context.Context) error) error {
+	return s.runWithTimeout(&s.calendarMu, timeout, fn)
 }
 
 func (s *Scheduler) periodicSent(idx int, key string) bool {

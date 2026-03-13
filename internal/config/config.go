@@ -44,10 +44,11 @@ type WebhookTarget struct {
 }
 
 type UpcomingNotification struct {
-	Enabled       bool               `yaml:"enabled" json:"enabled"`
-	MinutesBefore int                `yaml:"minutes_before" json:"minutes_before"`
-	Message       string             `yaml:"message" json:"message"`
-	Conditions    UpcomingConditions `yaml:"conditions" json:"conditions"`
+	Enabled        bool               `yaml:"enabled" json:"enabled"`
+	MinutesBefore  int                `yaml:"minutes_before" json:"minutes_before"`
+	AllDayBaseTime string             `yaml:"allday_base_time" json:"allday_base_time"`
+	Message        string             `yaml:"message" json:"message"`
+	Conditions     UpcomingConditions `yaml:"conditions" json:"conditions"`
 }
 
 type UpcomingConditions struct {
@@ -242,6 +243,9 @@ func ValidateConfig(cfg Config) error {
 		if adv.MinutesBefore <= 0 {
 			return fmt.Errorf("notifications.upcoming[%d].minutes_before must be > 0", i)
 		}
+		if err := validateHHMM(adv.AllDayBaseTime); err != nil {
+			return fmt.Errorf("notifications.upcoming[%d].allday_base_time: %w", i, err)
+		}
 		for _, d := range adv.Conditions.DaysOfWeek {
 			if d < 1 || d > 7 {
 				return fmt.Errorf("notifications.upcoming[%d].conditions.days_of_week must be 1-7", i)
@@ -342,16 +346,13 @@ func NormalizeConfig(cfg Config) Config {
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
 	cfg.Webhook.InternalNotification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.InternalNotification.PayloadTemplate)
 
-	// Fix zero-value slices so JSON marshals as [] instead of null
-	if cfg.Notifications.Upcoming == nil {
-		cfg.Notifications.Upcoming = make([]UpcomingNotification, 0)
+
+	for i := range cfg.Notifications.Upcoming {
+		if cfg.Notifications.Upcoming[i].AllDayBaseTime == "" {
+			cfg.Notifications.Upcoming[i].AllDayBaseTime = "09:00"
+		}
 	}
-	if cfg.Notifications.Periodic == nil {
-		cfg.Notifications.Periodic = make([]PeriodicNotification, 0)
-	}
-	if cfg.PropertyMap.Custom == nil {
-		cfg.PropertyMap.Custom = make([]CustomMapping, 0)
-	}
+
 
 	return cfg
 }

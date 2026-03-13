@@ -10,16 +10,17 @@ import (
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/logging"
 	"notion-notifier/internal/models"
-	"notion-notifier/internal/timezone"
+	tpl "notion-notifier/internal/template"
+	"notion-notifier/internal/timeutil"
 )
 
 func (s *Scheduler) RebuildUpcomingSchedules() error {
-	return s.withRuntimeOp(rebuildOpTimeout, s.rebuildUpcomingSchedules)
+	return s.withSyncOp(rebuildOpTimeout, s.rebuildUpcomingSchedules)
 }
 
 func (s *Scheduler) rebuildUpcomingSchedules(ctx context.Context) error {
 	cfg := s.cfg.Config()
-	loc := timezone.LoadOrLocal(cfg.Timezone)
+	loc := timeutil.LoadOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {
@@ -33,12 +34,12 @@ func (s *Scheduler) rebuildUpcomingSchedules(ctx context.Context) error {
 }
 
 func (s *Scheduler) SchedulePendingFromDB() error {
-	return s.withRuntimeOp(rebuildOpTimeout, s.schedulePendingFromDB)
+	return s.withSyncOp(rebuildOpTimeout, s.schedulePendingFromDB)
 }
 
 func (s *Scheduler) schedulePendingFromDB(ctx context.Context) error {
 	s.clearUpcomingTimers()
-	loc := timezone.LoadOrLocal(s.currentTimezone())
+	loc := timeutil.LoadOrLocal(s.currentTimezone())
 	now := time.Now().In(loc)
 	schedules, err := s.repo.ListPendingUpcomingSchedules(ctx)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *Scheduler) fireUpcoming(ctx context.Context, sched models.UpcomingSched
 	custom := extractCustomValues(event.RawPropsJSON, cfg.PropertyMap)
 	templateEvent := toTemplateEvent(event, custom)
 	rule := cfg.Notifications.Upcoming[sched.RuleIndex]
-	message, err := s.renderer.RenderSingle(rule.Message, templateEvent, rule.MinutesBefore)
+	message, err := tpl.RenderSingle(rule.Message, templateEvent, rule.MinutesBefore)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func (s *Scheduler) fireUpcoming(ctx context.Context, sched models.UpcomingSched
 
 func (s *Scheduler) PreviewUpcomingTemplate(ctx context.Context, template string, minutesBefore int) (string, error) {
 	cfg := s.cfg.Config()
-	loc := timezone.LoadOrLocal(cfg.Timezone)
+	loc := timeutil.LoadOrLocal(cfg.Timezone)
 	now := time.Now().In(loc)
 	events, err := s.repo.ListUpcomingEvents(ctx, 30, now)
 	if err != nil {
@@ -112,17 +113,17 @@ func (s *Scheduler) PreviewUpcomingTemplate(ctx context.Context, template string
 	}
 	custom := extractCustomValues(events[0].RawPropsJSON, cfg.PropertyMap)
 	templateEvent := toTemplateEvent(events[0], custom)
-	return s.renderer.RenderSingle(template, templateEvent, minutesBefore)
+	return tpl.RenderSingle(template, templateEvent, minutesBefore)
 }
 
 func buildUpcomingSchedules(events []models.Event, cfg config.Config, now time.Time, loc *time.Location) []models.UpcomingSchedule {
 	var schedules []models.UpcomingSchedule
 	for _, ev := range events {
-		startTime := parseEventStart(ev, loc)
 		for idx, rule := range cfg.Notifications.Upcoming {
 			if !rule.Enabled {
 				continue
 			}
+			startTime := parseEventStart(ev, loc, rule.AllDayBaseTime)
 			if !matchUpcomingConditions(ev, startTime, rule, cfg) {
 				continue
 			}
@@ -143,7 +144,10 @@ func buildUpcomingSchedules(events []models.Event, cfg config.Config, now time.T
 	return schedules
 }
 
-func parseEventStart(ev models.Event, loc *time.Location) time.Time {
+// parseEventStart returns the effective start time of an event.
+// For all-day events (no StartTime), allDayBaseTime (HH:MM) is used
+// instead of midnight, so that notifications fire at a reasonable hour.
+func parseEventStart(ev models.Event, loc *time.Location, allDayBaseTime string) time.Time {
 	if loc == nil {
 		loc = time.Local
 	}
@@ -154,6 +158,9 @@ func parseEventStart(ev models.Event, loc *time.Location) time.Time {
 		t, err := time.ParseInLocation("2006-01-02", ev.StartDate, loc)
 		if err != nil {
 			return time.Now().In(loc)
+		}
+		if base, parseErr := time.Parse("15:04", allDayBaseTime); parseErr == nil {
+			t = time.Date(t.Year(), t.Month(), t.Day(), base.Hour(), base.Minute(), 0, 0, loc)
 		}
 		return t
 	}
