@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { cn } from "../../lib/utils";
+
     export let selectedDays: number[] = [];
-    export let ariaLabelPrefix: string = "実行曜日";
+    export let ariaLabelPrefix = "実行曜日";
 
     const daysLabels = ["月", "火", "水", "木", "金", "土", "日"];
     const dayValues = [1, 2, 3, 4, 5, 6, 7];
@@ -19,11 +21,14 @@
         <button
             type="button"
             on:click={() => toggleDay(day)}
-            class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all {selectedDays.includes(
-                day,
-            )
-                ? 'bg-brand-600 dark:bg-brand-500 text-white scale-105'
-                : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            class={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-semibold outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-200",
+                "focus-visible:ring-2 focus-visible:ring-brand-300/70 dark:focus-visible:ring-brand-700/60",
+                "active:scale-[0.985]",
+                selectedDays.includes(day)
+                    ? "border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-950"
+                    : "border-gray-200/80 bg-white/85 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900/70 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900 dark:hover:text-gray-100",
+            )}
             aria-label={`${ariaLabelPrefix} ${daysLabels[idx]}`}
             aria-pressed={selectedDays.includes(day)}
         >
