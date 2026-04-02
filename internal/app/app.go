@@ -132,7 +132,7 @@ func buildRouter(cfg *config.Manager, repo *db.Repository, sched *scheduler.Sche
 func resolveServerRuntime(env config.Env) (string, tlsRuntime, error) {
 	port := env.Server.Port
 	if port == 0 {
-		port = 8080
+		port = 18080
 	}
 	if port < 1 || port > 65535 {
 		return "", tlsRuntime{}, fmt.Errorf("server.port must be between 1 and 65535: %d", port)

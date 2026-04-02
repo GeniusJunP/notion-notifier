@@ -166,7 +166,7 @@ google:
   oauth_client_secret: ""
   oauth_refresh_token: ""
 server:
-  port: 8080
+  port: 18080
   tls:
     cert_file: ""
     key_file: ""

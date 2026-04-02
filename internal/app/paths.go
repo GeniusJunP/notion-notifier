@@ -127,7 +127,7 @@ webhook:
 #   oauth_refresh_token: ""
 
 server:
-  port: 8080  # or APP_PORT env var
+  port: 18080  # or APP_PORT env var
   # tls:
   #   cert_file: ""
   #   key_file: ""
