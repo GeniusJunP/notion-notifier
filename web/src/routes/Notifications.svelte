@@ -2,7 +2,6 @@
     import {
         api,
         buildPreviewNotificationRequest,
-        type Config,
         type UpcomingNotification,
         type PeriodicNotification,
     } from "../lib/api";
@@ -15,6 +14,7 @@
     import { Plus, Save } from "lucide-svelte";
     import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
     import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
+    import Button from "../lib/ui/Button.svelte";
 
     $: config = $configStore;
 
@@ -126,40 +126,25 @@
 </script>
 
 <div class="space-y-6">
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-        <button
-            on:click={saveConfig}
-            disabled={isSaving}
-            class="px-6 py-2.5 bg-brand-600 dark:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 active:scale-95 disabled:opacity-50 transition-all"
-        >
-            {#if isSaving}
-                <div
-                    class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                ></div>
-            {:else}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <Button on:click={saveConfig} disabled={isSaving} loading={isSaving} size="md">
+            {#if !isSaving}
                 <Save size={18} />
             {/if}
             変更を保存
-        </button>
+        </Button>
     </div>
 
     {#if config}
-        <!-- 並列表示: 小画面は縦並び、lg以上で2カラム横並び -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- 事前通知カラム -->
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2
-                        class="text-xl font-bold text-gray-800 dark:text-gray-200"
-                    >
+                    <h2 class="ui-block-title">
                         事前通知ルール
                     </h2>
-                    <button
-                        on:click={addUpcomingRule}
-                        class="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-bold hover:underline"
-                    >
+                    <Button on:click={addUpcomingRule} variant="text" size="sm">
                         <Plus size={16} /> ルールを追加
-                    </button>
+                    </Button>
                 </div>
 
                 {#each config.notifications.upcoming || [] as rule, i}
@@ -178,20 +163,14 @@
                 {/each}
             </div>
 
-            <!-- 定期通知カラム -->
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2
-                        class="text-xl font-bold text-gray-800 dark:text-gray-200"
-                    >
+                    <h2 class="ui-block-title">
                         定期通知ルール
                     </h2>
-                    <button
-                        on:click={addPeriodicRule}
-                        class="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-bold hover:underline"
-                    >
+                    <Button on:click={addPeriodicRule} variant="text" size="sm">
                         <Plus size={16} /> ルールを追加
-                    </button>
+                    </Button>
                 </div>
 
                 {#each config.notifications.periodic || [] as rule, i}

@@ -2,24 +2,25 @@
     import { RefreshCw, CalendarDays, Clock, ArrowRight } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
     import type { UpcomingEvent } from "../../lib/api";
+    import Badge from "../../lib/ui/Badge.svelte";
+    import Button from "../../lib/ui/Button.svelte";
+    import Card from "../../lib/ui/Card.svelte";
+    import IconChip from "../../lib/ui/IconChip.svelte";
 
     export let upcoming: UpcomingEvent[] = [];
-    export let isLoading: boolean = false;
-    export let isSyncing: boolean = false;
+    export let isLoading = false;
+    export let isSyncing = false;
 
     const dispatch = createEventDispatcher<{ refresh: void }>();
 
     const calendarStateMeta: Record<
         UpcomingEvent["calendar_state"],
-        { className: string; label: string }
+        { variant: "neutral" | "warning" | "success" | "error"; label: string }
     > = {
-        disabled: { className: "bg-gray-100 text-gray-600", label: "連携オフ" },
-        needs_sync: {
-            className: "bg-amber-100 text-amber-700",
-            label: "要同期",
-        },
-        synced: { className: "bg-green-100 text-green-700", label: "反映済み" },
-        error: { className: "bg-red-100 text-red-700", label: "連携エラー" },
+        disabled: { variant: "neutral", label: "連携オフ" },
+        needs_sync: { variant: "warning", label: "要同期" },
+        synced: { variant: "success", label: "反映済み" },
+        error: { variant: "error", label: "連携エラー" },
     };
 
     function formatEventDateTime(event: UpcomingEvent): string {
@@ -46,66 +47,61 @@
 
 <div class="space-y-4">
     <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">
+        <h2 class="ui-block-title">
             直近の予定 (14日間)
         </h2>
-        <button
-            on:click={() => dispatch("refresh")}
-            class="text-sm text-brand-600 font-medium hover:underline flex items-center gap-1"
-        >
+        <Button on:click={() => dispatch("refresh")} variant="text" size="sm">
             <RefreshCw size={14} />
             更新
-        </button>
+        </Button>
     </div>
 
     {#if isLoading && !isSyncing}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             {#each Array(4) as _}
-                <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse h-32"
-                ></div>
+                <Card
+                    tone="default"
+                    radius="2xl"
+                    class="h-32 animate-pulse"
+                ></Card>
             {/each}
         </div>
     {:else if upcoming.length === 0}
-        <div
-            class="bg-white dark:bg-gray-800 p-12 rounded-3xl border border-dashed border-gray-200 dark:border-gray-600 text-center"
+        <Card
+            radius="3xl"
+            class="border-dashed p-12 text-center"
         >
-            <div
-                class="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-300 dark:text-gray-500 mx-auto mb-4"
-            >
+            <div class="mx-auto mb-4">
+            <IconChip tone="neutral" size="lg">
                 <CalendarDays size={32} />
+            </IconChip>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+            <h3 class="mb-1 text-lg font-bold text-gray-900 dark:text-gray-100">
                 予定が見つかりません
             </h3>
-            <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            <p class="mx-auto max-w-sm text-gray-500 dark:text-gray-400">
                 同期された直近の予定はありません。Notion
                 データベースを確認してください。
             </p>
-        </div>
+        </Card>
     {:else}
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {#each upcoming as event}
-                <div
-                    class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 group flex flex-col justify-between min-h-[140px]"
+                <Card
+                    radius="2xl"
+                    padding="md"
+                    class="group flex min-h-[140px] flex-col justify-between"
                 >
                     <div>
-                        <div
-                            class="flex items-start justify-between gap-3 mb-2"
-                        >
+                        <div class="mb-2 flex items-start justify-between gap-3">
                             <h3
-                                class="font-bold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors"
+                                class="line-clamp-2 font-bold leading-tight text-gray-900 transition-colors group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-300"
                             >
                                 {event.title}
                             </h3>
-                            <div class="flex flex-col items-end gap-1">
-                                <span
-                                    class={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${calendarStateMeta[event.calendar_state].className}`}
-                                >
-                                    {calendarStateMeta[event.calendar_state]
-                                        .label}
-                                </span>
-                            </div>
+                            <Badge variant={calendarStateMeta[event.calendar_state].variant}>
+                                {calendarStateMeta[event.calendar_state].label}
+                            </Badge>
                         </div>
                         <div class="space-y-1.5">
                             <div
@@ -122,34 +118,30 @@
                                     class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                                 >
                                     <div
-                                        class="w-3.5 flex items-center justify-center"
+                                        class="flex w-3.5 items-center justify-center"
                                     >
                                         <div
-                                            class="w-1 h-3.5 bg-brand-400 dark:bg-brand-500 rounded-full"
+                                            class="h-3.5 w-1 rounded-full bg-brand-400 dark:bg-brand-500"
                                         ></div>
                                     </div>
-                                    <span class="truncate"
-                                        >{event.location}</span
-                                    >
+                                    <span class="truncate">{event.location}</span>
                                 </div>
                             {/if}
                         </div>
                     </div>
 
-                    <div
-                        class="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between"
-                    >
+                    <div class="mt-4 border-t border-gray-200/60 pt-3 dark:border-gray-800">
                         <a
                             href={event.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="text-xs text-brand-600 font-bold flex items-center gap-1 hover:underline"
+                            class="ui-link-button text-xs"
                         >
                             Notion で開く
                             <ArrowRight size={12} />
                         </a>
                     </div>
-                </div>
+                </Card>
             {/each}
         </div>
     {/if}

@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { api, getErrorMessage, type Config } from "../lib/api";
+    import { api, getErrorMessage } from "../lib/api";
     import {
         configStore,
         addToast,
@@ -12,9 +11,13 @@
         Trash2,
         CalendarDays,
         Settings,
-        ArrowRight,
-        Search,
     } from "lucide-svelte";
+    import Button from "../lib/ui/Button.svelte";
+    import Card from "../lib/ui/Card.svelte";
+    import FormField from "../lib/ui/FormField.svelte";
+    import IconChip from "../lib/ui/IconChip.svelte";
+    import Input from "../lib/ui/Input.svelte";
+    import Toggle from "../lib/ui/Toggle.svelte";
 
     $: config = $configStore;
 
@@ -68,207 +71,154 @@
     }
 </script>
 
-<div class="space-y-8 max-w-4xl">
-    <!-- Status Header -->
-    <div
-        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center gap-8"
-    >
-        <div
-            class="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400"
-        >
+<div class="max-w-4xl space-y-8">
+    <Card radius="3xl" padding="lg" class="flex flex-col items-center gap-8 md:flex-row">
+        <IconChip tone="brand" size="lg">
             <Calendar size={32} />
-        </div>
+        </IconChip>
         <div class="flex-1 text-center md:text-left">
-            <h2
-                class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2"
-            >
+            <h2 class="ui-page-title mb-2">
                 Google カレンダー同期
             </h2>
-            <p class="text-gray-500 dark:text-gray-400">
+            <p class="ui-support-text">
                 Notionを正としてGoogle
                 カレンダーを同期します。カレンダー側の意図しない編集は次回同期でNotion内容に戻されます。
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-gray-400 dark:text-gray-500"
-                >同期有効化</span
-            >
+            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                同期有効化
+            </span>
             {#if config}
-                <button
-                    on:click={() => {
-                        if (!config) return;
-                        config.calendar_sync.enabled =
-                            !config.calendar_sync.enabled;
-                        handleConfigUpdate();
-                    }}
-                    class="w-14 h-8 rounded-full transition-all duration-300 flex items-center p-1 {config
-                        .calendar_sync.enabled
-                        ? 'bg-green-500'
-                        : 'bg-gray-200 dark:bg-gray-600'}"
-                    aria-label="カレンダー同期の有効化を切り替え"
-                    aria-pressed={config.calendar_sync.enabled}
-                >
-                    <div
-                        class="w-6 h-6 bg-white rounded-full shadow-sm transform transition-transform duration-300 {config
-                            .calendar_sync.enabled
-                            ? 'translate-x-6'
-                            : 'translate-x-0'}"
-                    ></div>
-                </button>
+                <Toggle
+                    bind:checked={config.calendar_sync.enabled}
+                    ariaLabel="カレンダー同期の有効化を切り替え"
+                    tone="success"
+                    on:change={handleConfigUpdate}
+                />
             {/if}
         </div>
-    </div>
+    </Card>
 
     {#if config}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Sync Configuration -->
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
-                <h3
-                    class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
-                >
-                    <Settings
-                        size={20}
-                        class="text-gray-400 dark:text-gray-500"
-                    />
+                <h3 class="ui-section-title">
+                    <Settings size={20} class="text-gray-400 dark:text-gray-500" />
                     同期設定
                 </h3>
 
-                <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-4"
-                >
-                    <div>
-                        <label
-                            for="cal-interval-hours"
-                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
-                            >実行間隔 (時間)</label
-                        >
-                        <input
+                <Card tone="muted" class="space-y-4" radius="2xl">
+                    <FormField label="実行間隔 (時間)" forId="cal-interval-hours">
+                        <Input
                             id="cal-interval-hours"
                             type="number"
                             bind:value={config.calendar_sync.interval_hours}
                             on:change={handleConfigUpdate}
-                            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                         />
-                    </div>
-                    <div>
-                        <label
-                            for="cal-lookahead-days"
-                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
-                            >同期先読み日数</label
-                        >
-                        <input
+                    </FormField>
+
+                    <FormField label="同期先読み日数" forId="cal-lookahead-days">
+                        <Input
                             id="cal-lookahead-days"
                             type="number"
                             bind:value={config.calendar_sync.lookahead_days}
                             on:change={handleConfigUpdate}
-                            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400 transition-all"
                         />
-                    </div>
+                    </FormField>
+
                     <div
-                        class="pt-4 border-t border-gray-50 dark:border-gray-600 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500"
+                        class="flex items-center justify-between border-t border-gray-200/70 pt-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400"
                     >
-                        <span
-                            >同期を無効にすると、スケジューラによる自動実行が停止します。</span
-                        >
+                        <span>
+                            同期を無効にすると、スケジューラによる自動実行が停止します。
+                        </span>
                     </div>
-                </div>
+                </Card>
             </div>
 
-            <!-- Manual Sync -->
             <div class="space-y-6">
-                <h3
-                    class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2"
-                >
-                    <RefreshCw
-                        size={20}
-                        class="text-gray-400 dark:text-gray-500"
-                    />
+                <h3 class="ui-section-title">
+                    <RefreshCw size={20} class="text-gray-400 dark:text-gray-500" />
                     手動同期・管理
                 </h3>
 
-                <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-6"
-                >
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                for="cal-sync-from"
-                                class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
-                                >開始日</label
-                            >
-                            <input
+                <Card tone="muted" class="space-y-6" radius="2xl">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField
+                            label="開始日"
+                            forId="cal-sync-from"
+                            variant="eyebrow"
+                        >
+                            <Input
                                 id="cal-sync-from"
                                 type="date"
                                 bind:value={syncRange.from}
-                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                                uiSize="sm"
                             />
-                        </div>
-                        <div>
-                            <label
-                                for="cal-sync-to"
-                                class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"
-                                >終了日</label
-                            >
-                            <input
+                        </FormField>
+
+                        <FormField
+                            label="終了日"
+                            forId="cal-sync-to"
+                            variant="eyebrow"
+                        >
+                            <Input
                                 id="cal-sync-to"
                                 type="date"
                                 bind:value={syncRange.to}
-                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                                uiSize="sm"
                             />
-                        </div>
+                        </FormField>
                     </div>
 
-                    <button
+                    <Button
                         on:click={handleSync}
                         disabled={isSyncing}
-                        class="w-full py-4 bg-brand-600 dark:bg-brand-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 dark:hover:bg-brand-600 transition-all active:scale-95 disabled:opacity-50"
+                        loading={isSyncing}
+                        block
+                        size="lg"
                     >
-                        {#if isSyncing}
-                            <RefreshCw size={20} class="animate-spin" />
-                            同期中...
-                        {:else}
+                        {#if !isSyncing}
                             <RefreshCw size={20} />
-                            指定範囲で同期実行
                         {/if}
-                    </button>
+                        {isSyncing ? "同期中..." : "指定範囲で同期実行"}
+                    </Button>
 
-                    <div
-                        class="pt-6 border-t border-gray-100 dark:border-gray-600"
-                    >
-                        <button
+                    <div class="border-t border-gray-200/70 pt-6 dark:border-gray-800">
+                        <Button
                             on:click={handleClear}
                             disabled={isClearing}
-                            class="w-full py-3 border border-red-100 dark:border-red-700 text-red-600 dark:text-red-400 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900 transition-all"
+                            block
+                            size="md"
+                            variant="danger"
                         >
                             <Trash2 size={16} />
                             同期記録をリセット
-                        </button>
-                        <p
-                            class="mt-2 text-[11px] text-gray-400 dark:text-gray-500 text-center"
-                        >
+                        </Button>
+                        <p class="ui-hint text-center">
                             カレンダーで重複が発生する場合や、再同期したい場合に実行してください。
                         </p>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     {/if}
 
-    <!-- Help Section -->
-    <div
-        class="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl flex items-start gap-4"
-    >
-        <CalendarDays size={70} class="h-8 items-center justify-center" />
+    <Card tone="muted" radius="2xl" class="flex items-start gap-4">
+        <IconChip tone="neutral" size="md" class="shrink-0">
+            <CalendarDays size={20} />
+        </IconChip>
         <div>
-            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">
+            <h4 class="mb-1 font-bold text-gray-900 dark:text-gray-100">
                 同期の仕組み
             </h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                 Calendar
                 APIの追跡イベント（notion_page_id付き）を起点にDBへ逆引きし、差分があれば統一ロジックで更新します。
                 Notionにない追跡イベントは削除し、重複イベントは1件に整理します。設定の「Notion
                 プロパティマッピング」で、タイトル・日付・場所・参加者（メールアドレス）を紐付けてください。
             </p>
         </div>
-    </div>
+    </Card>
 </div>

@@ -1,8 +1,10 @@
 <script lang="ts">
     import { RefreshCw } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
+    import Button from "../../lib/ui/Button.svelte";
+    import Card from "../../lib/ui/Card.svelte";
 
-    export let isSyncing: boolean = false;
+    export let isSyncing = false;
 
     const dispatch = createEventDispatcher<{ sync: void }>();
 
@@ -11,35 +13,39 @@
     }
 </script>
 
-<div
-    class="bg-brand-600 p-8 rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
->
-    <div class="relative z-10">
-        <h2 class="text-2xl font-bold mb-2">手動同期を実行</h2>
-        <p class="text-brand-100 max-w-md">
-            Notion
-            データベースから最新の変更を即座に取得し、カレンダーや通知スケジュールを更新します。
-        </p>
-    </div>
-    <button
-        on:click={handleSync}
-        disabled={isSyncing}
-        class="relative z-10 px-8 py-4 bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-300 rounded-2xl font-bold hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+<Card tone="brand" padding="lg" radius="3xl" class="relative overflow-hidden">
+    <div
+        class="relative z-10 flex flex-col items-center justify-between gap-6 md:flex-row"
     >
-        {#if isSyncing}
-            <RefreshCw size={20} class="animate-spin" />
-            同期中...
-        {:else}
-            <RefreshCw size={20} />
-            今すぐ同期
-        {/if}
-    </button>
+        <div>
+            <h2 class="ui-page-title mb-2">
+                手動同期を実行
+            </h2>
+            <p class="ui-support-text max-w-md">
+                Notion
+                データベースから最新の変更を即座に取得し、カレンダーや通知スケジュールを更新します。
+            </p>
+        </div>
 
-    <!-- Abstract pattern -->
+        <Button
+            on:click={handleSync}
+            disabled={isSyncing}
+            loading={isSyncing}
+            variant="secondary"
+            size="lg"
+            class="relative z-10"
+        >
+            {#if !isSyncing}
+                <RefreshCw size={20} />
+            {/if}
+            {isSyncing ? "同期中..." : "今すぐ同期"}
+        </Button>
+    </div>
+
     <div
-        class="absolute right-0 top-0 w-64 h-64 bg-white dark:bg-gray-800 opacity-[0.05] rounded-full translate-x-1/2 -translate-y-1/2"
+        class="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/35 translate-x-1/2 -translate-y-1/2 dark:bg-white/5"
     ></div>
     <div
-        class="absolute left-0 bottom-0 w-32 h-32 bg-white dark:bg-gray-800 opacity-[0.05] rounded-full -translate-x-1/2 translate-y-1/2"
+        class="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-white/25 dark:bg-white/5"
     ></div>
-</div>
+</Card>

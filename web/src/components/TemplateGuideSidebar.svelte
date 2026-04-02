@@ -1,5 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
+    import Button from "../lib/ui/Button.svelte";
+    import Card from "../lib/ui/Card.svelte";
 
     const templateVariables = [
         "{{.Name}}",
@@ -102,23 +104,23 @@
     }
 </script>
 
-<div class="rounded-2xl border border-gray-100 bg-white px-3 py-3 dark:border-gray-700 dark:bg-gray-800">
-    <div class="mb-2 flex items-center justify-between gap-2">
-        <h3 class="text-xs font-bold text-gray-800 dark:text-gray-100">使える変数</h3>
+<Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
+    <div class="flex items-center justify-between gap-2">
+        <h3 class="text-xs font-semibold text-gray-800 dark:text-gray-100">
+            使える変数
+        </h3>
+        <Button on:click={openGuideDetail} variant="text" size="sm">
+            詳細
+        </Button>
     </div>
 
     <div class="flex flex-wrap gap-1.5">
         {#each templateVariables as variable}
-            <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-700 dark:bg-gray-700 dark:text-gray-100 break-all">
+            <code
+                class="break-all rounded-md border border-gray-200/80 bg-white/80 px-1.5 py-0.5 font-mono text-[10px] text-gray-700 dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-100"
+            >
                 {variable}
             </code>
         {/each}
-
-        <button
-            on:click={openGuideDetail}
-            class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:bg-brand-100 dark:border-brand-900/50 dark:bg-brand-400/20 dark:text-brand-300 dark:hover:bg-brand-500"
-        >
-            詳細
-        </button>
     </div>
-</div>
+</Card>
