@@ -150,7 +150,7 @@
             label="本日の予定"
             value={dashboard?.today_count ?? 0}
             subLabel="Notion 内予定数"
-            iconColorClass="bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-300"
+            tone="brand"
         >
             <CalendarDays size={20} slot="icon" />
         </StatCard>
@@ -161,7 +161,7 @@
             subLabel={dashboard?.next_sync
                 ? new Date(dashboard.next_sync).toLocaleTimeString()
                 : "Scheduled"}
-            iconColorClass="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-300"
+            tone="warning"
         >
             <RefreshCw size={20} slot="icon" />
         </StatCard>
@@ -170,7 +170,7 @@
             label="最終同期件数"
             value={dashboard?.last_sync_count ?? 0}
             subLabel="同期済み件数"
-            iconColorClass="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300"
+            tone="success"
         >
             <CheckCircle size={20} slot="icon" />
         </StatCard>
@@ -179,9 +179,7 @@
             label="ステータス"
             value={dashboard?.last_sync_error ? "エラー" : "正常"}
             subLabel={dashboard?.last_sync_error || "問題は検出されていません"}
-            iconColorClass={dashboard?.last_sync_error
-                ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300"
-                : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300"}
+            tone={dashboard?.last_sync_error ? "danger" : "success"}
         >
             <svelte:fragment slot="icon">
                 {#if dashboard?.last_sync_error}

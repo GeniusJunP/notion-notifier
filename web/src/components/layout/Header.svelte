@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount, onDestroy } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import { Menu, Sun, Moon } from "lucide-svelte";
     import { darkMode } from "../../lib/store";
     import { sidebarOpen } from "../../lib/uiStore";
+    import Badge from "../../lib/ui/Badge.svelte";
+    import Button from "../../lib/ui/Button.svelte";
 
     export let activeRouteLabel: string;
     export let isServiceActive: boolean;
@@ -30,8 +32,6 @@
     $: currentWeekday = weekdayFormatter.format(now);
     $: currentTime = timeFormatter.format(now);
 
-    const dispatch = createEventDispatcher();
-
     function toggleDarkMode() {
         darkMode.update((current) => !current);
     }
@@ -51,56 +51,44 @@
 </script>
 
 <header
-    class="h-14 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 flex items-center px-4 md:px-8 justify-between sticky top-0 z-40"
+    class="sticky top-0 z-40 flex h-14 items-center justify-between bg-gray-100 px-4 dark:bg-gray-950 md:px-8"
 >
     <div class="flex items-center gap-4">
-        <button
-            class="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+        <Button
+            class="lg:hidden"
+            variant="ghost"
+            size="icon"
             on:click={() => sidebarOpen.open()}
             aria-expanded={$sidebarOpen}
             aria-controls={mainNavId}
             aria-label="サイドバーを開く"
         >
             <Menu size={20} />
-        </button>
+        </Button>
         <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">
             {activeRouteLabel}
         </h1>
     </div>
 
     <div class="flex items-center gap-3">
-        <!-- Date & Time -->
         <span
-            class="hidden sm:inline text-sm font-medium tabular-nums text-gray-500 dark:text-gray-400"
+            class="hidden text-sm font-medium tabular-nums text-gray-500 dark:text-gray-400 sm:inline"
             aria-label="現在日時"
         >
             {currentDate}（{currentWeekday}）{currentTime}
         </span>
 
-        <!-- Status Indicator -->
-        <div
-            class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full {isServiceActive
-                ? 'bg-green-50 dark:bg-green-900/30'
-                : 'bg-red-50 dark:bg-red-900/30'}"
+        <Badge
+            variant={isServiceActive ? "success" : "error"}
+            class="hidden sm:inline-flex"
         >
-            <div
-                class="w-1.5 h-1.5 rounded-full {isServiceActive
-                    ? 'bg-green-500'
-                    : 'bg-red-500'}"
-            ></div>
-            <span
-                class="text-[10px] font-semibold tracking-wide {isServiceActive
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'}"
-            >
-                {isServiceActive ? "ACTIVE" : "OFFLINE"}
-            </span>
-        </div>
+            {isServiceActive ? "ACTIVE" : "OFFLINE"}
+        </Badge>
 
-        <!-- Dark Mode Toggle -->
-        <button
+        <Button
             on:click={toggleDarkMode}
-            class="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            variant="ghost"
+            size="icon"
             aria-label={$darkMode
                 ? "ライトモードに切り替え"
                 : "ダークモードに切り替え"}
@@ -110,6 +98,6 @@
             {:else}
                 <Moon size={18} />
             {/if}
-        </button>
+        </Button>
     </div>
 </header>
