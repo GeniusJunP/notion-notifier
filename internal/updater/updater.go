@@ -7,6 +7,8 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
+
+	"notion-notifier/internal/serviceutil"
 )
 
 // Run checks GitHub for a newer release than the current version,
@@ -48,6 +50,6 @@ func Run(currentVersion, repository string) error {
 	}
 
 	fmt.Printf("Successfully updated to version %s\n", latest.Version)
-	fmt.Println("Please restart the service to apply changes. (e.g. `notion-notifier restart`)")
+	fmt.Printf("Please restart the service to apply changes. (e.g. `%s`)\n", serviceutil.RestartHint())
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"notion-notifier/internal/app"
 	"notion-notifier/internal/logging"
+	"notion-notifier/internal/serviceutil"
 	"notion-notifier/internal/updater"
 )
 
@@ -84,9 +85,6 @@ func main() {
 		Description: "Syncs Notion database and sends webhook notifications.",
 		Arguments:   []string{"-config", *cfgPath, "-env", *envPath, "-db", *dbPath},
 	}
-	if *userSvc {
-		svcConfig.Option = service.KeyValue{"UserService": true}
-	}
 
 	prg := &program{
 		cfgPath: *cfgPath,
@@ -94,7 +92,7 @@ func main() {
 		dbPath:  *dbPath,
 	}
 
-	s, err := service.New(prg, svcConfig)
+	s, err := service.New(prg, serviceutil.RuntimeConfig(svcConfig, *userSvc))
 	if err != nil {
 		logging.Fatal("MAIN", "service init failed: %v", err)
 	}
@@ -113,7 +111,7 @@ func main() {
 			}
 			return
 		case "install", "start", "stop", "restart", "uninstall":
-			if err := service.Control(s, cmd); err != nil {
+			if err := serviceutil.Control(prg, svcConfig, cmd, *userSvc); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				os.Exit(1)
 			}
