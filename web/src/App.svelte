@@ -12,7 +12,7 @@
     serviceActiveStore,
   } from "./lib/store";
   import { sidebarOpen, guideModal } from "./lib/uiStore";
-  import { api, type Config } from "./lib/api";
+  import { api } from "./lib/api";
   import {
     LayoutDashboard,
     Bell,
@@ -28,8 +28,6 @@
   import SystemSettings from "./routes/Settings.svelte";
   import NotificationHistory from "./routes/History.svelte";
   import PreviewModal from "./components/PreviewModal.svelte";
-  import SidebarButton from "./components/SidebarButton.svelte";
-  import TemplateGuideSidebar from "./components/TemplateGuideSidebar.svelte";
   import Sidebar from "./components/layout/Sidebar.svelte";
   import Header from "./components/layout/Header.svelte";
   import ToastContainer from "./components/ToastContainer.svelte";
@@ -133,7 +131,7 @@
 </a>
 
 <div
-  class="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden font-sans"
+  class="flex h-screen overflow-hidden bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100 font-sans"
 >
   <!-- Sidebar -->
   <Sidebar
@@ -168,7 +166,7 @@
 
     <main
       id="main-content"
-      class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar"
+      class="ui-scrollbar flex-1 overflow-y-auto p-4 md:p-8"
     >
       <div class="max-w-6xl mx-auto">
         <svelte:component this={currentComponent} />
@@ -186,19 +184,3 @@
 
   <ToastContainer />
 </div>
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 10px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
-  }
-</style>
