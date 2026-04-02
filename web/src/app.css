@@ -2,36 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-content: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#app {
-  width: 100%;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    font-family:
+      Inter,
+      "Helvetica Neue",
+      "Hiragino Sans",
+      "Yu Gothic UI",
+      sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    @apply bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+  }
+
+  body {
+    @apply m-0 min-h-screen min-w-[320px] bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  #app {
+    @apply w-full;
+  }
+}
+
+@layer components {
+  .ui-page-title {
+    @apply text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100;
+  }
+
+  .ui-page-subtitle {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  .ui-block-title {
+    @apply text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100;
+  }
+
+  .ui-panel-header {
+    @apply flex items-center justify-between gap-4 border-b border-gray-200/60 bg-gray-50/80 dark:border-gray-800 dark:bg-gray-800/70;
+  }
+
+  .ui-section-title {
+    @apply flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200;
+  }
+
+  .ui-support-text {
+    @apply text-sm leading-relaxed text-gray-600 dark:text-gray-300;
+  }
+
+  .ui-meta-text {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .ui-subsurface {
+    @apply rounded-2xl border border-gray-200/70 bg-gray-50/80 shadow-sm dark:border-gray-800 dark:bg-gray-900/70;
+  }
+
+  .ui-filter-bar {
+    @apply flex flex-wrap items-center gap-4 border-b border-gray-200/70 bg-gray-50/70 p-4 dark:border-gray-800 dark:bg-gray-900/80;
+  }
+
+  .ui-filter-control {
+    @apply flex items-center gap-2 rounded-xl border border-gray-200/80 bg-white/90 px-3 py-1.5 shadow-sm dark:border-gray-800 dark:bg-gray-950/80;
+  }
+
+  .ui-inline-code {
+    @apply rounded bg-white/70 px-1 py-0.5 font-mono dark:bg-gray-900/60;
+  }
+
+  .ui-icon-chip {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200/70 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
+  }
+
+  .ui-link-button {
+    @apply inline-flex items-center gap-1 text-sm font-semibold text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100;
+  }
+
+  .ui-hint {
+    @apply mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400;
+  }
+
+  .ui-interactive-tile {
+    @apply rounded-xl border border-transparent bg-transparent text-gray-600 shadow-none transition-[background-color,border-color,color,box-shadow,transform] duration-200;
+    @apply hover:border-gray-200/80 hover:bg-white/80 hover:text-gray-900 hover:shadow-sm;
+    @apply dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900/70 dark:hover:text-gray-100;
+  }
+}
+
+@layer utilities {
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translate3d(16px, 0, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -8px, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .animate-toast-in {
+    animation: toast-in 180ms ease-out both;
+  }
+
+  .animate-panel-in {
+    animation: panel-in 180ms ease-out both;
+  }
+
+  .ui-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .ui-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ui-scrollbar::-webkit-scrollbar-thumb {
+    background: #d4dce4;
+    border-radius: 999px;
+  }
+
+  .ui-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #b1bcc8;
   }
 }
