@@ -98,3 +98,20 @@ func TestApplyEnvOverridesWebhookURLs(t *testing.T) {
 		t.Fatalf("INTERNAL_NOTIFICATION_WEBHOOK_URL must override webhook internal notification url")
 	}
 }
+
+func TestApplyEnvOverridesGoogleServiceAccount(t *testing.T) {
+	t.Setenv("GOOGLE_CALENDAR_ID", "calendar@example.com")
+	t.Setenv("GOOGLE_SERVICE_ACCOUNT_KEY_FILE", "/run/secrets/google-sa.json")
+	t.Setenv("GOOGLE_SERVICE_ACCOUNT_KEY_JSON", `{"client_email":"sa@example.com"}`)
+
+	env := ApplyEnvOverrides(Env{})
+	if env.Google.CalendarID != "calendar@example.com" {
+		t.Fatalf("GOOGLE_CALENDAR_ID must override calendar id")
+	}
+	if env.Google.ServiceAccountKeyFile != "/run/secrets/google-sa.json" {
+		t.Fatalf("GOOGLE_SERVICE_ACCOUNT_KEY_FILE must override service account key file")
+	}
+	if env.Google.ServiceAccountKeyJSON != `{"client_email":"sa@example.com"}` {
+		t.Fatalf("GOOGLE_SERVICE_ACCOUNT_KEY_JSON must override service account key json")
+	}
+}

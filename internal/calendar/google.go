@@ -6,11 +6,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
 	googleoauth "golang.org/x/oauth2/google"
 	calendarapi "google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
@@ -24,17 +24,15 @@ type Client struct {
 }
 
 type ClientOptions struct {
-	CalendarID        string
-	OAuthClientID     string
-	OAuthClientSecret string
-	OAuthRefreshToken string
+	CalendarID            string
+	ServiceAccountKeyFile string
+	ServiceAccountKeyJSON string
 }
 
 func (o ClientOptions) normalize() ClientOptions {
 	o.CalendarID = strings.TrimSpace(o.CalendarID)
-	o.OAuthClientID = strings.TrimSpace(o.OAuthClientID)
-	o.OAuthClientSecret = strings.TrimSpace(o.OAuthClientSecret)
-	o.OAuthRefreshToken = strings.TrimSpace(o.OAuthRefreshToken)
+	o.ServiceAccountKeyFile = strings.TrimSpace(o.ServiceAccountKeyFile)
+	o.ServiceAccountKeyJSON = strings.TrimSpace(o.ServiceAccountKeyJSON)
 	return o
 }
 
@@ -43,8 +41,8 @@ func (o ClientOptions) Validate() error {
 	if o.CalendarID == "" {
 		return errors.New("google calendar id is empty")
 	}
-	if o.OAuthClientID == "" || o.OAuthClientSecret == "" || o.OAuthRefreshToken == "" {
-		return errors.New("google oauth credentials are incomplete")
+	if o.ServiceAccountKeyFile == "" && o.ServiceAccountKeyJSON == "" {
+		return errors.New("google service account credentials are incomplete")
 	}
 	return nil
 }
@@ -57,15 +55,14 @@ func (o ClientOptions) Fingerprint() string {
 	o = o.normalize()
 	sum := sha256.Sum256([]byte(strings.Join([]string{
 		o.CalendarID,
-		o.OAuthClientID,
-		o.OAuthClientSecret,
-		o.OAuthRefreshToken,
+		o.ServiceAccountKeyFile,
+		o.ServiceAccountKeyJSON,
 	}, "\n")))
 	return hex.EncodeToString(sum[:])
 }
 
 // NewClient creates a long-lived Calendar API client.
-// context.Background() is used for OAuth TokenSource and service construction
+// context.Background() is used for service account TokenSource and service construction
 // because the client outlives any single operation context. Per-request contexts
 // are passed via .Context(ctx) in each API method (ListEvents, UpsertEvent, etc.).
 func NewClient(opts ClientOptions) (*Client, error) {
@@ -73,19 +70,32 @@ func NewClient(opts ClientOptions) (*Client, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, err
 	}
-	oauthCfg := &oauth2.Config{
-		ClientID:     opts.OAuthClientID,
-		ClientSecret: opts.OAuthClientSecret,
-		Endpoint:     googleoauth.Endpoint,
-		Scopes:       []string{calendarapi.CalendarScope},
+	credentials, err := opts.credentialsJSON()
+	if err != nil {
+		return nil, err
 	}
 	bgCtx := context.Background()
-	tokenSource := oauthCfg.TokenSource(bgCtx, &oauth2.Token{RefreshToken: opts.OAuthRefreshToken})
+	jwtCfg, err := googleoauth.JWTConfigFromJSON(credentials, calendarapi.CalendarScope)
+	if err != nil {
+		return nil, fmt.Errorf("google service account credentials: %w", err)
+	}
+	tokenSource := jwtCfg.TokenSource(bgCtx)
 	srv, err := calendarapi.NewService(bgCtx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		return nil, err
 	}
 	return &Client{srv: srv, calendarID: opts.CalendarID}, nil
+}
+
+func (o ClientOptions) credentialsJSON() ([]byte, error) {
+	if o.ServiceAccountKeyJSON != "" {
+		return []byte(o.ServiceAccountKeyJSON), nil
+	}
+	data, err := os.ReadFile(o.ServiceAccountKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("read google service account key file: %w", err)
+	}
+	return data, nil
 }
 
 func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID string, tz *time.Location) (string, string, error) {

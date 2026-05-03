@@ -117,10 +117,9 @@ type WebhookEnv struct {
 }
 
 type GoogleEnv struct {
-	CalendarID        string `yaml:"calendar_id" json:"calendar_id"`
-	OAuthClientID     string `yaml:"oauth_client_id" json:"oauth_client_id"`
-	OAuthClientSecret string `yaml:"oauth_client_secret" json:"oauth_client_secret"`
-	OAuthRefreshToken string `yaml:"oauth_refresh_token" json:"oauth_refresh_token"`
+	CalendarID            string `yaml:"calendar_id" json:"calendar_id"`
+	ServiceAccountKeyFile string `yaml:"service_account_key_file" json:"service_account_key_file"`
+	ServiceAccountKeyJSON string `yaml:"service_account_key_json" json:"service_account_key_json"`
 }
 
 type ServerEnv struct {
@@ -180,9 +179,8 @@ func ApplyEnvOverrides(env Env) Env {
 	env.Webhook.NotificationURL = pickEnv("NOTIFICATION_WEBHOOK_URL", env.Webhook.NotificationURL)
 	env.Webhook.InternalNotificationURL = pickEnv("INTERNAL_NOTIFICATION_WEBHOOK_URL", env.Webhook.InternalNotificationURL)
 	env.Google.CalendarID = pickEnv("GOOGLE_CALENDAR_ID", env.Google.CalendarID)
-	env.Google.OAuthClientID = pickEnv("GOOGLE_OAUTH_CLIENT_ID", env.Google.OAuthClientID)
-	env.Google.OAuthClientSecret = pickEnv("GOOGLE_OAUTH_CLIENT_SECRET", env.Google.OAuthClientSecret)
-	env.Google.OAuthRefreshToken = pickEnv("GOOGLE_OAUTH_REFRESH_TOKEN", env.Google.OAuthRefreshToken)
+	env.Google.ServiceAccountKeyFile = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY_FILE", env.Google.ServiceAccountKeyFile)
+	env.Google.ServiceAccountKeyJSON = pickEnv("GOOGLE_SERVICE_ACCOUNT_KEY_JSON", env.Google.ServiceAccountKeyJSON)
 	env.Server.Port = pickEnvInt("APP_PORT", env.Server.Port)
 	env.Server.TLS.CertFile = pickEnv("APP_TLS_CERT_FILE", env.Server.TLS.CertFile)
 	env.Server.TLS.KeyFile = pickEnv("APP_TLS_KEY_FILE", env.Server.TLS.KeyFile)
@@ -266,8 +264,8 @@ func ValidateConfig(cfg Config) error {
 		}
 	}
 	if cfg.SnoozeUntil != "" {
-		if _, err := time.Parse(time.RFC3339, cfg.SnoozeUntil); err != nil {
-			return fmt.Errorf("snooze_until must be RFC3339: %w", err)
+		if _, err := ParseSnoozeUntil(cfg.SnoozeUntil, cfg.Timezone); err != nil {
+			return fmt.Errorf("snooze_until: %w", err)
 		}
 	}
 	return nil
@@ -285,11 +283,31 @@ func IsSnoozed(cfg Config, now time.Time) bool {
 	if cfg.SnoozeUntil == "" {
 		return false
 	}
-	until, err := time.Parse(time.RFC3339, cfg.SnoozeUntil)
+	until, err := ParseSnoozeUntil(cfg.SnoozeUntil, cfg.Timezone)
 	if err != nil {
 		return false
 	}
 	return now.Before(until)
+}
+
+// ParseSnoozeUntil parses a snooze_until value in either RFC3339 or
+// datetime-local ("2006-01-02T15:04") format. For datetime-local values
+// the configured timezone is used to produce an absolute time.
+func ParseSnoozeUntil(value, tz string) (time.Time, error) {
+	// Try RFC3339 first (backwards compatible)
+	if t, err := time.Parse(time.RFC3339, value); err == nil {
+		return t, nil
+	}
+	// Try datetime-local format (HTML input type="datetime-local")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.Local
+	}
+	t, err := time.ParseInLocation("2006-01-02T15:04", value, loc)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("must be RFC3339 or datetime-local (YYYY-MM-DDTHH:mm): %w", err)
+	}
+	return t, nil
 }
 
 func WriteConfig(path string, cfg Config) error {
@@ -346,13 +364,11 @@ func NormalizeConfig(cfg Config) Config {
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
 	cfg.Webhook.InternalNotification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.InternalNotification.PayloadTemplate)
 
-
 	for i := range cfg.Notifications.Upcoming {
 		if cfg.Notifications.Upcoming[i].AllDayBaseTime == "" {
 			cfg.Notifications.Upcoming[i].AllDayBaseTime = "09:00"
 		}
 	}
-
 
 	return cfg
 }

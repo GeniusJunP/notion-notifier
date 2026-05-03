@@ -58,9 +58,8 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 | `NOTIFICATION_WEBHOOK_URL`     | `webhook.notification_url`     |
 | `INTERNAL_NOTIFICATION_WEBHOOK_URL` | `webhook.internal_notification_url` |
 | `GOOGLE_CALENDAR_ID`           | `google.calendar_id`           |
-| `GOOGLE_OAUTH_CLIENT_ID`       | `google.oauth_client_id`       |
-| `GOOGLE_OAUTH_CLIENT_SECRET`   | `google.oauth_client_secret`   |
-| `GOOGLE_OAUTH_REFRESH_TOKEN`   | `google.oauth_refresh_token`   |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | `google.service_account_key_file` |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_JSON` | `google.service_account_key_json` |
 | `APP_PORT`                     | `server.port`                  |
 | `APP_TLS_CERT_FILE`            | `server.tls.cert_file`         |
 | `APP_TLS_KEY_FILE`             | `server.tls.key_file`          |
@@ -130,7 +129,7 @@ env.yaml の認証情報は以下の環境変数で上書きできる：
 
 ### 3. Google Calendar連携
 
-Google Calendar APIはOAuth 2.0（ユーザー認可）で接続する。
+Google Calendar APIはService Accountで接続する。対象カレンダーの共有設定で、Service Account の `client_email` に予定の変更権限を付与する。
 
 | 機能         | 説明                   |
 | ------------ | ---------------------- |
@@ -261,9 +260,8 @@ webhook:
 
 google:
   calendar_id: ""
-  oauth_client_id: ""
-  oauth_client_secret: ""
-  oauth_refresh_token: ""
+  service_account_key_file: ""
+  service_account_key_json: ""
 server:
   port: 18080
   tls:

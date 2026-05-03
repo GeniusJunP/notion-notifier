@@ -151,7 +151,7 @@ snooze_until: ""         # RFC3339 or ""
 ## 認証情報 (`env.yaml`)
 
 認証情報は `env.yaml` に分離。WebUI/API では編集不可。
-Google Calendar連携は OAuth 2.0 のみをサポートし、`service_account_key` は使用しない。
+Google Calendar連携は Service Account で接続する。対象カレンダーの共有設定で、Service Account の `client_email` に予定の変更権限を付与する。
 
 ```yaml
 notion:
@@ -162,9 +162,8 @@ webhook:
   internal_notification_url: ""
 google:
   calendar_id: ""
-  oauth_client_id: ""
-  oauth_client_secret: ""
-  oauth_refresh_token: ""
+  service_account_key_file: ""
+  service_account_key_json: "" # コンテナ等では GOOGLE_SERVICE_ACCOUNT_KEY_JSON env var 推奨
 server:
   port: 18080
   tls:

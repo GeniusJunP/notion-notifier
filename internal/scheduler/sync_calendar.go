@@ -60,17 +60,16 @@ func (s *Scheduler) syncCalendar(ctx context.Context, from, to time.Time) (int, 
 		return 0, nil
 	}
 	calendarOpts := calendar.ClientOptions{
-		CalendarID:        env.Google.CalendarID,
-		OAuthClientID:     env.Google.OAuthClientID,
-		OAuthClientSecret: env.Google.OAuthClientSecret,
-		OAuthRefreshToken: env.Google.OAuthRefreshToken,
+		CalendarID:            env.Google.CalendarID,
+		ServiceAccountKeyFile: env.Google.ServiceAccountKeyFile,
+		ServiceAccountKeyJSON: env.Google.ServiceAccountKeyJSON,
 	}
 	if err := calendarOpts.Validate(); err != nil {
 		s.mu.Lock()
 		s.calendar = nil
 		s.calendarFingerprint = ""
 		s.mu.Unlock()
-		logging.Error("CALENDAR", "calendar oauth config invalid: %v", err)
+		logging.Error("CALENDAR", "calendar google config invalid: %v", err)
 		return 0, err
 	}
 	fingerprint := calendarOpts.Fingerprint()

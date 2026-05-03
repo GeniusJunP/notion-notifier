@@ -122,9 +122,8 @@ webhook:
 
 # google:
 #   calendar_id: ""
-#   oauth_client_id: ""
-#   oauth_client_secret: ""
-#   oauth_refresh_token: ""
+#   service_account_key_file: ""
+#   service_account_key_json: ""  # or GOOGLE_SERVICE_ACCOUNT_KEY_JSON env var
 
 server:
   port: 18080  # or APP_PORT env var
