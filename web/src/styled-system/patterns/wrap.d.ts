@@ -1,17 +1,18 @@
 /* eslint-disable */
 import type { SystemStyleObject, ConditionalValue } from '../types/index';
 import type { Properties } from '../types/csstype';
-import type { SystemProperties } from '../types/style-props';
+import type { PropertyValue } from '../types/prop-type';
 import type { DistributiveOmit } from '../types/system-types';
 import type { Tokens } from '../tokens/index';
 
 export interface WrapProperties {
-   gap?: SystemProperties["gap"]
-	rowGap?: SystemProperties["gap"]
-	columnGap?: SystemProperties["gap"]
-	align?: SystemProperties["alignItems"]
-	justify?: SystemProperties["justifyContent"]
+   gap?: PropertyValue<'gap'>
+	rowGap?: PropertyValue<'gap'>
+	columnGap?: PropertyValue<'gap'>
+	align?: PropertyValue<'alignItems'>
+	justify?: PropertyValue<'justifyContent'>
 }
+
 
 interface WrapStyles extends WrapProperties, DistributiveOmit<SystemStyleObject, keyof WrapProperties > {}
 

@@ -13,7 +13,7 @@ transform(props) {
     ...rest
   };
 },
-defaultValues:{gap:'8px'}}
+defaultValues:{gap:'10px'}}
 
 export const getVstackStyle = (styles = {}) => {
   const _styles = getPatternStyles(vstackConfig, styles)

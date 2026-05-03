@@ -11,10 +11,9 @@ const defaults = (conf) => ({
 
 export function cva(config) {
   const { base, variants, defaultVariants, compoundVariants } = defaults(config)
-  const getVariantProps = (variants) => ({ ...defaultVariants, ...compact(variants) })
 
   function resolve(props = {}) {
-    const computedVariants = getVariantProps(props)
+    const computedVariants = { ...defaultVariants, ...compact(props) }
     let variantCss = { ...base }
     for (const [key, value] of Object.entries(computedVariants)) {
       if (variants[key]?.[value]) {
@@ -58,7 +57,6 @@ export function cva(config) {
     config,
     merge,
     splitVariantProps,
-    getVariantProps
   })
 }
 

@@ -10,7 +10,7 @@ export interface Conditions {
 	"_focusWithin": string
 	/** `&:is(:focus-visible, [data-focus-visible])` */
 	"_focusVisible": string
-	/** `&:is(:disabled, [disabled], [data-disabled], [aria-disabled=true])` */
+	/** `&:is(:disabled, [disabled], [data-disabled])` */
 	"_disabled": string
 	/** `&:is(:active, [data-active])` */
 	"_active": string
@@ -18,7 +18,7 @@ export interface Conditions {
 	"_visited": string
 	/** `&:target` */
 	"_target": string
-	/** `&:is(:read-only, [data-read-only], [aria-readonly=true])` */
+	/** `&:is(:read-only, [data-read-only])` */
 	"_readOnly": string
 	/** `&:read-write` */
 	"_readWrite": string
@@ -32,12 +32,6 @@ export interface Conditions {
 	"_expanded": string
 	/** `&[data-highlighted]` */
 	"_highlighted": string
-	/** `&[data-complete]` */
-	"_complete": string
-	/** `&[data-incomplete]` */
-	"_incomplete": string
-	/** `&[data-dragging]` */
-	"_dragging": string
 	/** `&::before` */
 	"_before": string
 	/** `&::after` */
@@ -46,7 +40,7 @@ export interface Conditions {
 	"_firstLetter": string
 	/** `&::first-line` */
 	"_firstLine": string
-	/** `&::marker, &::-webkit-details-marker` */
+	/** `&::marker` */
 	"_marker": string
 	/** `&::selection` */
 	"_selection": string
@@ -80,7 +74,7 @@ export interface Conditions {
 	"_peerFocusWithin": string
 	/** `.peer:is(:focus-visible, [data-focus-visible]) ~ &` */
 	"_peerFocusVisible": string
-	/** `.peer:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) ~ &` */
+	/** `.peer:is(:disabled, [disabled], [data-disabled]) ~ &` */
 	"_peerDisabled": string
 	/** `.peer:is(:checked, [data-checked], [aria-checked=true], [data-state="checked"]) ~ &` */
 	"_peerChecked": string
@@ -100,13 +94,13 @@ export interface Conditions {
 	"_groupFocusWithin": string
 	/** `.group:is(:focus-visible, [data-focus-visible]) &` */
 	"_groupFocusVisible": string
-	/** `.group:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) &` */
+	/** `.group:is(:disabled, [disabled], [data-disabled]) &` */
 	"_groupDisabled": string
 	/** `.group:is(:checked, [data-checked], [aria-checked=true], [data-state="checked"]) &` */
 	"_groupChecked": string
 	/** `.group:is([aria-expanded=true], [data-expanded], [data-state="expanded"]) &` */
 	"_groupExpanded": string
-	/** `.group:is(:invalid, [data-invalid], [aria-invalid=true]) &` */
+	/** `.group:invalid &` */
 	"_groupInvalid": string
 	/** `&:is(:indeterminate, [data-indeterminate], [aria-checked=mixed], [data-state="indeterminate"])` */
 	"_indeterminate": string
@@ -114,13 +108,13 @@ export interface Conditions {
 	"_required": string
 	/** `&:is(:valid, [data-valid])` */
 	"_valid": string
-	/** `&:is(:invalid, [data-invalid], [aria-invalid=true])` */
+	/** `&:is(:invalid, [data-invalid])` */
 	"_invalid": string
 	/** `&:autofill` */
 	"_autofill": string
-	/** `&:is(:in-range, [data-in-range])` */
+	/** `&:in-range` */
 	"_inRange": string
-	/** `&:is(:out-of-range, [data-outside-range])` */
+	/** `&:out-of-range` */
 	"_outOfRange": string
 	/** `&::placeholder, &[data-placeholder]` */
 	"_placeholder": string
@@ -130,46 +124,22 @@ export interface Conditions {
 	"_pressed": string
 	/** `&:is([aria-selected=true], [data-selected])` */
 	"_selected": string
-	/** `&:is([aria-grabbed=true], [data-grabbed])` */
-	"_grabbed": string
-	/** `&[data-state=under-value]` */
-	"_underValue": string
-	/** `&[data-state=over-value]` */
-	"_overValue": string
-	/** `&[data-state=at-value]` */
-	"_atValue": string
 	/** `&:default` */
 	"_default": string
 	/** `&:optional` */
 	"_optional": string
-	/** `&:is([open], [data-open], [data-state="open"], :popover-open)` */
+	/** `&:is([open], [data-open], [data-state="open"])` */
 	"_open": string
 	/** `&:is([closed], [data-closed], [data-state="closed"])` */
 	"_closed": string
-	/** `&:is(:fullscreen, [data-fullscreen])` */
+	/** `&:fullscreen` */
 	"_fullscreen": string
 	/** `&:is([data-loading], [aria-busy=true])` */
 	"_loading": string
-	/** `&:is([hidden], [data-hidden])` */
-	"_hidden": string
-	/** `&:is([aria-current=true], [data-current])` */
-	"_current": string
 	/** `&[aria-current=page]` */
 	"_currentPage": string
 	/** `&[aria-current=step]` */
 	"_currentStep": string
-	/** `&[data-today]` */
-	"_today": string
-	/** `&[data-unavailable]` */
-	"_unavailable": string
-	/** `&[data-range-start]` */
-	"_rangeStart": string
-	/** `&[data-range-end]` */
-	"_rangeEnd": string
-	/** `&[data-now]` */
-	"_now": string
-	/** `&[data-topmost]` */
-	"_topmost": string
 	/** `@media (prefers-reduced-motion: reduce)` */
 	"_motionReduce": string
 	/** `@media (prefers-reduced-motion: no-preference)` */
@@ -180,9 +150,9 @@ export interface Conditions {
 	"_landscape": string
 	/** `@media (orientation: portrait)` */
 	"_portrait": string
-	/** `.dark &` */
+	/** ` &.dark, .dark &` */
 	"_dark": string
-	/** `.light &` */
+	/** ` &.light, .light &` */
 	"_light": string
 	/** `@media (prefers-color-scheme: dark)` */
 	"_osDark": string
@@ -194,9 +164,9 @@ export interface Conditions {
 	"_lessContrast": string
 	/** `@media (prefers-contrast: more)` */
 	"_moreContrast": string
-	/** `:where([dir=ltr], :dir(ltr)) &` */
+	/** `[dir=ltr] &` */
 	"_ltr": string
-	/** `:where([dir=rtl], :dir(rtl)) &` */
+	/** `[dir=rtl] &` */
 	"_rtl": string
 	/** `&::-webkit-scrollbar` */
 	"_scrollbar": string
@@ -208,98 +178,94 @@ export interface Conditions {
 	"_horizontal": string
 	/** `&[data-orientation=vertical]` */
 	"_vertical": string
-	/** `& :where(svg)` */
-	"_icon": string
-	/** `@starting-style` */
-	"_starting": string
-	/** `@media (scripting: none)` */
-	"_noscript": string
-	/** `@media (inverted-colors: inverted)` */
-	"_invertedColors": string
-	/** `@media screen and (min-width: 40rem)` */
+	/** `@media screen and (min-width: 40em)` */
 	"sm": string
-	/** `@media screen and (min-width: 40rem) and (max-width: 47.9975rem)` */
+	/** `@media screen and (min-width: 40em) and (max-width: 47.9975em)` */
 	"smOnly": string
-	/** `@media screen and (max-width: 39.9975rem)` */
+	/** `@media screen and (max-width: 39.9975em)` */
 	"smDown": string
-	/** `@media screen and (min-width: 48rem)` */
+	/** `@media screen and (min-width: 48em)` */
 	"md": string
-	/** `@media screen and (min-width: 48rem) and (max-width: 63.9975rem)` */
+	/** `@media screen and (min-width: 48em) and (max-width: 63.9975em)` */
 	"mdOnly": string
-	/** `@media screen and (max-width: 47.9975rem)` */
+	/** `@media screen and (max-width: 47.9975em)` */
 	"mdDown": string
-	/** `@media screen and (min-width: 64rem)` */
+	/** `@media screen and (min-width: 64em)` */
 	"lg": string
-	/** `@media screen and (min-width: 64rem) and (max-width: 79.9975rem)` */
+	/** `@media screen and (min-width: 64em) and (max-width: 79.9975em)` */
 	"lgOnly": string
-	/** `@media screen and (max-width: 63.9975rem)` */
+	/** `@media screen and (max-width: 63.9975em)` */
 	"lgDown": string
-	/** `@media screen and (min-width: 80rem)` */
+	/** `@media screen and (min-width: 80em)` */
 	"xl": string
-	/** `@media screen and (min-width: 80rem) and (max-width: 95.9975rem)` */
+	/** `@media screen and (min-width: 80em) and (max-width: 95.9975em)` */
 	"xlOnly": string
-	/** `@media screen and (max-width: 79.9975rem)` */
+	/** `@media screen and (max-width: 79.9975em)` */
 	"xlDown": string
-	/** `@media screen and (min-width: 96rem)` */
+	/** `@media screen and (min-width: 96em)` */
 	"2xl": string
-	/** `@media screen and (min-width: 96rem)` */
+	/** `@media screen and (min-width: 96em)` */
 	"2xlOnly": string
-	/** `@media screen and (max-width: 95.9975rem)` */
+	/** `@media screen and (max-width: 95.9975em)` */
 	"2xlDown": string
-	/** `@media screen and (min-width: 40rem) and (max-width: 47.9975rem)` */
+	/** `@media screen and (min-width: 40em) and (max-width: 47.9975em)` */
 	"smToMd": string
-	/** `@media screen and (min-width: 40rem) and (max-width: 63.9975rem)` */
+	/** `@media screen and (min-width: 40em) and (max-width: 63.9975em)` */
 	"smToLg": string
-	/** `@media screen and (min-width: 40rem) and (max-width: 79.9975rem)` */
+	/** `@media screen and (min-width: 40em) and (max-width: 79.9975em)` */
 	"smToXl": string
-	/** `@media screen and (min-width: 40rem) and (max-width: 95.9975rem)` */
+	/** `@media screen and (min-width: 40em) and (max-width: 95.9975em)` */
 	"smTo2xl": string
-	/** `@media screen and (min-width: 48rem) and (max-width: 63.9975rem)` */
+	/** `@media screen and (min-width: 48em) and (max-width: 63.9975em)` */
 	"mdToLg": string
-	/** `@media screen and (min-width: 48rem) and (max-width: 79.9975rem)` */
+	/** `@media screen and (min-width: 48em) and (max-width: 79.9975em)` */
 	"mdToXl": string
-	/** `@media screen and (min-width: 48rem) and (max-width: 95.9975rem)` */
+	/** `@media screen and (min-width: 48em) and (max-width: 95.9975em)` */
 	"mdTo2xl": string
-	/** `@media screen and (min-width: 64rem) and (max-width: 79.9975rem)` */
+	/** `@media screen and (min-width: 64em) and (max-width: 79.9975em)` */
 	"lgToXl": string
-	/** `@media screen and (min-width: 64rem) and (max-width: 95.9975rem)` */
+	/** `@media screen and (min-width: 64em) and (max-width: 95.9975em)` */
 	"lgTo2xl": string
-	/** `@media screen and (min-width: 80rem) and (max-width: 95.9975rem)` */
+	/** `@media screen and (min-width: 80em) and (max-width: 95.9975em)` */
 	"xlTo2xl": string
-	/** `@container  (min-width: 20rem)` */
+	/** `@container  (min-width: 20em)` */
 	"@/xs": string
-	/** `@container  (min-width: 24rem)` */
+	/** `@container  (min-width: 24em)` */
 	"@/sm": string
-	/** `@container  (min-width: 28rem)` */
+	/** `@container  (min-width: 28em)` */
 	"@/md": string
-	/** `@container  (min-width: 32rem)` */
+	/** `@container  (min-width: 32em)` */
 	"@/lg": string
-	/** `@container  (min-width: 36rem)` */
+	/** `@container  (min-width: 36em)` */
 	"@/xl": string
-	/** `@container  (min-width: 42rem)` */
+	/** `@container  (min-width: 42em)` */
 	"@/2xl": string
-	/** `@container  (min-width: 48rem)` */
+	/** `@container  (min-width: 48em)` */
 	"@/3xl": string
-	/** `@container  (min-width: 56rem)` */
+	/** `@container  (min-width: 56em)` */
 	"@/4xl": string
-	/** `@container  (min-width: 64rem)` */
+	/** `@container  (min-width: 64em)` */
 	"@/5xl": string
-	/** `@container  (min-width: 72rem)` */
+	/** `@container  (min-width: 72em)` */
 	"@/6xl": string
-	/** `@container  (min-width: 80rem)` */
+	/** `@container  (min-width: 80em)` */
 	"@/7xl": string
-	/** `@container  (min-width: 90rem)` */
+	/** `@container  (min-width: 90em)` */
 	"@/8xl": string
 	/** The base (=no conditions) styles to apply  */
 	"base": string
 }
 
-export type ConditionalValue<V> =
+export type Condition = keyof Conditions
+
+export type Conditional<V> =
   | V
   | Array<V | null>
   | {
-      [K in keyof Conditions]?: ConditionalValue<V>
+      [K in keyof Conditions]?: Conditional<V>
     }
+
+export type ConditionalValue<T> = Conditional<T>
 
 export type Nested<P> = P & {
   [K in Selectors]?: Nested<P>

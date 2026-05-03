@@ -1,17 +1,14 @@
 /* eslint-disable */
-interface ConditionOptions {
+interface WithConditions {
   /**
-   * The conditions to generate for the rule.
+   * The css conditions to generate for the rule.
    * @example ['hover', 'focus']
    */
   conditions?: string[]
-  /**
-   * Whether to generate responsive styles for the rule.
-   */
   responsive?: boolean
 }
 
-export interface CssRule extends ConditionOptions {
+export interface CssRule extends WithConditions {
   /**
    * The css properties to generate utilities for.
    * @example ['margin', 'padding']
@@ -25,9 +22,7 @@ interface RecipeRuleVariants {
   [variant: string]: boolean | string[]
 }
 
-export type RecipeRuleObject = RecipeRuleVariants & ConditionOptions
-export type RecipeRule = '*' | RecipeRuleObject
-
+export type RecipeRule = '*' | (RecipeRuleVariants & WithConditions)
 export type PatternRule = '*' | CssRule
 
 export interface StaticCssOptions {
@@ -49,8 +44,4 @@ export interface StaticCssOptions {
   patterns?: {
     [pattern: string]: PatternRule[]
   }
-  /**
-   * The CSS themes to generate
-   */
-  themes?: string[]
 }
