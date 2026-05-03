@@ -59,7 +59,11 @@
   "calendar_sync": { ... },
   "property_mapping": { ... },
   "content_rules": { ... },
-  "snooze_until": ""
+  "snooze": {
+    "until": "",
+    "mute_upcoming": true,
+    "mute_periodic": true
+  }
 }
 ```
 
@@ -92,7 +96,11 @@
   "last_sync_count": 25,
   "last_sync_error": "",
   "snooze_active": false,
-  "snooze_until": ""
+  "snooze": {
+    "until": "",
+    "mute_upcoming": true,
+    "mute_periodic": true
+  }
 }
 ```
 

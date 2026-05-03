@@ -92,7 +92,10 @@ content_rules:
   stop_at_delimiter: true
   delimiter_text: ""
 
-snooze_until: ""         # RFC3339 or ""
+snooze:
+  until: ""              # RFC3339 or ""
+  mute_upcoming: true
+  mute_periodic: true
 ```
 
 ## フィールド詳細
@@ -122,7 +125,9 @@ snooze_until: ""         # RFC3339 or ""
 | `calendar_sync.lookahead_days` | int | - | 30 | 同期対象日数 |
 | `property_mapping.attendees` | string | - | "" | 参加者メール抽出元のNotion peopleプロパティ |
 | `property_mapping.attendees_enabled` | bool | - | false | 参加者同期の有効化 |
-| `snooze_until` | string | - | "" | スヌーズ期限 (RFC3339) |
+| `snooze.until` | string | - | "" | スヌーズ期限 (RFC3339) |
+| `snooze.mute_upcoming` | bool | - | true | 事前通知をスヌーズ対象にする |
+| `snooze.mute_periodic` | bool | - | true | 定期通知をスヌーズ対象にする |
 
 ## 正規化ルール (`NormalizeConfig`)
 
@@ -146,7 +151,7 @@ snooze_until: ""         # RFC3339 or ""
 - `notifications.periodic[].time`: HH:mm 形式
 - `notifications.periodic[].days_of_week`: 各要素 1-7
 - `notifications.advance[].conditions.days_of_week`: 各要素 1-7
-- `snooze_until`: 空 or RFC3339
+- `snooze.until`: 空 or RFC3339
 
 ## 認証情報 (`env.yaml`)
 

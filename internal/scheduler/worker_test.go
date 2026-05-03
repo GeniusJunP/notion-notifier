@@ -272,3 +272,92 @@ func TestSendManualNotificationRoutesByIsTest(t *testing.T) {
 		})
 	}
 }
+
+func TestSendWebhookSkipsSnoozedNotificationsInTestMode(t *testing.T) {
+	var hits atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+	envPath := filepath.Join(dir, "env.yaml")
+	dbPath := filepath.Join(dir, "test.db")
+
+	cfg := config.NormalizeConfig(config.Config{
+		Timezone: "Asia/Tokyo",
+		Sync: config.SyncConfig{
+			CheckInterval: 15,
+		},
+		Notifications: config.Notifications{
+			Upcoming: []config.UpcomingNotification{},
+			Periodic: []config.PeriodicNotification{},
+		},
+		Webhook: config.WebhookConfig{
+			IsTest: true,
+			Notification: config.WebhookTarget{
+				ContentType:     "application/json",
+				PayloadTemplate: `{"content":{{json .Message}}}`,
+			},
+			InternalNotification: config.WebhookTarget{
+				ContentType:     "application/json",
+				PayloadTemplate: `{"content":{{json .Message}}}`,
+			},
+		},
+		CalendarSync: config.CalendarSyncConfig{
+			Enabled:       false,
+			IntervalHours: 6,
+			LookaheadDays: 30,
+		},
+		Snooze: config.SnoozeConfig{
+			Until:        time.Now().Add(1 * time.Hour).Format(time.RFC3339),
+			MuteUpcoming: true,
+			MutePeriodic: true,
+		},
+	})
+	if err := config.WriteConfig(cfgPath, cfg); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	envData, err := yaml.Marshal(config.Env{
+		Webhook: config.WebhookEnv{
+			NotificationURL:         server.URL,
+			InternalNotificationURL: server.URL,
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal env: %v", err)
+	}
+	if err := os.WriteFile(envPath, envData, 0o644); err != nil {
+		t.Fatalf("write env: %v", err)
+	}
+
+	cfgMgr, err := config.NewManager(cfgPath, envPath)
+	if err != nil {
+		t.Fatalf("new manager: %v", err)
+	}
+	repo, err := db.Open(dbPath)
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer repo.Close()
+
+	sched := New(cfgMgr, repo, nil, webhook.New(nil, retry.Config{}), nil)
+	if err := sched.sendWebhook(context.Background(), notificationTypeUpcoming, "hello", nil, 0, "page-1"); err != nil {
+		t.Fatalf("sendWebhook skipped notification should not fail: %v", err)
+	}
+	if got := hits.Load(); got != 0 {
+		t.Fatalf("webhook hits = %d, want 0", got)
+	}
+	history, err := repo.ListNotificationHistory(context.Background(), 10)
+	if err != nil {
+		t.Fatalf("list history: %v", err)
+	}
+	if len(history) != 1 {
+		t.Fatalf("history len = %d, want 1", len(history))
+	}
+	if history[0].Status != notificationStatusSkipped {
+		t.Fatalf("history status = %q, want %q", history[0].Status, notificationStatusSkipped)
+	}
+}

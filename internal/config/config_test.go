@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDefaultTemplatesContainExpectedTokens(t *testing.T) {
@@ -113,5 +114,45 @@ func TestApplyEnvOverridesGoogleServiceAccount(t *testing.T) {
 	}
 	if env.Google.ServiceAccountKeyJSON != `{"client_email":"sa@example.com"}` {
 		t.Fatalf("GOOGLE_SERVICE_ACCOUNT_KEY_JSON must override service account key json")
+	}
+}
+
+func TestNormalizeConfigSnoozeDefaultsAndNormalizesUntil(t *testing.T) {
+	cfg := NormalizeConfig(Config{
+		Timezone:     "Asia/Tokyo",
+		Sync:         SyncConfig{CheckInterval: 15},
+		CalendarSync: CalendarSyncConfig{IntervalHours: 6, LookaheadDays: 30},
+		Snooze: SnoozeConfig{
+			Until: "2026-05-04T10:30",
+		},
+	})
+
+	if !cfg.Snooze.MuteUpcoming || !cfg.Snooze.MutePeriodic {
+		t.Fatalf("snooze defaults must mute upcoming and periodic")
+	}
+	if cfg.Snooze.Until != "2026-05-04T10:30:00+09:00" {
+		t.Fatalf("unexpected normalized snooze until: %q", cfg.Snooze.Until)
+	}
+}
+
+func TestIsSnoozedByNotificationType(t *testing.T) {
+	now := time.Date(2026, 5, 4, 9, 0, 0, 0, time.UTC)
+	cfg := Config{
+		Timezone: "UTC",
+		Snooze: SnoozeConfig{
+			Until:        "2026-05-04T10:00:00Z",
+			MuteUpcoming: true,
+			MutePeriodic: false,
+		},
+	}
+
+	if !IsSnoozed(cfg, "upcoming", now) {
+		t.Fatalf("upcoming must be snoozed")
+	}
+	if IsSnoozed(cfg, "periodic", now) {
+		t.Fatalf("periodic must not be snoozed when mute_periodic is false")
+	}
+	if IsSnoozed(cfg, "manual", now) {
+		t.Fatalf("manual must never be snoozed")
 	}
 }

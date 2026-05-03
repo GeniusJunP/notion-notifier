@@ -18,13 +18,16 @@ import (
 )
 
 const (
-	notificationTypeUpcoming = "upcoming"
-	notificationTypePeriodic = "periodic"
-	notificationTypeManual   = "manual"
-	syncOpTimeout            = 2 * time.Minute
-	calendarOpTimeout        = 3 * time.Minute
-	rebuildOpTimeout         = 30 * time.Second
-	upcomingFireTimeout      = 30 * time.Second
+	notificationTypeUpcoming  = "upcoming"
+	notificationTypePeriodic  = "periodic"
+	notificationTypeManual    = "manual"
+	notificationStatusSuccess = "success"
+	notificationStatusFailed  = "failed"
+	notificationStatusSkipped = "skipped"
+	syncOpTimeout             = 2 * time.Minute
+	calendarOpTimeout         = 3 * time.Minute
+	rebuildOpTimeout          = 30 * time.Second
+	upcomingFireTimeout       = 30 * time.Second
 )
 
 var errSchedulerNotRunning = errors.New("scheduler runtime is not running")
@@ -139,7 +142,20 @@ func (s *Scheduler) renderListFromRange(ctx context.Context, template string, fr
 func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events []models.TemplateEvent, minutesBefore int, notionPageID string) error {
 	logging.Info("WBHK", "sending (%s)", typ)
 	envCfg, env := s.cfg.Snapshot()
-	if !envCfg.Webhook.IsTest && config.IsSnoozed(envCfg, time.Now()) {
+	now := time.Now()
+	if config.IsSnoozed(envCfg, typ, now) {
+		history := models.NotificationHistory{
+			Type:         typ,
+			Status:       notificationStatusSkipped,
+			Message:      message,
+			NotionPageID: notionPageID,
+			Error:        "snoozed",
+			SentAt:       now,
+		}
+		if err := s.repo.InsertNotificationHistory(ctx, history); err != nil {
+			logging.Error("WBHK", "save notification history failed: %v", err)
+		}
+		logging.Info("WBHK", "send skipped (%s): snoozed", typ)
 		return nil
 	}
 	payloadTarget, url := envCfg.Webhook.Notification, strings.TrimSpace(env.Webhook.NotificationURL)
@@ -155,15 +171,15 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 	if len(events) > 0 {
 		payloadCtx.Event = events[0]
 	}
-	status, errStr := "success", ""
+	status, errStr := notificationStatusSuccess, ""
 	if url == "" {
-		status, errStr = "failed", "webhook url is empty"
+		status, errStr = notificationStatusFailed, "webhook url is empty"
 	} else if s.webhook == nil {
-		status, errStr = "failed", "webhook client not configured"
+		status, errStr = notificationStatusFailed, "webhook client not configured"
 	} else if payload, err := tpl.RenderPayload(payloadTarget.PayloadTemplate, payloadCtx); err != nil {
-		status, errStr = "failed", err.Error()
+		status, errStr = notificationStatusFailed, err.Error()
 	} else if err := s.webhook.Send(ctx, url, payloadTarget.ContentType, []byte(payload)); err != nil {
-		status, errStr = "failed", err.Error()
+		status, errStr = notificationStatusFailed, err.Error()
 	}
 	history := models.NotificationHistory{
 		Type:         typ,
@@ -171,12 +187,12 @@ func (s *Scheduler) sendWebhook(ctx context.Context, typ, message string, events
 		Message:      message,
 		NotionPageID: notionPageID,
 		Error:        errStr,
-		SentAt:       time.Now(),
+		SentAt:       now,
 	}
 	if err := s.repo.InsertNotificationHistory(ctx, history); err != nil {
 		logging.Error("WBHK", "save notification history failed: %v", err)
 	}
-	if status == "failed" {
+	if status == notificationStatusFailed {
 		logging.Error("WBHK", "send failed (%s): %s", typ, errStr)
 		return errors.New(errStr)
 	}

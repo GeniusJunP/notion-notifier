@@ -178,6 +178,56 @@ func TestHandleDefaultTemplates(t *testing.T) {
 	}
 }
 
+func TestHandleSnoozeUpdatesOnlySnooze(t *testing.T) {
+	mux, repo, cfgMgr := setupAPIHandler(t, true)
+	defer repo.Close()
+
+	reqBody := map[string]any{
+		"until":         "2026-05-04T10:30",
+		"mute_upcoming": true,
+		"mute_periodic": false,
+	}
+	resp := patchJSON(t, mux, "/api/snooze", reqBody)
+	if resp["until"] != "2026-05-04T10:30:00+09:00" {
+		t.Fatalf("unexpected snooze until: got=%v", resp["until"])
+	}
+	if resp["mute_upcoming"] != true {
+		t.Fatalf("mute_upcoming must be true")
+	}
+	if resp["mute_periodic"] != false {
+		t.Fatalf("mute_periodic must be false")
+	}
+
+	cfg := cfgMgr.Config()
+	if cfg.Snooze.Until != "2026-05-04T10:30:00+09:00" {
+		t.Fatalf("config snooze was not updated: %q", cfg.Snooze.Until)
+	}
+	if !cfg.CalendarSync.Enabled {
+		t.Fatalf("unrelated config must remain unchanged")
+	}
+}
+
+func TestHandleSnoozeRejectsInvalidUntil(t *testing.T) {
+	mux, repo, _ := setupAPIHandler(t, true)
+	defer repo.Close()
+
+	data, err := json.Marshal(map[string]any{
+		"until":         "not-a-date",
+		"mute_upcoming": true,
+		"mute_periodic": true,
+	})
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPatch, "/api/snooze", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("unexpected status: got=%d want=%d body=%s", rec.Code, http.StatusUnprocessableEntity, rec.Body.String())
+	}
+}
+
 func setupAPIHandler(t *testing.T, calendarEnabled bool) (*http.ServeMux, *db.Repository, *config.Manager) {
 	t.Helper()
 
@@ -280,6 +330,28 @@ func postJSON(t *testing.T, mux *http.ServeMux, path string, body any) map[strin
 		t.Fatalf("marshal request: %v", err)
 	}
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unexpected status: got=%d want=%d body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return payload
+}
+
+func patchJSON(t *testing.T, mux *http.ServeMux, path string, body any) map[string]any {
+	t.Helper()
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPatch, path, bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)

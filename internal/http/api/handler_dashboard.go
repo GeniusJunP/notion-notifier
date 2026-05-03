@@ -12,14 +12,14 @@ import (
 // --- GET /api/dashboard ---
 
 type dashboardResponse struct {
-	TodayCount    int    `json:"today_count"`
-	NextSync      string `json:"next_sync"`
-	NextSyncIn    string `json:"next_sync_in"`
-	LastSync      string `json:"last_sync"`
-	LastSyncCount int    `json:"last_sync_count"`
-	LastSyncError string `json:"last_sync_error,omitempty"`
-	SnoozeActive  bool   `json:"snooze_active"`
-	SnoozeUntil   string `json:"snooze_until,omitempty"`
+	TodayCount    int                 `json:"today_count"`
+	NextSync      string              `json:"next_sync"`
+	NextSyncIn    string              `json:"next_sync_in"`
+	LastSync      string              `json:"last_sync"`
+	LastSyncCount int                 `json:"last_sync_count"`
+	LastSyncError string              `json:"last_sync_error,omitempty"`
+	SnoozeActive  bool                `json:"snooze_active"`
+	Snooze        config.SnoozeConfig `json:"snooze"`
 }
 
 func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +63,8 @@ func (h *Handler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		LastSync:      lastSync,
 		LastSyncCount: status.LastCount,
 		LastSyncError: status.LastError,
-		SnoozeActive:  config.IsSnoozed(cfg, now),
-		SnoozeUntil:   cfg.SnoozeUntil,
+		SnoozeActive:  config.IsSnoozed(cfg, "upcoming", now) || config.IsSnoozed(cfg, "periodic", now),
+		Snooze:        cfg.Snooze,
 	}
 	respondJSON(w, http.StatusOK, resp)
 }

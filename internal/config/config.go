@@ -19,7 +19,7 @@ type Config struct {
 	CalendarSync  CalendarSyncConfig `yaml:"calendar_sync" json:"calendar_sync"`
 	PropertyMap   PropertyMapping    `yaml:"property_mapping" json:"property_mapping"`
 	ContentRules  ContentRules       `yaml:"content_rules" json:"content_rules"`
-	SnoozeUntil   string             `yaml:"snooze_until" json:"snooze_until"`
+	Snooze        SnoozeConfig       `yaml:"snooze" json:"snooze"`
 }
 
 type SyncConfig struct {
@@ -41,6 +41,12 @@ type WebhookConfig struct {
 type WebhookTarget struct {
 	ContentType     string `yaml:"content_type" json:"content_type"`
 	PayloadTemplate string `yaml:"payload_template" json:"payload_template"`
+}
+
+type SnoozeConfig struct {
+	Until        string `yaml:"until" json:"until"`
+	MuteUpcoming bool   `yaml:"mute_upcoming" json:"mute_upcoming"`
+	MutePeriodic bool   `yaml:"mute_periodic" json:"mute_periodic"`
 }
 
 type UpcomingNotification struct {
@@ -263,9 +269,9 @@ func ValidateConfig(cfg Config) error {
 			}
 		}
 	}
-	if cfg.SnoozeUntil != "" {
-		if _, err := ParseSnoozeUntil(cfg.SnoozeUntil, cfg.Timezone); err != nil {
-			return fmt.Errorf("snooze_until: %w", err)
+	if cfg.Snooze.Until != "" {
+		if _, err := ParseSnoozeTimestamp(cfg.Snooze.Until, cfg.Timezone); err != nil {
+			return fmt.Errorf("snooze.until: %w", err)
 		}
 	}
 	return nil
@@ -279,22 +285,35 @@ func validateHHMM(value string) error {
 	return err
 }
 
-func IsSnoozed(cfg Config, now time.Time) bool {
-	if cfg.SnoozeUntil == "" {
+func IsSnoozed(cfg Config, notificationType string, now time.Time) bool {
+	snooze := cfg.Snooze
+	if snooze.Until == "" {
 		return false
 	}
-	until, err := ParseSnoozeUntil(cfg.SnoozeUntil, cfg.Timezone)
+	switch notificationType {
+	case "upcoming":
+		if !snooze.MuteUpcoming {
+			return false
+		}
+	case "periodic":
+		if !snooze.MutePeriodic {
+			return false
+		}
+	default:
+		return false
+	}
+	until, err := ParseSnoozeTimestamp(snooze.Until, cfg.Timezone)
 	if err != nil {
 		return false
 	}
 	return now.Before(until)
 }
 
-// ParseSnoozeUntil parses a snooze_until value in either RFC3339 or
+// ParseSnoozeTimestamp parses a snooze until value in either RFC3339 or
 // datetime-local ("2006-01-02T15:04") format. For datetime-local values
 // the configured timezone is used to produce an absolute time.
-func ParseSnoozeUntil(value, tz string) (time.Time, error) {
-	// Try RFC3339 first (backwards compatible)
+func ParseSnoozeTimestamp(value, tz string) (time.Time, error) {
+	// Try RFC3339 first.
 	if t, err := time.Parse(time.RFC3339, value); err == nil {
 		return t, nil
 	}
@@ -363,6 +382,16 @@ func NormalizeConfig(cfg Config) Config {
 	}
 	cfg.Webhook.Notification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.Notification.PayloadTemplate)
 	cfg.Webhook.InternalNotification.PayloadTemplate = SanitizeTemplate(cfg.Webhook.InternalNotification.PayloadTemplate)
+
+	if !cfg.Snooze.MuteUpcoming && !cfg.Snooze.MutePeriodic {
+		cfg.Snooze.MuteUpcoming = true
+		cfg.Snooze.MutePeriodic = true
+	}
+	if cfg.Snooze.Until != "" {
+		if until, err := ParseSnoozeTimestamp(cfg.Snooze.Until, cfg.Timezone); err == nil {
+			cfg.Snooze.Until = until.Format(time.RFC3339)
+		}
+	}
 
 	for i := range cfg.Notifications.Upcoming {
 		if cfg.Notifications.Upcoming[i].AllDayBaseTime == "" {

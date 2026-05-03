@@ -243,7 +243,10 @@ content_rules:
 # - 抽出結果は {{.Content}} で参照可能
 
 # 通知抑制
-snooze_until: "" # ISO8601日時、空白=無効
+snooze:
+  until: "" # RFC3339日時、空白=無効
+  mute_upcoming: true
+  mute_periodic: true
 ```
 
 ### env.yaml

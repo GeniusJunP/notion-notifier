@@ -72,6 +72,15 @@ func (m *Manager) UpdateConfig(cfg Config) (Config, error) {
 	return cfg, nil
 }
 
+func (m *Manager) UpdateSnooze(snooze SnoozeConfig) (Config, error) {
+	m.mu.RLock()
+	cfg := m.cfg
+	m.mu.RUnlock()
+
+	cfg.Snooze = snooze
+	return m.UpdateConfig(cfg)
+}
+
 func (m *Manager) Reload() error {
 	cfg, err := LoadConfig(m.cfgPath)
 	if err != nil {

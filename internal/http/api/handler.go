@@ -26,6 +26,7 @@ func NewHandler(cfg *config.Manager, repo *db.Repository, sched *scheduler.Sched
 // Register mounts all API routes on the given mux under /api/.
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/config", h.handleConfig)
+	mux.HandleFunc("/api/snooze", h.handleSnooze)
 	mux.HandleFunc("/api/dashboard", h.handleDashboard)
 	mux.HandleFunc("/api/history", h.handleHistory)
 	mux.HandleFunc("/api/events/upcoming", h.handleUpcomingEvents)
@@ -36,6 +37,40 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/notifications/preview", h.handlePreviewNotification)
 	mux.HandleFunc("/api/notifications/manual", h.handleManualNotification)
 	mux.HandleFunc("/api/templates/defaults", h.handleDefaultTemplates)
+}
+
+// --- PATCH /api/snooze ---
+
+func (h *Handler) handleSnooze(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPatch) {
+		return
+	}
+
+	var incoming config.SnoozeConfig
+	if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+		return
+	}
+
+	saved, err := h.cfg.UpdateSnooze(incoming)
+	if err == nil && h.sched != nil {
+		err = h.sched.Reload()
+	}
+
+	if err != nil {
+		var vErr config.ValidationError
+		if errors.As(err, &vErr) {
+			respondValidationError(w, "validation failed", map[string]string{
+				"snooze": vErr.Error(),
+			})
+			return
+		}
+		logging.Error("CONF", "snooze update failed: %v", err)
+		respondError(w, http.StatusInternalServerError, "failed to save snooze")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, saved.Snooze)
 }
 
 // --- GET /api/config, PUT /api/config ---
