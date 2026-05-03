@@ -103,6 +103,10 @@ const tokens = {
     "value": "1.5rem",
     "variable": "var(--radii-3xl)"
   },
+  "radii.4xl": {
+    "value": "2rem",
+    "variable": "var(--radii-4xl)"
+  },
   "radii.full": {
     "value": "9999px",
     "variable": "var(--radii-full)"
@@ -259,6 +263,10 @@ const tokens = {
     "value": "8rem",
     "variable": "var(--font-sizes-9xl)"
   },
+  "shadows.2xs": {
+    "value": "0 1px rgb(0 0 0 / 0.05)",
+    "variable": "var(--shadows-2xs)"
+  },
   "shadows.xs": {
     "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
     "variable": "var(--shadows-xs)"
@@ -283,17 +291,25 @@ const tokens = {
     "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
     "variable": "var(--shadows-2xl)"
   },
-  "shadows.inner": {
-    "value": "inset 0 2px 4px 0 rgb(0 0 0 / 0.05)",
-    "variable": "var(--shadows-inner)"
+  "shadows.inset-2xs": {
+    "value": "inset 0 1px rgb(0 0 0 / 0.05)",
+    "variable": "var(--shadows-inset-2xs)"
+  },
+  "shadows.inset-xs": {
+    "value": "inset 0 1px 1px rgb(0 0 0 / 0.05)",
+    "variable": "var(--shadows-inset-xs)"
+  },
+  "shadows.inset-sm": {
+    "value": "inset 0 2px 4px rgb(0 0 0 / 0.05)",
+    "variable": "var(--shadows-inset-sm)"
+  },
+  "blurs.xs": {
+    "value": "4px",
+    "variable": "var(--blurs-xs)"
   },
   "blurs.sm": {
-    "value": "4px",
-    "variable": "var(--blurs-sm)"
-  },
-  "blurs.base": {
     "value": "8px",
-    "variable": "var(--blurs-base)"
+    "variable": "var(--blurs-sm)"
   },
   "blurs.md": {
     "value": "12px",
@@ -451,6 +467,14 @@ const tokens = {
     "value": "0.875rem",
     "variable": "var(--spacing-3\\.5)"
   },
+  "spacing.4.5": {
+    "value": "1.125rem",
+    "variable": "var(--spacing-4\\.5)"
+  },
+  "spacing.5.5": {
+    "value": "1.375rem",
+    "variable": "var(--spacing-5\\.5)"
+  },
   "sizes.0": {
     "value": "0rem",
     "variable": "var(--sizes-0)"
@@ -587,6 +611,14 @@ const tokens = {
     "value": "0.875rem",
     "variable": "var(--sizes-3\\.5)"
   },
+  "sizes.4.5": {
+    "value": "1.125rem",
+    "variable": "var(--sizes-4\\.5)"
+  },
+  "sizes.5.5": {
+    "value": "1.375rem",
+    "variable": "var(--sizes-5\\.5)"
+  },
   "sizes.xs": {
     "value": "20rem",
     "variable": "var(--sizes-xs)"
@@ -690,22 +722,6 @@ const tokens = {
   "animations.bounce": {
     "value": "bounce 1s infinite",
     "variable": "var(--animations-bounce)"
-  },
-  "borderWidths.1": {
-    "value": "1px",
-    "variable": "var(--border-widths-1)"
-  },
-  "borderWidths.2": {
-    "value": "2px",
-    "variable": "var(--border-widths-2)"
-  },
-  "opacity.50": {
-    "value": "0.5",
-    "variable": "var(--opacity-50)"
-  },
-  "opacity.60": {
-    "value": "0.6",
-    "variable": "var(--opacity-60)"
   },
   "colors.current": {
     "value": "currentColor",
@@ -1886,6 +1902,14 @@ const tokens = {
   "spacing.-3.5": {
     "value": "calc(var(--spacing-3\\.5) * -1)",
     "variable": "var(--spacing-3\\.5)"
+  },
+  "spacing.-4.5": {
+    "value": "calc(var(--spacing-4\\.5) * -1)",
+    "variable": "var(--spacing-4\\.5)"
+  },
+  "spacing.-5.5": {
+    "value": "calc(var(--spacing-5\\.5) * -1)",
+    "variable": "var(--spacing-5\\.5)"
   },
   "colors.colorPalette": {
     "value": "var(--colors-color-palette)",

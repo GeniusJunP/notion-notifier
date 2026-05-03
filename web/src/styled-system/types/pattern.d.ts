@@ -6,10 +6,10 @@ type Primitive = string | number | boolean | null | undefined
 type LiteralUnion<T, K extends Primitive = string> = T | (K & Record<never, never>)
 
 export type PatternProperty =
-  | { type: 'property'; value: CssProperty }
-  | { type: 'enum'; value: string[] }
-  | { type: 'token'; value: TokenCategory; property?: CssProperty }
-  | { type: 'string' | 'boolean' | 'number' }
+  | { type: 'property'; value: CssProperty; description?: string }
+  | { type: 'enum'; value: string[]; description?: string }
+  | { type: 'token'; value: TokenCategory; property?: CssProperty; description?: string }
+  | { type: 'string' | 'boolean' | 'number'; description?: string }
 
 export interface PatternHelpers {
   map: (value: any, fn: (value: string) => string | undefined) => any
@@ -50,6 +50,10 @@ export interface PatternConfig<T extends PatternProperties = PatternProperties> 
    * The css object this pattern will generate.
    */
   transform?: (props: InferProps<T>, helpers: PatternHelpers) => SystemStyleObject
+  /**
+   * Whether the pattern is deprecated.
+   */
+  deprecated?: boolean | string
   /**
    * The jsx element name this pattern will generate.
    */

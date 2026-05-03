@@ -11,11 +11,11 @@ export const buttonRecipe = cva({
     outline: "none",
     transitionProperty: "common",
     transitionDuration: "normal",
-    _focusVisible: { outlineWidth: "2", outlineColor: "brand.300" },
+    _focusVisible: { outlineWidth: "2px", outlineColor: "brand.300" },
     _active: { transform: "scale(0.985)" },
     _disabled: {
       pointerEvents: "none",
-      opacity: "50",
+      opacity: 0.5,
     },
   },
   variants: {
@@ -27,7 +27,7 @@ export const buttonRecipe = cva({
         _hover: { bg: "brand.700" },
       },
       secondary: {
-        borderWidth: "1",
+        borderWidth: "1px",
         borderColor: "gray.200",
         bg: "gray.100",
         color: "gray.700",
@@ -39,7 +39,7 @@ export const buttonRecipe = cva({
         _hover: { bg: "gray.100", color: "gray.900" },
       },
       danger: {
-        borderWidth: "1",
+        borderWidth: "1px",
         borderColor: "red.200",
         bg: "red.50",
         color: "red.700",
@@ -53,13 +53,7 @@ export const buttonRecipe = cva({
     },
     size: {
       sm: { minH: "9", borderRadius: "lg", px: "3", py: "2", fontSize: "xs" },
-      md: {
-        minH: "10",
-        borderRadius: "xl",
-        px: "4",
-        py: "2.5",
-        fontSize: "sm",
-      },
+      md: { minH: "10", borderRadius: "xl", px: "4", py: "2.5", fontSize: "sm" },
       lg: { minH: "12", borderRadius: "2xl", px: "6", py: "3", fontSize: "sm" },
       icon: { h: "10", w: "10", borderRadius: "xl", p: "0" },
     },
@@ -77,7 +71,7 @@ export const fieldRecipe = cva({
   base: {
     w: "full",
     borderRadius: "xl",
-    borderWidth: "1",
+    borderWidth: "1px",
     borderColor: "gray.200",
     bg: "gray.50",
     color: "gray.900",
@@ -86,14 +80,10 @@ export const fieldRecipe = cva({
     transitionProperty: "common",
     transitionDuration: "normal",
     _placeholder: { color: "gray.400" },
-    _focus: {
-      borderColor: "brand.300",
-      outlineWidth: "2",
-      outlineColor: "brand.200",
-    },
+    _focus: { borderColor: "brand.300", outlineWidth: "2px", outlineColor: "brand.200" },
     _disabled: {
       cursor: "not-allowed",
-      opacity: "60",
+      opacity: 0.6,
     },
   },
   variants: {
