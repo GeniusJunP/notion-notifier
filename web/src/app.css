@@ -1,14 +1,12 @@
+@layer reset, base, tokens, recipes, utilities;
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    font-family:
-      Inter,
-      "Helvetica Neue",
-      "Hiragino Sans",
-      "Yu Gothic UI",
+    font-family: Inter, "Helvetica Neue", "Hiragino Sans", "Yu Gothic UI",
       sans-serif;
     line-height: 1.5;
     font-weight: 400;
@@ -183,7 +181,8 @@
     border-radius: 0.375rem;
     background-color: var(--ui-markdown-code-bg);
     padding: 0.1rem 0.3rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
     font-size: 0.82em;
   }
 

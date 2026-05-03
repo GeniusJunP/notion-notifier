@@ -4,7 +4,7 @@ export default defineConfig({
   preflight: false,
   strictTokens: true,
   jsxFramework: "none",
-  include: ["./src/**/*.{ts,svelte}"],
+  include: ["./src/lib/ui/recipes.ts"],
   outdir: "src/styled-system",
   theme: {
     extend: {
