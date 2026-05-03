@@ -1,3 +1,5 @@
+import { toLocalDateInputValue } from './utils';
+
 export interface Config {
   timezone: string;
   sync: SyncConfig;
@@ -6,7 +8,7 @@ export interface Config {
   calendar_sync: CalendarSyncConfig;
   property_mapping: PropertyMapping;
   content_rules: ContentRules;
-  snooze_until: string;
+  snooze: SnoozeConfig;
 }
 
 export interface SyncConfig {
@@ -57,6 +59,12 @@ export interface WebhookTarget {
   payload_template: string;
 }
 
+export interface SnoozeConfig {
+  until: string;
+  mute_upcoming: boolean;
+  mute_periodic: boolean;
+}
+
 export interface CalendarSyncConfig {
   enabled: boolean;
   interval_hours: number;
@@ -93,7 +101,7 @@ export interface DashboardData {
   last_sync_count: number;
   last_sync_error?: string;
   snooze_active: boolean;
-  snooze_until?: string;
+  snooze: SnoozeConfig;
 }
 
 export interface UpcomingEvent {
@@ -180,8 +188,8 @@ export function buildPreviewNotificationRequest(
     const to = new Date(now.getTime() + options.daysAhead * 24 * 60 * 60 * 1000);
     return buildManualNotificationRequest(
       template,
-      now.toISOString().split('T')[0],
-      to.toISOString().split('T')[0],
+      toLocalDateInputValue(now),
+      toLocalDateInputValue(to),
     );
   }
   return { template };
@@ -227,6 +235,7 @@ export const api = {
   onError: null as ((msg: string) => void) | null,
   getConfig: () => request<Config>('/api/config'),
   updateConfig: (cfg: Config) => request<Config>('/api/config', { method: 'PUT', body: JSON.stringify(cfg) }),
+  updateSnooze: (snooze: SnoozeConfig) => request<SnoozeConfig>('/api/snooze', { method: 'PATCH', body: JSON.stringify(snooze) }),
   getDashboard: () => request<DashboardData>('/api/dashboard'),
   getUpcomingEvents: () => request<UpcomingEvent[]>('/api/events/upcoming'),
   getHistory: () => request<HistoryItem[]>('/api/history'),

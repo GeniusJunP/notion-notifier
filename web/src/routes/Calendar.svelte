@@ -18,16 +18,15 @@
     import IconChip from "../lib/ui/IconChip.svelte";
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
+    import { toLocalDateInputValue } from "../lib/utils";
 
     $: config = $configStore;
 
     let isSyncing = false;
     let isClearing = false;
     let syncRange = {
-        from: new Date().toISOString().split("T")[0],
-        to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
+        from: toLocalDateInputValue(new Date()),
+        to: toLocalDateInputValue(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     };
 
     async function handleConfigUpdate() {

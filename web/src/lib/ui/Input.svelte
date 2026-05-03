@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { HTMLInputAttributes } from "svelte/elements";
     import { cn } from "../utils";
+    import { fieldRecipe } from "./recipes";
 
     type UiSize = "sm" | "md";
 
@@ -46,12 +47,8 @@
     }
 
     $: classes = cn(
-        "w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 shadow-sm outline-none transition-[background-color,border-color,box-shadow,color] duration-200",
-        "placeholder:text-gray-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-200",
+        fieldRecipe({ size: uiSize, mono }),
         "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-brand-500 dark:focus:ring-brand-900/50",
-        "disabled:cursor-not-allowed disabled:opacity-60",
-        sizeClasses[uiSize],
-        mono && "font-mono",
         className,
     );
 </script>

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { Send, RotateCcw, Play } from "lucide-svelte";
+    import { Send, RotateCcw } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
     import Button from "../../lib/ui/Button.svelte";
     import FormField from "../../lib/ui/FormField.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import Panel from "../../lib/ui/Panel.svelte";
-    import Textarea from "../../lib/ui/Textarea.svelte";
+    import TemplateEditor from "../TemplateEditor.svelte";
 
     export let manualFromDate: string;
     export let manualToDate: string;
@@ -64,31 +64,20 @@
         </FormField>
     </div>
 
-    <FormField label="メッセージテンプレート" forId="manual-template" variant="eyebrow">
-        <Textarea
+    <FormField forId="manual-template">
+        <TemplateEditor
             id="manual-template"
+            label="メッセージテンプレート"
             bind:value={manualTemplate}
             placeholder="Go テンプレート形式で入力..."
-            class="min-h-[120px]"
-            mono
+            rows={5}
+            previewLoading={isPreviewLoading}
+            on:preview={() => dispatch("preview")}
+            on:reset={() => dispatch("loadDefault")}
         />
     </FormField>
 
     <div class="flex items-center gap-3">
-        <Button
-            on:click={() => dispatch("preview")}
-            disabled={isPreviewLoading}
-            loading={isPreviewLoading}
-            variant="secondary"
-            block
-            size="md"
-        >
-            {#if !isPreviewLoading}
-                <Play size={16} />
-            {/if}
-            プレビュー
-        </Button>
-
         <Button
             on:click={() => dispatch("send")}
             disabled={isSending}

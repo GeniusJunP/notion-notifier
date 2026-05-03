@@ -13,6 +13,7 @@
         configStore,
         syncNotion as syncNotionState,
     } from "../lib/store";
+    import { toLocalDateInputValue } from "../lib/utils";
     import PreviewModal from "../components/PreviewModal.svelte";
     import StatCard from "../components/dashboard/StatCard.svelte";
     import ManualSyncCard from "../components/dashboard/ManualSyncCard.svelte";
@@ -33,10 +34,10 @@
 
     // Manual notification state
     let manualTemplate = "";
-    let manualFromDate = new Date().toISOString().split("T")[0];
-    let manualToDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+    let manualFromDate = toLocalDateInputValue(new Date());
+    let manualToDate = toLocalDateInputValue(
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    );
     let isPreviewLoading = false;
     let isSending = false;
     let previewOpen = false;

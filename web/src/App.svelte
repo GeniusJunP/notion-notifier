@@ -5,7 +5,6 @@
     configStore,
     addToast,
     darkMode,
-    saveConfig as saveConfigState,
     syncNotion as syncNotionState,
     healthPoller,
     dashboardStore,
@@ -59,17 +58,24 @@
   }
 
   async function saveSnooze() {
-    await saveConfigState(config, {
-      errorMessage: "スヌーズ設定の保存に失敗しました",
-      onSaved: async () => {
-        await healthPoller.forceCheck();
-      },
-    });
+    if (!config) return;
+    try {
+      const saved = await api.updateSnooze(config.snooze);
+      config.snooze = saved;
+      configStore.set(config);
+      await healthPoller.forceCheck();
+    } catch {
+      addToast("スヌーズ設定の保存に失敗しました", "error");
+    }
   }
 
   async function clearSnooze() {
     if (!config) return;
-    config.snooze_until = "";
+    config.snooze = {
+      until: "",
+      mute_upcoming: true,
+      mute_periodic: true,
+    };
     configStore.set(config);
     await saveSnooze();
   }

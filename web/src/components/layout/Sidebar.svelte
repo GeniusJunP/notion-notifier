@@ -10,6 +10,7 @@
     import Card from "../../lib/ui/Card.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
     import Input from "../../lib/ui/Input.svelte";
+    import Toggle from "../../lib/ui/Toggle.svelte";
 
     export let navItems: { path: string; label: string; icon: any }[];
     export let activeRouteValue: string;
@@ -124,12 +125,12 @@
                     <div class="flex w-full items-center gap-2">
                         <Input
                             type="datetime-local"
-                            bind:value={config.snooze_until}
+                            bind:value={config.snooze.until}
                             on:change={() => dispatch("saveSnooze")}
                             uiSize="sm"
                             class="w-full text-xs"
                         />
-                        {#if config.snooze_until}
+                        {#if config.snooze.until}
                             <Button
                                 on:click={() => dispatch("clearSnooze")}
                                 variant="ghost"
@@ -139,6 +140,30 @@
                                 <X size={14} />
                             </Button>
                         {/if}
+                    </div>
+                    <div class:ui-snooze-targets={true}>
+                        <div class:ui-snooze-target-row={true}>
+                            <span class:ui-snooze-target-label={true}>
+                                事前通知
+                            </span>
+                            <Toggle
+                                bind:checked={config.snooze.mute_upcoming}
+                                ariaLabel="スヌーズ対象に事前通知を含める"
+                                size="sm"
+                                on:change={() => dispatch("saveSnooze")}
+                            />
+                        </div>
+                        <div class:ui-snooze-target-row={true}>
+                            <span class:ui-snooze-target-label={true}>
+                                定期通知
+                            </span>
+                            <Toggle
+                                bind:checked={config.snooze.mute_periodic}
+                                ariaLabel="スヌーズ対象に定期通知を含める"
+                                size="sm"
+                                on:change={() => dispatch("saveSnooze")}
+                            />
+                        </div>
                     </div>
                 </Card>
             {/if}

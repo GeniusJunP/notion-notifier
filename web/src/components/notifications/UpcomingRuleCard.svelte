@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Trash2, Clock, Play, RotateCcw } from "lucide-svelte";
+    import { Trash2, Clock } from "lucide-svelte";
     import DayPicker from "./DayPicker.svelte";
     import type { UpcomingNotification } from "../../lib/api";
     import { createEventDispatcher } from "svelte";
@@ -7,8 +7,8 @@
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import Panel from "../../lib/ui/Panel.svelte";
-    import Textarea from "../../lib/ui/Textarea.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
+    import TemplateEditor from "../TemplateEditor.svelte";
 
     export let rule: UpcomingNotification;
     export let index: number;
@@ -86,37 +86,21 @@
             </div>
         </FormField>
 
-        <FormField label="メッセージテンプレート" forId={`adv-message-${index}`}>
-            <Textarea
+        <FormField forId={`adv-message-${index}`}>
+            <TemplateEditor
                 id={`adv-message-${index}`}
+                label="メッセージテンプレート"
                 bind:value={rule.message}
                 placeholder="空欄の場合はデフォルトが使用されます"
-                class="min-h-[120px]"
-                mono
+                rows={5}
+                on:preview={() =>
+                    dispatch("preview", {
+                        template: rule.message,
+                        title: "事前通知プレビュー",
+                        minutes_before: rule.minutes_before,
+                    })}
+                on:reset={() => dispatch("reset", index)}
             />
-            <div class="mt-3 flex items-center gap-3">
-                <Button
-                    type="button"
-                    on:click={() =>
-                        dispatch("preview", {
-                            template: rule.message,
-                            title: "事前通知プレビュー",
-                            minutes_before: rule.minutes_before,
-                        })}
-                    variant="text"
-                    size="sm"
-                >
-                    <Play size={12} /> プレビューを実行
-                </Button>
-                <Button
-                    type="button"
-                    on:click={() => dispatch("reset", index)}
-                    variant="ghost"
-                    size="sm"
-                >
-                    <RotateCcw size={12} /> デフォルトに戻す
-                </Button>
-            </div>
         </FormField>
     </div>
 

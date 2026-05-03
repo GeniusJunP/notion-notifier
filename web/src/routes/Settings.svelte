@@ -4,11 +4,8 @@
     import GeneralSettings from "../components/settings/GeneralSettings.svelte";
     import PropertyMappingSettings from "../components/settings/PropertyMappingSettings.svelte";
     import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
-    import { Settings, Save, Hash } from "lucide-svelte";
+    import { Settings, Save } from "lucide-svelte";
     import Button from "../lib/ui/Button.svelte";
-    import FormField from "../lib/ui/FormField.svelte";
-    import Input from "../lib/ui/Input.svelte";
-    import SectionCard from "../lib/ui/SectionCard.svelte";
 
     $: config = $configStore;
 
@@ -47,27 +44,6 @@
 
             <div class="space-y-8">
                 <ContentRuleSettings bind:config />
-
-                <SectionCard>
-                    <h3 class="ui-section-title">
-                        <Hash size={20} class="text-brand-500 dark:text-brand-300" />
-                        その他
-                    </h3>
-
-                    <FormField
-                        label="スヌーズ (Snooze)"
-                        forId="settings-snooze"
-                        variant="eyebrow"
-                    >
-                        <Input
-                            id="settings-snooze"
-                            type="datetime-local"
-                            bind:value={config.snooze_until}
-                            uiSize="sm"
-                        />
-                    </FormField>
-                </SectionCard>
-
                 <WebhookSettingsCard {config} />
             </div>
         </div>

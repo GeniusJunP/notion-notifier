@@ -4,9 +4,9 @@
     import FormField from "../lib/ui/FormField.svelte";
     import Input from "../lib/ui/Input.svelte";
     import SectionCard from "../lib/ui/SectionCard.svelte";
-    import Textarea from "../lib/ui/Textarea.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
     import Card from "../lib/ui/Card.svelte";
+    import TemplateEditor from "./TemplateEditor.svelte";
 
     export let config: Config;
 </script>
@@ -64,11 +64,13 @@
             forId="wh-notification-pt"
             variant="eyebrow"
         >
-            <Textarea
+            <TemplateEditor
                 id="wh-notification-pt"
+                label="ペイロードテンプレート"
                 bind:value={config.webhook.notification.payload_template}
-                class="min-h-[96px]"
-                mono
+                rows={4}
+                showPreview={false}
+                showReset={false}
             />
         </FormField>
     </Card>
@@ -98,11 +100,13 @@
             forId="wh-internal-notif-pt"
             variant="eyebrow"
         >
-            <Textarea
+            <TemplateEditor
                 id="wh-internal-notif-pt"
+                label="ペイロードテンプレート"
                 bind:value={config.webhook.internal_notification.payload_template}
-                class="min-h-[96px]"
-                mono
+                rows={4}
+                showPreview={false}
+                showReset={false}
             />
         </FormField>
     </Card>
