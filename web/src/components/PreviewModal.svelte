@@ -74,7 +74,7 @@
         <button
             type="button"
             class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            on:click={close}
+            onclick={close}
             aria-label="プレビューを閉じる"
         ></button>
 
@@ -89,7 +89,7 @@
                     {title}
                 </h3>
                 <Button
-                    on:click={close}
+                    onclick={close}
                     variant="ghost"
                     size="icon"
                     aria-label="プレビューを閉じる"

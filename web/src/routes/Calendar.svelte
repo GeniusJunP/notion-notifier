@@ -197,7 +197,7 @@
                     </div>
 
                     <Button
-                        on:click={handleSync}
+                        onclick={handleSync}
                         disabled={isSyncing}
                         loading={isSyncing}
                         block
@@ -211,7 +211,7 @@
 
                     <div class="border-t border-gray-200/70 pt-6 dark:border-gray-800">
                         <Button
-                            on:click={handleClear}
+                            onclick={handleClear}
                             disabled={isClearing}
                             block
                             size="md"

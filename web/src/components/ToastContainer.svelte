@@ -36,7 +36,7 @@
                     </p>
                 </div>
                 <Button
-                    on:click={() =>
+                    onclick={() =>
                         toastStore.update((toasts) =>
                             toasts.filter((t) => t.id !== toast.id),
                         )}

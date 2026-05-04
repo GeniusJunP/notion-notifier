@@ -30,7 +30,7 @@
             <Database size={20} class="text-brand-500 dark:text-brand-300" />
             Notion プロパティマッピング
         </h3>
-        <Button on:click={addCustomMapping} variant="secondary" size="sm">
+        <Button onclick={addCustomMapping} variant="secondary" size="sm">
             <Plus size={14} /> カスタム
         </Button>
     </div>
@@ -115,7 +115,7 @@
                             />
                         </div>
                         <Button
-                            on:click={() => removeCustomMapping(idx)}
+                            onclick={() => removeCustomMapping(idx)}
                             class="opacity-100 md:opacity-0 md:group-hover:opacity-100"
                             variant="ghost"
                             size="icon"

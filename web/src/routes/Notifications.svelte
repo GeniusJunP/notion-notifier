@@ -170,7 +170,7 @@
 
 <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-        <Button on:click={saveConfig} disabled={isSaving} loading={isSaving} size="md">
+        <Button onclick={saveConfig} disabled={isSaving} loading={isSaving} size="md">
             {#if !isSaving}
                 <Save size={18} />
             {/if}
@@ -185,7 +185,7 @@
                     <h2 class="ui-block-title">
                         事前通知ルール
                     </h2>
-                    <Button on:click={addUpcomingRule} variant="text" size="sm">
+                    <Button onclick={addUpcomingRule} variant="text" size="sm">
                         <Plus size={16} /> ルールを追加
                     </Button>
                 </div>
@@ -211,7 +211,7 @@
                     <h2 class="ui-block-title">
                         定期通知ルール
                     </h2>
-                    <Button on:click={addPeriodicRule} variant="text" size="sm">
+                    <Button onclick={addPeriodicRule} variant="text" size="sm">
                         <Plus size={16} /> ルールを追加
                     </Button>
                 </div>

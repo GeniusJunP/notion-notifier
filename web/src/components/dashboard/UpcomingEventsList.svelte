@@ -50,7 +50,7 @@
         <h2 class="ui-block-title">
             直近の予定 (14日間)
         </h2>
-        <Button on:click={() => dispatch("refresh")} variant="text" size="sm">
+        <Button onclick={() => dispatch("refresh")} variant="text" size="sm">
             <RefreshCw size={14} />
             更新
         </Button>

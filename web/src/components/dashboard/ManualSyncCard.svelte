@@ -28,7 +28,7 @@
         </div>
 
         <Button
-            on:click={handleSync}
+            onclick={handleSync}
             disabled={isSyncing}
             loading={isSyncing}
             variant="secondary"

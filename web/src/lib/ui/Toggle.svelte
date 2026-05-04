@@ -60,7 +60,7 @@
             : "bg-gray-200 dark:bg-gray-700",
         className,
     )}
-    on:click={toggle}
+    onclick={toggle}
 >
     <span
         class={cn(

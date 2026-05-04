@@ -38,7 +38,7 @@
             <Settings size={28} class="text-brand-600 dark:text-brand-300" />
             システム設定
         </h2>
-        <Button on:click={saveConfig} disabled={isSaving} loading={isSaving} size="lg">
+        <Button onclick={saveConfig} disabled={isSaving} loading={isSaving} size="lg">
             {#if !isSaving}
                 <Save size={20} />
             {/if}

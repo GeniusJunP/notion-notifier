@@ -58,7 +58,7 @@
             class="lg:hidden"
             variant="ghost"
             size="icon"
-            on:click={() => sidebarOpen.open()}
+            onclick={() => sidebarOpen.open()}
             aria-expanded={$sidebarOpen}
             aria-controls={mainNavId}
             aria-label="サイドバーを開く"
@@ -86,7 +86,7 @@
         </Badge>
 
         <Button
-            on:click={toggleDarkMode}
+            onclick={toggleDarkMode}
             variant="ghost"
             size="icon"
             aria-label={$darkMode

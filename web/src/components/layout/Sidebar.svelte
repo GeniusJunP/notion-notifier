@@ -39,7 +39,7 @@
         <Button
             variant="ghost"
             size="icon"
-            on:click={() => sidebarOpen.close()}
+            onclick={() => sidebarOpen.close()}
             aria-label="サイドバーを閉じる"
         >
             <X size={20} />
@@ -57,7 +57,7 @@
                 ariaCurrent={activeRouteValue === item.path
                     ? "page"
                     : undefined}
-                on:click={() => {
+                onclick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) sidebarOpen.close();
                 }}
@@ -79,7 +79,7 @@
         <div class="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-800">
             <SidebarButton
                 justifyBetween
-                on:click={() => dispatch("sync")}
+                onclick={() => dispatch("sync")}
                 disabled={isSyncing}
             >
                 <div class="flex items-center gap-3">
@@ -132,7 +132,7 @@
                         />
                         {#if config.snooze.until}
                             <Button
-                                on:click={() => dispatch("clearSnooze")}
+                                onclick={() => dispatch("clearSnooze")}
                                 variant="ghost"
                                 size="icon"
                                 aria-label="スヌーズ設定をクリア"

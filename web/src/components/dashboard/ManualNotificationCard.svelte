@@ -38,7 +38,7 @@
         </div>
     </svelte:fragment>
     <svelte:fragment slot="actions">
-        <Button on:click={() => dispatch("loadDefault")} variant="ghost" size="sm">
+        <Button onclick={() => dispatch("loadDefault")} variant="ghost" size="sm">
             <RotateCcw size={12} />
             デフォルトに戻す
         </Button>
@@ -79,7 +79,7 @@
 
     <div class="flex items-center gap-3">
         <Button
-            on:click={() => dispatch("send")}
+            onclick={() => dispatch("send")}
             disabled={isSending}
             loading={isSending}
             block

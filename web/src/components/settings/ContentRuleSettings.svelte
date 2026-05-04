@@ -27,7 +27,7 @@
                     class="flex-1"
                 />
                 <Button
-                    on:click={() => {
+                    onclick={() => {
                         if (!config) return;
                         config.content_rules.include_start_heading =
                             !config.content_rules.include_start_heading;

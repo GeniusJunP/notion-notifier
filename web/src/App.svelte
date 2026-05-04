@@ -159,7 +159,7 @@
   {#if $sidebarOpen}
     <button
       class="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
-      on:click={() => sidebarOpen.close()}
+      onclick={() => sidebarOpen.close()}
       aria-label="サイドバーを閉じる"
     ></button>
   {/if}

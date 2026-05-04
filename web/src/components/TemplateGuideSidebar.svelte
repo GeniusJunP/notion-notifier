@@ -109,7 +109,7 @@
         <h3 class="text-xs font-semibold text-gray-800 dark:text-gray-100">
             使える変数
         </h3>
-        <Button on:click={openGuideDetail} variant="text" size="sm">
+        <Button onclick={openGuideDetail} variant="text" size="sm">
             詳細
         </Button>
     </div>

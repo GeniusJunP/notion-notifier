@@ -20,7 +20,7 @@
     {#each dayValues as day, idx (day)}
         <button
             type="button"
-            on:click={() => toggleDay(day)}
+            onclick={() => toggleDay(day)}
             class={cn(
                 "flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-semibold outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-200",
                 "focus-visible:ring-2 focus-visible:ring-brand-300/70 dark:focus-visible:ring-brand-700/60",

@@ -42,7 +42,7 @@
     <svelte:fragment slot="actions">
         <Button
             type="button"
-            on:click={() => dispatch("remove", index)}
+            onclick={() => dispatch("remove", index)}
             variant="ghost"
             size="icon"
             aria-label={`定期通知 ${index + 1} を削除`}

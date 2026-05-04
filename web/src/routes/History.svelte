@@ -75,14 +75,14 @@
 
         <div class="flex items-center gap-2">
             <Button
-                on:click={loadHistory}
+                onclick={loadHistory}
                 variant="secondary"
                 size="icon"
                 aria-label="履歴を更新"
             >
                 <RefreshCcw size={20} class={isLoading ? "animate-spin" : ""} />
             </Button>
-            <Button on:click={handleClear} variant="danger" size="md">
+            <Button onclick={handleClear} variant="danger" size="md">
                 <Trash2 size={18} />
                 履歴をクリア
             </Button>

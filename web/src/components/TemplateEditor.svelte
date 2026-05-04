@@ -94,7 +94,7 @@
                 type="button"
                 variant={mode === "visual" ? "secondary" : "ghost"}
                 size="sm"
-                on:click={enterVisualMode}
+                onclick={enterVisualMode}
             >
                 <Eye size={14} /> Visual
             </Button>
@@ -102,7 +102,7 @@
                 type="button"
                 variant={mode === "raw" ? "secondary" : "ghost"}
                 size="sm"
-                on:click={enterRawMode}
+                onclick={enterRawMode}
             >
                 <Code2 size={14} /> Raw
             </Button>
@@ -133,7 +133,7 @@
                             variant="ghost"
                             size="icon"
                             aria-label="ブロックを削除"
-                            on:click={() => removeBlock(index)}
+                            onclick={() => removeBlock(index)}
                         >
                             <Trash2 size={14} />
                         </Button>
@@ -179,7 +179,7 @@
                         type="button"
                         variant="ghost"
                         size="sm"
-                        on:click={() => addBlock(option.value)}
+                        onclick={() => addBlock(option.value)}
                     >
                         <Plus size={12} /> {option.label}
                     </Button>
@@ -192,7 +192,7 @@
         {#if showPreview}
             <Button
                 type="button"
-                on:click={() => dispatch("preview")}
+                onclick={() => dispatch("preview")}
                 disabled={previewLoading}
                 loading={previewLoading}
                 variant="text"
@@ -204,7 +204,7 @@
         {#if showReset}
             <Button
                 type="button"
-                on:click={() => dispatch("reset")}
+                onclick={() => dispatch("reset")}
                 variant="ghost"
                 size="sm"
             >
