@@ -18,32 +18,34 @@ const allowRawControlsIn = new Set([
   path.join(webRoot, "src", "components", "notifications", "DayPicker.svelte"),
 ]);
 
-const classBudgets = new Map(Object.entries({
-  "src/App.svelte": 6,
-  "src/components/PreviewModal.svelte": 8,
-  "src/components/SidebarButton.svelte": 1,
-  "src/components/TemplateEditor.svelte": 12,
-  "src/components/TemplateGuideSidebar.svelte": 5,
-  "src/components/ToastContainer.svelte": 9,
-  "src/components/WebhookSettingsCard.svelte": 12,
-  "src/components/dashboard/ManualNotificationCard.svelte": 5,
-  "src/components/dashboard/ManualSyncCard.svelte": 7,
-  "src/components/dashboard/StatCard.svelte": 6,
-  "src/components/dashboard/UpcomingEventsList.svelte": 22,
-  "src/components/layout/Header.svelte": 7,
-  "src/components/layout/Sidebar.svelte": 15,
-  "src/components/notifications/DayPicker.svelte": 2,
-  "src/components/notifications/PeriodicRuleCard.svelte": 6,
-  "src/components/notifications/UpcomingRuleCard.svelte": 12,
-  "src/components/settings/ContentRuleSettings.svelte": 11,
-  "src/components/settings/GeneralSettings.svelte": 3,
-  "src/components/settings/PropertyMappingSettings.svelte": 18,
-  "src/routes/Calendar.svelte": 24,
-  "src/routes/Dashboard.svelte": 2,
-  "src/routes/History.svelte": 40,
-  "src/routes/Notifications.svelte": 9,
-  "src/routes/Settings.svelte": 9,
-}));
+const classBudgets = new Map(
+  Object.entries({
+    "src/App.svelte": 6,
+    "src/components/PreviewModal.svelte": 8,
+    "src/components/SidebarButton.svelte": 1,
+    "src/components/TemplateEditor.svelte": 12,
+    "src/components/TemplateGuideSidebar.svelte": 5,
+    "src/components/ToastContainer.svelte": 9,
+    "src/components/WebhookSettingsCard.svelte": 12,
+    "src/components/dashboard/ManualNotificationCard.svelte": 5,
+    "src/components/dashboard/ManualSyncCard.svelte": 7,
+    "src/components/dashboard/StatCard.svelte": 6,
+    "src/components/dashboard/UpcomingEventsList.svelte": 22,
+    "src/components/layout/Header.svelte": 7,
+    "src/components/layout/Sidebar.svelte": 15,
+    "src/components/notifications/DayPicker.svelte": 2,
+    "src/components/notifications/PeriodicRuleCard.svelte": 6,
+    "src/components/notifications/UpcomingRuleCard.svelte": 12,
+    "src/components/settings/ContentRuleSettings.svelte": 11,
+    "src/components/settings/GeneralSettings.svelte": 3,
+    "src/components/settings/PropertyMappingSettings.svelte": 18,
+    "src/routes/Calendar.svelte": 24,
+    "src/routes/Dashboard.svelte": 2,
+    "src/routes/History.svelte": 40,
+    "src/routes/Notifications.svelte": 9,
+    "src/routes/Settings.svelte": 9,
+  }),
+);
 
 const patterns = [
   { tag: "input", re: /<input\b/ },
@@ -52,16 +54,24 @@ const patterns = [
   { tag: "button", re: /<button\b/ },
 ];
 
-function listSvelteFiles(dir) {
-  if (fs.statSync(dir).isFile()) return [dir];
+function listFiles(dir, extensions) {
+  if (fs.statSync(dir).isFile()) {
+    return extensions.some((ext) => dir.endsWith(ext)) ? [dir] : [];
+  }
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const files = [];
   for (const ent of entries) {
     const full = path.join(dir, ent.name);
-    if (ent.isDirectory()) files.push(...listSvelteFiles(full));
-    else if (ent.isFile() && ent.name.endsWith(".svelte")) files.push(full);
+    if (ent.isDirectory()) files.push(...listFiles(full, extensions));
+    else if (ent.isFile() && extensions.some((ext) => ent.name.endsWith(ext))) {
+      files.push(full);
+    }
   }
   return files;
+}
+
+function listSvelteFiles(dir) {
+  return listFiles(dir, [".svelte"]);
 }
 
 function lineNumberForIndex(source, index) {
@@ -71,6 +81,34 @@ function lineNumberForIndex(source, index) {
 
 const violations = [];
 const classViolations = [];
+const pandaViolations = [];
+const pandaApiPattern =
+  /from\s+["'][^"']*styled-system\/(?:css|patterns)["']|\b(?:css|cva|sva)\s*\(/;
+
+for (const root of [path.join(webRoot, "src")]) {
+  for (const file of listSvelteFiles(root)) {
+    const source = fs.readFileSync(file, "utf8");
+    const match = pandaApiPattern.exec(source);
+    if (match) {
+      pandaViolations.push({
+        file,
+        line: lineNumberForIndex(source, match.index),
+      });
+    }
+  }
+}
+
+for (const file of listFiles(path.join(webRoot, "src"), [".ts"])) {
+  if (file.endsWith(".d.ts")) continue;
+  const source = fs.readFileSync(file, "utf8");
+  const match = pandaApiPattern.exec(source);
+  if (match) {
+    pandaViolations.push({
+      file,
+      line: lineNumberForIndex(source, match.index),
+    });
+  }
+}
 
 for (const root of scanRoots) {
   for (const file of listSvelteFiles(root)) {
@@ -96,7 +134,11 @@ for (const root of scanRoots) {
   }
 }
 
-if (violations.length > 0 || classViolations.length > 0) {
+if (
+  violations.length > 0 ||
+  classViolations.length > 0 ||
+  pandaViolations.length > 0
+) {
   const lines = violations
     .map((v) => {
       const rel = path.relative(repoRoot, v.file);
@@ -109,14 +151,26 @@ if (violations.length > 0 || classViolations.length > 0) {
       return `- ${rel} has ${v.count} class bindings; budget is ${v.budget}`;
     })
     .join("\n");
-  console.error([
-    "UI policy check failed.",
-    "Use primitives in web/src/lib/ui instead of raw HTML controls, and do not increase class bindings outside the UI DSL.",
-    violations.length ? "Raw control violations:" : "",
-    lines,
-    classViolations.length ? "Class budget violations:" : "",
-    classLines,
-  ].filter(Boolean).join("\n"));
+  const pandaLines = pandaViolations
+    .map((v) => {
+      const rel = path.relative(repoRoot, v.file);
+      return `- ${rel}:${v.line} uses Panda styling APIs directly. Use primitives in web/src/lib/ui or define recipes in panda.config.ts instead.`;
+    })
+    .join("\n");
+  console.error(
+    [
+      "UI policy check failed.",
+      "Use primitives in web/src/lib/ui instead of raw HTML controls, and do not increase class bindings outside the UI DSL.",
+      violations.length ? "Raw control violations:" : "",
+      lines,
+      classViolations.length ? "Class budget violations:" : "",
+      classLines,
+      pandaViolations.length ? "Panda styling API violations:" : "",
+      pandaLines,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
   process.exit(1);
 }
 
