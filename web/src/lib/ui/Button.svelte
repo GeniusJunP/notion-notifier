@@ -51,7 +51,7 @@
     let className = "";
     export { className as class };
 
-    let spinnerTone: "current" | "muted" | "inverse" = "muted";
+    let spinnerTone: "current" | "muted" | "inverse";
 
     $: spinnerTone =
         variant === "primary"

@@ -15,8 +15,20 @@
     import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
     import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
     import Button from "../lib/ui/Button.svelte";
+    import { onMount, onDestroy } from "svelte";
 
-    $: config = $configStore;
+    let config = $configStore;
+    let unsubscribe: () => void;
+
+    onMount(() => {
+        unsubscribe = configStore.subscribe((value) => {
+            config = value;
+        });
+    });
+
+    onDestroy(() => {
+        if (unsubscribe) unsubscribe();
+    });
 
     let isSaving = false;
     let previewOpen = false;
@@ -50,11 +62,13 @@
                 property_filters: [],
             },
         };
-        config.notifications.upcoming = [
-            ...(config.notifications.upcoming || []),
-            newRule,
-        ];
-        configStore.set(config);
+        configStore.update((cfg) => cfg ? {
+            ...cfg,
+            notifications: {
+                ...cfg.notifications,
+                upcoming: [...(cfg.notifications.upcoming || []), newRule],
+            }
+        } : null);
     }
 
     function addPeriodicRule() {
@@ -66,27 +80,41 @@
             days_ahead: 7,
             message: "",
         };
-        config.notifications.periodic = [
-            ...(config.notifications.periodic || []),
-            newRule,
-        ];
-        configStore.set(config);
+        configStore.update((cfg) => cfg ? {
+            ...cfg,
+            notifications: {
+                ...cfg.notifications,
+                periodic: [...(cfg.notifications.periodic || []), newRule],
+            }
+        } : null);
     }
 
     function removeUpcomingRule(index: number) {
         if (!config) return;
-        config.notifications.upcoming = (
-            config.notifications.upcoming || []
-        ).filter((_, i) => i !== index);
-        configStore.set(config);
+        configStore.update((cfg) => {
+            if (!cfg) return null;
+            return {
+                ...cfg,
+                notifications: {
+                    ...cfg.notifications,
+                    upcoming: (cfg.notifications.upcoming || []).filter((_, i) => i !== index),
+                }
+            };
+        });
     }
 
     function removePeriodicRule(index: number) {
         if (!config) return;
-        config.notifications.periodic = (
-            config.notifications.periodic || []
-        ).filter((_, i) => i !== index);
-        configStore.set(config);
+        configStore.update((cfg) => {
+            if (!cfg) return null;
+            return {
+                ...cfg,
+                notifications: {
+                    ...cfg.notifications,
+                    periodic: (cfg.notifications.periodic || []).filter((_, i) => i !== index),
+                }
+            };
+        });
     }
 
     async function previewTemplate(
@@ -113,11 +141,26 @@
             const defaults = await api.getDefaultTemplates();
             const message = defaults[type] || "";
             if (type === "upcoming") {
-                config.notifications.upcoming[index].message = message;
+                configStore.update((cfg) => cfg ? {
+                    ...cfg,
+                    notifications: {
+                        ...cfg.notifications,
+                        upcoming: cfg.notifications.upcoming.map((rule, i) =>
+                            i === index ? { ...rule, message } : rule
+                        ),
+                    }
+                } : null);
             } else {
-                config.notifications.periodic[index].message = message;
+                configStore.update((cfg) => cfg ? {
+                    ...cfg,
+                    notifications: {
+                        ...cfg.notifications,
+                        periodic: cfg.notifications.periodic.map((rule, i) =>
+                            i === index ? { ...rule, message } : rule
+                        ),
+                    }
+                } : null);
             }
-            configStore.set(config);
             addToast("デフォルトテンプレートを適用しました", "info");
         } catch {
             addToast("デフォルトテンプレートの取得に失敗しました", "error");
@@ -147,7 +190,7 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.upcoming || [] as rule, i}
+                {#each config.notifications.upcoming || [] as rule, i (i)}
                     <UpcomingRuleCard
                         bind:rule
                         index={i}
@@ -173,7 +216,7 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.periodic || [] as rule, i}
+                {#each config.notifications.periodic || [] as rule, i (i)}
                     <PeriodicRuleCard
                         bind:rule
                         index={i}

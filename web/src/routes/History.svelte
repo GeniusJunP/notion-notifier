@@ -113,7 +113,7 @@
 
         {#if isLoading}
             <div class="space-y-4 p-12">
-                {#each Array(5) as _}
+                {#each Array(5) as _, index (index)}
                     <div
                         class="h-16 rounded-2xl bg-gray-50 animate-pulse dark:bg-gray-800"
                     ></div>

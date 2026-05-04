@@ -115,7 +115,7 @@
     </div>
 
     <div class="flex flex-wrap gap-1.5">
-        {#each templateVariables as variable}
+        {#each templateVariables as variable (variable)}
             <code
                 class="break-all rounded-md border border-gray-200/80 bg-white/80 px-1.5 py-0.5 font-mono text-[10px] text-gray-700 dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-100"
             >

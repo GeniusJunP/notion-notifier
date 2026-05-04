@@ -6,10 +6,21 @@
     import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
     import { Settings, Save } from "lucide-svelte";
     import Button from "../lib/ui/Button.svelte";
+    import { onMount, onDestroy } from "svelte";
 
-    $: config = $configStore;
-
+    let config = $configStore;
     let isSaving = false;
+    let unsubscribe: () => void;
+
+    onMount(() => {
+        unsubscribe = configStore.subscribe((value) => {
+            config = value;
+        });
+    });
+
+    onDestroy(() => {
+        if (unsubscribe) unsubscribe();
+    });
 
     async function saveConfig() {
         isSaving = true;
@@ -44,7 +55,7 @@
 
             <div class="space-y-8">
                 <ContentRuleSettings bind:config />
-                <WebhookSettingsCard {config} />
+                <WebhookSettingsCard config={config ?? undefined} />
             </div>
         </div>
     {/if}

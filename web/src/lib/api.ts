@@ -1,5 +1,11 @@
 import { toLocalDateInputValue } from './utils';
 
+type RequestOptions = {
+  method?: string;
+  body?: string;
+  headers?: Record<string, string>;
+};
+
 export interface Config {
   timezone: string;
   sync: SyncConfig;
@@ -126,6 +132,8 @@ export interface HistoryItem {
   sent_at: string;
 }
 
+type OnErrorCallback = (errorMessage: string) => void;
+
 export interface ApiError {
   error: string;
   details?: Record<string, string>;
@@ -195,7 +203,7 @@ export function buildPreviewNotificationRequest(
   return { template };
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+async function request<T>(path: string, options?: RequestOptions): Promise<T> {
   let response;
   try {
     response = await fetch(path, {
@@ -206,6 +214,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       },
     });
   } catch (networkError) {
+    console.error('Network error:', networkError);
     api.onError?.('ネットワークエラー: サーバーに接続できません');
     throw { error: 'ネットワークエラー' } as ApiError;
   }
@@ -232,7 +241,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  onError: null as ((msg: string) => void) | null,
+  onError: null as OnErrorCallback | null,
   getConfig: () => request<Config>('/api/config'),
   updateConfig: (cfg: Config) => request<Config>('/api/config', { method: 'PUT', body: JSON.stringify(cfg) }),
   updateSnooze: (snooze: SnoozeConfig) => request<SnoozeConfig>('/api/snooze', { method: 'PATCH', body: JSON.stringify(snooze) }),

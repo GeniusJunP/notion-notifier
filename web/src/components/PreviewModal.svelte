@@ -12,6 +12,15 @@
     export let mode: "webhook" | "guide" = "webhook";
 
     const dispatch = createEventDispatcher<{ close: void }>();
+
+    function setSanitizedHTML(node: HTMLElement, html: string) {
+        node.innerHTML = html;
+        return {
+            update(newHTML: string) {
+                node.innerHTML = newHTML;
+            }
+        };
+    }
     const markdownOptions = {
         gfm: true,
         breaks: true,
@@ -90,8 +99,7 @@
             </div>
             <div class="ui-modal-body ui-scrollbar">
                 {#if renderedContent}
-                    <div class="ui-markdown-preview">
-                        {@html renderedContent}
+                    <div class="ui-markdown-preview" use:setSanitizedHTML={renderedContent}>
                     </div>
                 {:else}
                     <div class="ui-empty-preview">

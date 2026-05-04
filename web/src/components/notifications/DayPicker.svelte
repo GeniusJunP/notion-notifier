@@ -17,7 +17,7 @@
 </script>
 
 <div class="flex flex-wrap gap-2">
-    {#each dayValues as day, idx}
+    {#each dayValues as day, idx (day)}
         <button
             type="button"
             on:click={() => toggleDay(day)}

@@ -51,7 +51,7 @@
         class="h-[calc(100%-3.5rem)] space-y-1 overflow-y-auto p-4 lg:h-full"
         aria-label="メインナビゲーション"
     >
-        {#each navItems as item}
+        {#each navItems as item (item.path)}
             <SidebarButton
                 active={activeRouteValue === item.path}
                 ariaCurrent={activeRouteValue === item.path

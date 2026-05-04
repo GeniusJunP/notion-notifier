@@ -37,11 +37,6 @@
     let className = "";
     export { className as class };
 
-    const sizeClasses = {
-        sm: "min-h-10 px-3 py-2 text-sm",
-        md: "min-h-11 px-4 py-2.5 text-sm",
-    } as const;
-
     function handleInput(event: Event) {
         const target = event.currentTarget as HTMLInputElement;
         if (type === "number") {

@@ -4,7 +4,6 @@
         api,
         buildManualNotificationRequest,
         getErrorMessage,
-        type Config,
         type DashboardData,
         type UpcomingEvent,
     } from "../lib/api";
@@ -125,7 +124,9 @@
             openPreview("送信メッセージ", res.message);
             try {
                 configStore.set(await api.getConfig());
-            } catch {}
+            } catch {
+                addToast("設定の再読み込みに失敗しました", "error");
+            }
         } catch (e: unknown) {
             addToast(`送信失敗: ${getErrorMessage(e)}`, "error");
         } finally {

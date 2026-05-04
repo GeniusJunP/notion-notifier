@@ -33,7 +33,6 @@
     }>();
 
     let blocks: TemplateBlock[] = blocksFromTemplate(value);
-    let lastVisualValue = value;
 
     const kindOptions = [
         { value: "text", label: "テキスト" },
@@ -46,13 +45,11 @@
 
     function syncFromBlocks() {
         value = serializeTemplateBlocks(blocks);
-        lastVisualValue = value;
     }
 
     function enterVisualMode() {
         if (mode === "visual") return;
         blocks = blocksFromTemplate(value);
-        lastVisualValue = value;
         mode = "visual";
     }
 
@@ -85,9 +82,6 @@
         updateBlock(index, block);
     }
 
-    $: if (mode === "visual" && value !== lastVisualValue) {
-        lastVisualValue = value;
-    }
 </script>
 
 <div class="space-y-3">
@@ -126,11 +120,11 @@
         />
     {:else}
         <Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
-            {#each blocks as block, index}
+            {#each blocks as block, index (index)}
                 <div class="rounded-xl border border-gray-200/80 bg-white/80 p-3 dark:border-gray-800 dark:bg-gray-950/60">
                     <div class="mb-3 flex items-center gap-2">
                         <Select bind:value={block.kind} uiSize="sm" on:change={() => updateBlock(index, block)}>
-                            {#each kindOptions as option}
+                            {#each kindOptions as option (option.value)}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
                         </Select>
@@ -154,7 +148,7 @@
                         />
                     {:else if block.kind === "variable"}
                         <Select bind:value={block.content} on:change={() => updateBlock(index, block)}>
-                            {#each variableOptions as option}
+                            {#each variableOptions as option (option.value)}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
                         </Select>
@@ -180,7 +174,7 @@
             {/each}
 
             <div class="flex flex-wrap gap-2">
-                {#each kindOptions as option}
+                {#each kindOptions as option (option.value)}
                     <Button
                         type="button"
                         variant="ghost"

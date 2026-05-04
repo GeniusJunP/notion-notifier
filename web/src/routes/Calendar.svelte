@@ -3,7 +3,6 @@
     import {
         configStore,
         addToast,
-        saveConfig as saveConfigState,
     } from "../lib/store";
     import {
         Calendar,
@@ -19,8 +18,20 @@
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
     import { toLocalDateInputValue } from "../lib/utils";
+    import { onMount, onDestroy } from "svelte";
 
-    $: config = $configStore;
+    let config = $configStore;
+    let unsubscribe: () => void;
+
+    onMount(() => {
+        unsubscribe = configStore.subscribe((value) => {
+            config = value;
+        });
+    });
+
+    onDestroy(() => {
+        if (unsubscribe) unsubscribe();
+    });
 
     let isSyncing = false;
     let isClearing = false;
@@ -28,13 +39,6 @@
         from: toLocalDateInputValue(new Date()),
         to: toLocalDateInputValue(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     };
-
-    async function handleConfigUpdate() {
-        await saveConfigState(config, {
-            successMessage: "設定を保存しました",
-            errorMessage: "保存に失敗しました",
-        });
-    }
 
     async function handleSync() {
         isSyncing = true;
@@ -90,10 +94,17 @@
             </span>
             {#if config}
                 <Toggle
-                    bind:checked={config.calendar_sync.enabled}
+                    checked={config?.calendar_sync.enabled ?? false}
+                    on:change={(e) => {
+                        if (!config) return;
+                        const target = e.currentTarget as HTMLInputElement;
+                        configStore.update((cfg) => cfg ? {
+                            ...cfg,
+                            calendar_sync: { ...cfg.calendar_sync, enabled: target.checked }
+                        } : null);
+                    }}
                     ariaLabel="カレンダー同期の有効化を切り替え"
                     tone="success"
-                    on:change={handleConfigUpdate}
                 />
             {/if}
         </div>
@@ -112,8 +123,15 @@
                         <Input
                             id="cal-interval-hours"
                             type="number"
-                            bind:value={config.calendar_sync.interval_hours}
-                            on:change={handleConfigUpdate}
+                            value={config?.calendar_sync.interval_hours ?? 0}
+                            on:input={(e) => {
+                                if (!config) return;
+                                const target = e.currentTarget as HTMLInputElement;
+                                configStore.update((cfg) => cfg ? {
+                                    ...cfg,
+                                    calendar_sync: { ...cfg.calendar_sync, interval_hours: parseInt(target.value) || 0 }
+                                } : null);
+                            }}
                         />
                     </FormField>
 
@@ -121,8 +139,15 @@
                         <Input
                             id="cal-lookahead-days"
                             type="number"
-                            bind:value={config.calendar_sync.lookahead_days}
-                            on:change={handleConfigUpdate}
+                            value={config?.calendar_sync.lookahead_days ?? 0}
+                            on:input={(e) => {
+                                if (!config) return;
+                                const target = e.currentTarget as HTMLInputElement;
+                                configStore.update((cfg) => cfg ? {
+                                    ...cfg,
+                                    calendar_sync: { ...cfg.calendar_sync, lookahead_days: parseInt(target.value) || 0 }
+                                } : null);
+                            }}
                         />
                     </FormField>
 

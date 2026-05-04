@@ -58,7 +58,7 @@
 
     {#if isLoading && !isSyncing}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {#each Array(4) as _}
+            {#each Array(4) as _, index (index)}
                 <Card
                     tone="default"
                     radius="2xl"
@@ -86,7 +86,7 @@
         </Card>
     {:else}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {#each upcoming as event}
+            {#each upcoming as event, index (index)}
                 <Card
                     radius="2xl"
                     padding="md"

@@ -65,6 +65,8 @@ export function navigate(path: string) {
   activeRoute.set(path);
 }
 
+type DarkModeUpdater = (value: boolean) => boolean;
+
 function createDarkModeStore() {
   const { subscribe, set, update } = writable<boolean>(false);
   return {
@@ -74,12 +76,12 @@ function createDarkModeStore() {
       document.documentElement.classList.toggle('dark', value);
       set(value);
     },
-    update: (updater: (v: boolean) => boolean) => {
+    update: (updater: DarkModeUpdater) => {
       update((current) => {
-        const value = updater(current);
-        localStorage.setItem('darkMode', value.toString());
-        document.documentElement.classList.toggle('dark', value);
-        return value;
+        const newValue = updater(current);
+        localStorage.setItem('darkMode', newValue.toString());
+        document.documentElement.classList.toggle('dark', newValue);
+        return newValue;
       });
     },
     init: () => {
@@ -111,7 +113,7 @@ export const darkMode = createDarkModeStore();
 interface SaveConfigOptions {
   successMessage?: string;
   errorMessage: string;
-  onSaved?: (saved: Config) => Promise<void> | void;
+  onSaved?: () => Promise<void> | void;
 }
 
 export async function saveConfig(
@@ -126,7 +128,7 @@ export async function saveConfig(
     const saved = await api.updateConfig(cfg);
     configStore.set(saved);
     if (options.onSaved) {
-      await options.onSaved(saved);
+      await options.onSaved();
     }
     if (options.successMessage) {
       addToast(options.successMessage, 'success');
@@ -140,9 +142,9 @@ export async function saveConfig(
 }
 
 interface SyncNotionOptions {
-  successMessage?: (count: number) => string;
+  successMessage?: (eventCount: number) => string;
   errorMessage?: string;
-  onSynced?: (count: number) => Promise<void> | void;
+  onSynced?: () => Promise<void> | void;
 }
 
 export async function syncNotion(options: SyncNotionOptions = {}): Promise<number | null> {
@@ -153,7 +155,7 @@ export async function syncNotion(options: SyncNotionOptions = {}): Promise<numbe
       : `${res.count}件のイベントを同期しました`;
     addToast(successMessage, 'success');
     if (options.onSynced) {
-      await options.onSynced(res.count);
+      await options.onSynced();
     }
     return res.count;
   } catch (e: unknown) {

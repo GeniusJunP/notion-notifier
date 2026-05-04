@@ -58,11 +58,10 @@
   }
 
   async function saveSnooze() {
-    if (!config) return;
+    if (!$configStore) return;
     try {
-      const saved = await api.updateSnooze(config.snooze);
-      config.snooze = saved;
-      configStore.set(config);
+      const saved = await api.updateSnooze($configStore.snooze);
+      configStore.update((cfg) => cfg ? { ...cfg, snooze: saved } : null);
       await healthPoller.forceCheck();
     } catch {
       addToast("スヌーズ設定の保存に失敗しました", "error");
@@ -70,13 +69,17 @@
   }
 
   async function clearSnooze() {
-    if (!config) return;
-    config.snooze = {
-      until: "",
-      mute_upcoming: true,
-      mute_periodic: true,
-    };
-    configStore.set(config);
+    configStore.update((cfg) => {
+      if (!cfg) return null;
+      return {
+        ...cfg,
+        snooze: {
+          until: "",
+          mute_upcoming: true,
+          mute_periodic: true,
+        },
+      };
+    });
     await saveSnooze();
   }
 

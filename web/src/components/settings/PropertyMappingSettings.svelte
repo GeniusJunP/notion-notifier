@@ -97,7 +97,7 @@
                     カスタムマッピング
                 </p>
 
-                {#each config.property_mapping.custom as custom, idx}
+                {#each config.property_mapping.custom as custom, idx (idx)}
                     <div class="group flex items-center gap-2">
                         <div class="grid flex-1 grid-cols-2 gap-2">
                             <Input
