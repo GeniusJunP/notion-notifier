@@ -45,8 +45,8 @@
         mono?: boolean;
     } = $props();
 
-    function handleInput(event: Event) {
-        const target = event.currentTarget as HTMLInputElement;
+    function handleInput(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+        const target = event.currentTarget;
         if (type === "number") {
             value = Number.isNaN(target.valueAsNumber)
                 ? ""
@@ -54,19 +54,19 @@
             return;
         }
         value = target.value;
-        oninput?.(event);
+        oninput?.(event as any);
     }
 
-    function handleChange(event: Event) {
+    function handleChange(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
         if (type !== "number") {
-            onchange?.(event);
+            onchange?.(event as any);
             return;
         }
-        const target = event.currentTarget as HTMLInputElement;
+        const target = event.currentTarget;
         value = Number.isNaN(target.valueAsNumber)
             ? ""
             : target.valueAsNumber;
-        onchange?.(event);
+        onchange?.(event as any);
     }
 
     const classes = $derived(cn(

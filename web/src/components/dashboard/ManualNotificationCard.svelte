@@ -22,7 +22,7 @@
 </script>
 
 <Panel radius="3xl" bodyClass="space-y-5">
-    <svelte:fragment slot="header">
+    {#snippet header()}
         <div class="flex items-center gap-3">
             <IconChip tone="brand" size="md">
                 <Send size={20} />
@@ -36,13 +36,13 @@
                 </p>
             </div>
         </div>
-    </svelte:fragment>
-    <svelte:fragment slot="actions">
+    {/snippet}
+    {#snippet actions()}
         <Button onclick={() => dispatch("loadDefault")} variant="ghost" size="sm">
             <RotateCcw size={12} />
             デフォルトに戻す
         </Button>
-    </svelte:fragment>
+    {/snippet}
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="開始日" forId="manual-from-date" variant="eyebrow">

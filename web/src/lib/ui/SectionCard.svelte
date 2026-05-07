@@ -1,19 +1,31 @@
 <script lang="ts">
     import { cn } from "../utils";
     import Card from "./Card.svelte";
+    import type { Snippet } from "svelte";
 
     type Tone = "default" | "muted" | "brand" | "danger";
     type Padding = "none" | "sm" | "md" | "lg";
     type Radius = "xl" | "2xl" | "3xl";
 
-    export let tone: Tone = "default";
-    export let padding: Padding = "md";
-    export let radius: Radius = "3xl";
-    export let interactive = false;
-    export let overflowHidden = false;
+    interface Props {
+        tone?: Tone;
+        padding?: Padding;
+        radius?: Radius;
+        interactive?: boolean;
+        overflowHidden?: boolean;
+        class?: string;
+        children?: Snippet;
+    }
 
-    let className = "";
-    export { className as class };
+    let {
+        tone = "default",
+        padding = "md",
+        radius = "3xl",
+        interactive = false,
+        overflowHidden = false,
+        class: className = "",
+        children,
+    }: Props = $props();
 </script>
 
 <Card
@@ -24,6 +36,6 @@
     {overflowHidden}
     class={cn("space-y-6", className)}
 >
-    <slot />
+    {@render children?.()}
 </Card>
 

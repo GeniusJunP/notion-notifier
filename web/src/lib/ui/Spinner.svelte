@@ -1,30 +1,45 @@
 <script lang="ts">
     import { cn } from "../utils";
+    import { tv } from "tailwind-variants";
 
-    export let size: "sm" | "md" = "sm";
-    export let tone: "current" | "muted" | "inverse" = "current";
+    const spinnerRecipe = tv({
+        base: "animate-spin rounded-full",
+        variants: {
+            size: {
+                sm: "size-4 border-2",
+                md: "size-5 border-2",
+            },
+            tone: {
+                current: "border-current/20 border-t-current",
+                muted: "border-gray-400/30 border-t-gray-600 dark:border-gray-500/30 dark:border-t-gray-200",
+                inverse: "border-white/25 border-t-white",
+            },
+        },
+        defaultVariants: {
+            size: "sm",
+            tone: "current",
+        },
+    });
 
-    let className = "";
-    export { className as class };
+    type Size = "sm" | "md";
+    type Tone = "current" | "muted" | "inverse";
 
-    const sizeClasses = {
-        sm: "h-4 w-4 border-2",
-        md: "h-5 w-5 border-2",
-    } as const;
+    interface Props {
+        size?: Size;
+        tone?: Tone;
+        class?: string;
+    }
 
-    const toneClasses = {
-        current: "border-current/20 border-t-current",
-        muted: "border-gray-400/30 border-t-gray-600 dark:border-gray-500/30 dark:border-t-gray-200",
-        inverse: "border-white/25 border-t-white",
-    } as const;
+    let {
+        size = "sm",
+        tone = "current",
+        class: className = "",
+    }: Props = $props();
+
+    let classes = $derived(cn(spinnerRecipe({ size, tone }), className));
 </script>
 
 <div
     aria-hidden="true"
-    class={cn(
-        "animate-spin rounded-full",
-        sizeClasses[size],
-        toneClasses[tone],
-        className,
-    )}
+    class={classes}
 ></div>

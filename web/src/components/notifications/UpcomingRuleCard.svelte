@@ -21,7 +21,7 @@
 </script>
 
 <Panel radius="2xl" interactive bodyClass="grid grid-cols-1 gap-8">
-    <svelte:fragment slot="header">
+    {#snippet header()}
         <div class="flex items-center gap-3">
             <div
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
@@ -38,8 +38,8 @@
                 事前通知 {index + 1}
             </span>
         </div>
-    </svelte:fragment>
-    <svelte:fragment slot="actions">
+    {/snippet}
+    {#snippet actions()}
         <Button
             type="button"
             onclick={() => dispatch("remove", index)}
@@ -49,7 +49,7 @@
         >
             <Trash2 size={18} />
         </Button>
-    </svelte:fragment>
+    {/snippet}
 
     <div class="space-y-4">
         <FormField label="通知タイミング (分前)" forId={`adv-minutes-${index}`}>

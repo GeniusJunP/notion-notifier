@@ -1,35 +1,58 @@
 <script lang="ts">
     import { cn } from "../utils";
+    import { tv } from "tailwind-variants";
     import Card from "./Card.svelte";
+    import type { Snippet } from "svelte";
+
+    const panelRecipe = tv({
+        slots: {
+            headerWrapper: "ui-panel-header",
+            bodyWrapper: "",
+        },
+        variants: {
+            padding: {
+                none: { headerWrapper: "", bodyWrapper: "" },
+                sm: { headerWrapper: "p-4", bodyWrapper: "p-4" },
+                md: { headerWrapper: "px-6 py-5", bodyWrapper: "p-6" },
+                lg: { headerWrapper: "px-8 py-6", bodyWrapper: "p-8" },
+            },
+        },
+        defaultVariants: {
+            padding: "md",
+        },
+    });
 
     type Tone = "default" | "muted" | "brand" | "danger";
     type Padding = "none" | "sm" | "md" | "lg";
     type Radius = "xl" | "2xl" | "3xl";
 
-    export let tone: Tone = "default";
-    export let padding: Padding = "md";
-    export let radius: Radius = "2xl";
-    export let interactive = false;
+    interface Props {
+        tone?: Tone;
+        padding?: Padding;
+        radius?: Radius;
+        interactive?: boolean;
+        headerClass?: string;
+        bodyClass?: string;
+        class?: string;
+        header?: Snippet;
+        actions?: Snippet;
+        children?: Snippet;
+    }
 
-    export let headerClass = "";
-    export let bodyClass = "";
+    let {
+        tone = "default",
+        padding = "md",
+        radius = "2xl",
+        interactive = false,
+        headerClass = "",
+        bodyClass = "",
+        class: className = "",
+        header,
+        actions,
+        children,
+    }: Props = $props();
 
-    let className = "";
-    export { className as class };
-
-    const headerPaddingClasses: Record<Padding, string> = {
-        none: "",
-        sm: "px-4 py-4",
-        md: "px-6 py-5",
-        lg: "px-8 py-6",
-    } as const;
-
-    const bodyPaddingClasses: Record<Padding, string> = {
-        none: "",
-        sm: "p-4",
-        md: "p-6",
-        lg: "p-8",
-    } as const;
+    let styles = $derived(panelRecipe({ padding }));
 </script>
 
 <Card
@@ -40,18 +63,18 @@
     overflowHidden
     class={className}
 >
-    <div class={cn("ui-panel-header", headerPaddingClasses[padding], headerClass)}>
+    <div class={cn(styles.headerWrapper(), headerClass)}>
         <div class="min-w-0 flex-1">
-            <slot name="header" />
+            {@render header?.()}
         </div>
-        {#if $$slots.actions}
+        {#if actions}
             <div class="shrink-0">
-                <slot name="actions" />
+                {@render actions()}
             </div>
         {/if}
     </div>
-    <div class={cn(bodyPaddingClasses[padding], bodyClass)}>
-        <slot />
+    <div class={cn(styles.bodyWrapper(), bodyClass)}>
+        {@render children?.()}
     </div>
 </Card>
 

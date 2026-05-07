@@ -1,5 +1,42 @@
 <script lang="ts">
     import { cn } from "../utils";
+    import { tv } from "tailwind-variants";
+
+    const toggleRecipe = tv({
+        slots: {
+            base: "relative inline-flex shrink-0 items-center rounded-full border border-transparent p-1 shadow-inner outline-none transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-2 focus-visible:ring-brand-300/70 disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-brand-700/60",
+            thumb: "rounded-full bg-white shadow-sm transition-transform duration-200",
+        },
+        variants: {
+            size: {
+                sm: { base: "h-6 w-10", thumb: "size-4" },
+                md: { base: "h-8 w-14", thumb: "size-6" },
+            },
+            tone: {
+                brand: "",
+                success: "",
+                warning: "",
+            },
+            checked: {
+                true: "",
+                false: { base: "bg-gray-200 dark:bg-gray-700" },
+            },
+        },
+        compoundVariants: [
+            { checked: true, tone: "brand", class: { base: "bg-brand-600 dark:bg-brand-500" } },
+            { checked: true, tone: "success", class: { base: "bg-emerald-600 dark:bg-emerald-500" } },
+            { checked: true, tone: "warning", class: { base: "bg-amber-500 dark:bg-amber-500" } },
+            { checked: true, size: "sm", class: { thumb: "translate-x-4" } },
+            { checked: false, size: "sm", class: { thumb: "translate-x-0" } },
+            { checked: true, size: "md", class: { thumb: "translate-x-6" } },
+            { checked: false, size: "md", class: { thumb: "translate-x-0" } },
+        ],
+        defaultVariants: {
+            size: "md",
+            tone: "brand",
+            checked: false,
+        },
+    });
 
     type Tone = "brand" | "success" | "warning";
     type Size = "sm" | "md";
@@ -18,38 +55,19 @@
         checked = $bindable(false),
         disabled = false,
         ariaLabel = "",
-        tone = "brand" as Tone,
-        size = "md" as Size,
+        tone = "brand",
+        size = "md",
         onchange,
         class: className = "",
     }: ToggleProps = $props();
-
-    const sizeClasses = {
-        sm: {
-            track: "h-6 w-10",
-            thumb: "h-4 w-4",
-            on: "translate-x-4",
-            off: "translate-x-0",
-        },
-        md: {
-            track: "h-8 w-14",
-            thumb: "h-6 w-6",
-            on: "translate-x-6",
-            off: "translate-x-0",
-        },
-    } as const satisfies Record<Size, any>;
-
-    const activeClasses = {
-        brand: "bg-brand-600 dark:bg-brand-500",
-        success: "bg-emerald-600 dark:bg-emerald-500",
-        warning: "bg-amber-500 dark:bg-amber-500",
-    } as const satisfies Record<Tone, string>;
 
     function toggle() {
         if (disabled) return;
         checked = !checked;
         onchange?.(checked);
     }
+
+    let styles = $derived(toggleRecipe({ size, tone, checked }));
 </script>
 
 <button
@@ -58,23 +76,8 @@
     aria-checked={checked}
     aria-label={ariaLabel}
     {disabled}
-    class={cn(
-        "relative inline-flex shrink-0 items-center rounded-full border border-transparent p-1 shadow-inner outline-none transition-[background-color,box-shadow,transform] duration-200",
-        "focus-visible:ring-2 focus-visible:ring-brand-300/70 dark:focus-visible:ring-brand-700/60",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        sizeClasses[size].track,
-        checked
-            ? activeClasses[tone]
-            : "bg-gray-200 dark:bg-gray-700",
-        className,
-    )}
+    class={cn(styles.base(), className)}
     onclick={toggle}
 >
-    <span
-        class={cn(
-            "rounded-full bg-white shadow-sm transition-transform duration-200",
-            sizeClasses[size].thumb,
-            checked ? sizeClasses[size].on : sizeClasses[size].off,
-        )}
-    ></span>
+    <span class={styles.thumb()}></span>
 </button>
