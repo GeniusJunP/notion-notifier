@@ -151,9 +151,9 @@
     {config}
     {showTemplateGuide}
     {mainNavId}
-    on:sync={handleSync}
-    on:saveSnooze={saveSnooze}
-    on:clearSnooze={clearSnooze}
+    onSync={handleSync}
+    onSaveSnooze={saveSnooze}
+    onClearSnooze={clearSnooze}
   />
 
   {#if $sidebarOpen}

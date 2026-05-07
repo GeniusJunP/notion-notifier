@@ -22,20 +22,28 @@
 
     type UiSize = "sm" | "md";
 
-    export let value: HTMLInputAttributes["value"] = "";
-    export let type: HTMLInputAttributes["type"] = "text";
-    export let id: HTMLInputAttributes["id"] = undefined;
-    export let name: HTMLInputAttributes["name"] = undefined;
-    export let placeholder: HTMLInputAttributes["placeholder"] = undefined;
-    export let disabled = false;
-    export let uiSize: UiSize = "md";
-    export let mono = false;
-    export let min: HTMLInputAttributes["min"] = undefined;
-    export let max: HTMLInputAttributes["max"] = undefined;
-    export let step: HTMLInputAttributes["step"] = undefined;
-
-    let className = "";
-    export { className as class };
+    let {
+        value = $bindable(""),
+        type = "text",
+        id = undefined,
+        name = undefined,
+        placeholder = undefined,
+        disabled = false,
+        uiSize = "md" as UiSize,
+        mono = false,
+        min = undefined,
+        max = undefined,
+        step = undefined,
+        onchange,
+        oninput,
+        onfocus,
+        onblur,
+        class: className = "",
+        ...rest
+    }: HTMLInputAttributes & {
+        uiSize?: UiSize;
+        mono?: boolean;
+    } = $props();
 
     function handleInput(event: Event) {
         const target = event.currentTarget as HTMLInputElement;
@@ -46,25 +54,29 @@
             return;
         }
         value = target.value;
+        oninput?.(event);
     }
 
     function handleChange(event: Event) {
         if (type !== "number") {
+            onchange?.(event);
             return;
         }
         const target = event.currentTarget as HTMLInputElement;
         value = Number.isNaN(target.valueAsNumber)
             ? ""
             : target.valueAsNumber;
+        onchange?.(event);
     }
 
-    $: classes = cn(
+    const classes = $derived(cn(
         fieldRecipe({ size: uiSize, mono }),
         className,
-    );
+    ));
 </script>
 
 <input
+    {...rest}
     {id}
     {name}
     {type}
@@ -75,8 +87,8 @@
     {step}
     {value}
     class={classes}
-    on:blur
-    on:change={handleChange}
-    on:focus
-    on:input={handleInput}
+    onblur={(e) => { onblur?.(e); }}
+    onchange={handleChange}
+    onfocus={(e) => { onfocus?.(e); }}
+    oninput={handleInput}
 />

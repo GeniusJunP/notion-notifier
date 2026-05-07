@@ -95,12 +95,11 @@
             {#if config}
                 <Toggle
                     checked={config?.calendar_sync.enabled ?? false}
-                    on:change={(e) => {
+                    onchange={(value: boolean) => {
                         if (!config) return;
-                        const target = e.currentTarget as HTMLInputElement;
                         configStore.update((cfg) => cfg ? {
                             ...cfg,
-                            calendar_sync: { ...cfg.calendar_sync, enabled: target.checked }
+                            calendar_sync: { ...cfg.calendar_sync, enabled: value }
                         } : null);
                     }}
                     ariaLabel="カレンダー同期の有効化を切り替え"
@@ -124,7 +123,7 @@
                             id="cal-interval-hours"
                             type="number"
                             value={config?.calendar_sync.interval_hours ?? 0}
-                            on:input={(e) => {
+                            oninput={(e) => {
                                 if (!config) return;
                                 const target = e.currentTarget as HTMLInputElement;
                                 configStore.update((cfg) => cfg ? {
@@ -140,7 +139,7 @@
                             id="cal-lookahead-days"
                             type="number"
                             value={config?.calendar_sync.lookahead_days ?? 0}
-                            on:input={(e) => {
+                            oninput={(e) => {
                                 if (!config) return;
                                 const target = e.currentTarget as HTMLInputElement;
                                 configStore.update((cfg) => cfg ? {

@@ -1,7 +1,12 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
+
+    let {
+        onOpenGuide
+    }: {
+        onOpenGuide?: (_title: string, _content: string) => void;
+    } = $props();
 
     const templateVariables = [
         "{{.Name}}",
@@ -90,17 +95,11 @@
 - custom マッピングを追加した後、値が見えない場合は Notion 同期を実行して最新データを反映してください。
 `.trim();
 
-    const dispatch = createEventDispatcher<{
-        openGuide: { title: string; content: string };
-    }>();
     const detailTitle = "Goテンプレートの使い方";
     const detailContent = guideMarkdown;
 
     function openGuideDetail() {
-        dispatch("openGuide", {
-            title: detailTitle,
-            content: detailContent,
-        });
+        onOpenGuide?.(detailTitle, detailContent);
     }
 </script>
 

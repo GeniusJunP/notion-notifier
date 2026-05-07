@@ -1,25 +1,36 @@
 <script lang="ts">
     import { cn } from "../lib/utils";
+    import type { HTMLButtonAttributes } from "svelte/elements";
 
-    export let active = false;
-    export let justifyBetween = false;
-    export let disabled = false;
-    export let ariaCurrent: "page" | undefined = undefined;
+    let {
+        active = false,
+        justifyBetween = false,
+        disabled = false,
+        ariaCurrent = undefined,
+        class: className = "",
+        children,
+        ...rest
+    }: HTMLButtonAttributes & {
+        active?: boolean;
+        justifyBetween?: boolean;
+        ariaCurrent?: "page" | undefined;
+    } = $props();
 
-    let className = "";
-    export { className as class };
+    const variantClass = $derived(
+        active
+            ? "border-gray-200/80 bg-white/85 text-gray-900 shadow-sm dark:border-gray-800 dark:bg-gray-900/75 dark:text-gray-100"
+            : "text-gray-600 dark:text-gray-400"
+    );
 
-    $: variantClass = active
-        ? "border-gray-200/80 bg-white/85 text-gray-900 shadow-sm dark:border-gray-800 dark:bg-gray-900/75 dark:text-gray-100"
-        : "text-gray-600 dark:text-gray-400";
-
-    $: layoutClass = justifyBetween
-        ? "items-center justify-between"
-        : "items-center gap-3";
+    const layoutClass = $derived(
+        justifyBetween
+            ? "items-center justify-between"
+            : "items-center gap-3"
+    );
 </script>
 
 <button
-    on:click
+    {...rest}
     {disabled}
     aria-current={ariaCurrent}
     class={cn(
@@ -31,5 +42,7 @@
         className,
     )}
 >
-    <slot />
+    {#if children}
+        {@render children()}
+    {/if}
 </button>

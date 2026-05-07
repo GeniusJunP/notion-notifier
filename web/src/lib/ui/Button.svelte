@@ -3,7 +3,7 @@
     import { cn } from "../utils";
     import Spinner from "./Spinner.svelte";
     import { tv } from "tailwind-variants";
-    
+
     const buttonRecipe = tv({
         base: "inline-flex items-center justify-center gap-2 font-semibold tracking-tight outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand-300 active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 dark:focus-visible:ring-brand-700/60",
         variants: {
@@ -33,48 +33,47 @@
     type Variant = "primary" | "secondary" | "ghost" | "danger" | "text";
     type Size = "sm" | "md" | "lg" | "icon";
 
-    interface $$Props extends HTMLButtonAttributes {
-        class?: string;
+    let {
+        class: className = "",
+        variant = "primary",
+        size = "md",
+        loading = false,
+        block = false,
+        disabled = false,
+        type = "button",
+        children,
+        ...rest
+    }: HTMLButtonAttributes & {
         variant?: Variant;
         size?: Size;
         loading?: boolean;
         block?: boolean;
-    }
+    } = $props();
 
-    export let variant: Variant = "primary";
-    export let size: Size = "md";
-    export let loading = false;
-    export let block = false;
-    export let disabled: HTMLButtonAttributes["disabled"] = false;
-    export let type: HTMLButtonAttributes["type"] = "button";
-
-    let className = "";
-    export { className as class };
-
-    let spinnerTone: "current" | "muted" | "inverse";
-
-    $: spinnerTone =
+    const spinnerTone = $derived(
         variant === "primary"
             ? "inverse"
             : variant === "text"
               ? "current"
-              : "muted";
-
-    $: classes = cn(
-        buttonRecipe({ variant, size, block }),
-        className,
+              : "muted"
     );
+
+    const classes = $derived(cn(
+        buttonRecipe({ variant, size, block }),
+        className
+    ));
 </script>
 
 <button
-    {...$$restProps}
+    {...rest}
     {type}
     disabled={Boolean(disabled || loading)}
     class={classes}
-    on:click
 >
     {#if loading}
         <Spinner size={size === "lg" ? "md" : "sm"} tone={spinnerTone} />
     {/if}
-    <slot />
+    {#if children}
+        {@render children()}
+    {/if}
 </button>

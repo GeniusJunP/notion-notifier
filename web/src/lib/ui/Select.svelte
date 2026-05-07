@@ -5,15 +5,28 @@
     type UiSize = "sm" | "md";
     type Variant = "default" | "ghost";
 
-    export let value: HTMLSelectAttributes["value"] = "";
-    export let id: HTMLSelectAttributes["id"] = undefined;
-    export let name: HTMLSelectAttributes["name"] = undefined;
-    export let disabled: HTMLSelectAttributes["disabled"] = false;
-    export let uiSize: UiSize = "md";
-    export let variant: Variant = "default";
+    interface Props extends Partial<Omit<HTMLSelectAttributes, "size">> {
+        value?: any;
+        uiSize?: UiSize;
+        variant?: Variant;
+        children?: import('svelte').Snippet;
+    }
 
-    let className = "";
-    export { className as class };
+    let {
+        value = $bindable(""),
+        id,
+        name,
+        disabled = false,
+        uiSize = "md",
+        variant = "default",
+        class: className = "",
+        children,
+        onchange,
+        oninput,
+        onblur,
+        onfocus,
+        ...rest
+    }: Props = $props();
 
     const sizeClasses = {
         sm: "min-h-10 px-3 py-2 text-sm",
@@ -26,27 +39,27 @@
         ghost: "rounded-md border-none bg-transparent text-gray-900 shadow-none dark:text-gray-100",
     } as const;
 
-    $: classes = cn(
+    let classes = $derived(cn(
         "w-full appearance-none outline-none transition-[background-color,border-color,box-shadow,color] duration-200",
         "focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-900/50",
         "disabled:cursor-not-allowed disabled:opacity-60",
         sizeClasses[uiSize],
         variantClasses[variant],
         className,
-    );
-
-    function handleChange(event: Event) {
-        value = (event.currentTarget as HTMLSelectElement).value;
-    }
+    ));
 </script>
 
 <select
     {id}
     {name}
     disabled={Boolean(disabled)}
-    {value}
+    bind:value
     class={classes}
-    on:change={handleChange}
+    {onchange}
+    {oninput}
+    {onblur}
+    {onfocus}
+    {...rest}
 >
-    <slot />
+    {@render children?.()}
 </select>

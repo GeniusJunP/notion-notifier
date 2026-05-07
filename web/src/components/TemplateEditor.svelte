@@ -123,7 +123,7 @@
             {#each blocks as block, index (index)}
                 <div class="rounded-xl border border-gray-200/80 bg-white/80 p-3 dark:border-gray-800 dark:bg-gray-950/60">
                     <div class="mb-3 flex items-center gap-2">
-                        <Select bind:value={block.kind} uiSize="sm" on:change={() => updateBlock(index, block)}>
+                        <Select bind:value={block.kind} uiSize="sm" onchange={() => updateBlock(index, block)}>
                             {#each kindOptions as option (option.value)}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
@@ -144,10 +144,10 @@
                             bind:value={block.content}
                             rows={3}
                             mono
-                            on:input={() => updateBlock(index, block)}
+                            oninput={() => updateBlock(index, block)}
                         />
                     {:else if block.kind === "variable"}
-                        <Select bind:value={block.content} on:change={() => updateBlock(index, block)}>
+                        <Select bind:value={block.content} onchange={() => updateBlock(index, block)}>
                             {#each variableOptions as option (option.value)}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
@@ -157,7 +157,7 @@
                             <Input
                                 bind:value={block.content}
                                 mono
-                                on:input={() => updateBlock(index, block)}
+                                oninput={() => updateBlock(index, block)}
                             />
                         </FormField>
                         <p class="ui-hint">
@@ -167,7 +167,7 @@
                             value={block.children?.[0]?.content ?? ""}
                             rows={3}
                             mono
-                            on:input={(event) => updateControlBody(index, event)}
+                            oninput={(event) => updateControlBody(index, event)}
                         />
                     {/if}
                 </div>

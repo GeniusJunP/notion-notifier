@@ -19,25 +19,31 @@
         },
     });
 
-    export let value: HTMLTextareaAttributes["value"] = "";
-    export let id: HTMLTextareaAttributes["id"] = undefined;
-    export let name: HTMLTextareaAttributes["name"] = undefined;
-    export let placeholder: HTMLTextareaAttributes["placeholder"] = undefined;
-    export let rows = 4;
-    export let disabled = false;
-    export let mono = false;
+    interface Props extends Partial<Omit<HTMLTextareaAttributes, "size">> {
+        value?: string | number | string[] | null;
+        mono?: boolean;
+    }
 
-    let className = "";
-    export { className as class };
+    let {
+        value = $bindable(""),
+        id,
+        name,
+        placeholder,
+        rows = 4,
+        disabled = false,
+        mono = false,
+        class: className = "",
+        oninput,
+        onchange,
+        onblur,
+        onfocus,
+        ...rest
+    }: Props = $props();
 
-    $: classes = cn(
+    let classes = $derived(cn(
         fieldRecipe({ size: "area", mono }),
         className,
-    );
-
-    function handleInput(event: Event) {
-        value = (event.currentTarget as HTMLTextAreaElement).value;
-    }
+    ));
 </script>
 
 <textarea
@@ -46,10 +52,11 @@
     {placeholder}
     {rows}
     {disabled}
-    {value}
+    bind:value
     class={classes}
-    on:blur
-    on:change
-    on:focus
-    on:input={handleInput}
+    {onblur}
+    {onchange}
+    {onfocus}
+    {oninput}
+    {...rest}
 ></textarea>

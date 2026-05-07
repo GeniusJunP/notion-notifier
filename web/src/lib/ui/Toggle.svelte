@@ -1,20 +1,28 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { cn } from "../utils";
 
     type Tone = "brand" | "success" | "warning";
     type Size = "sm" | "md";
 
-    export let checked = false;
-    export let disabled = false;
-    export let ariaLabel = "";
-    export let tone: Tone = "brand";
-    export let size: Size = "md";
+    interface ToggleProps {
+        checked?: boolean;
+        disabled?: boolean;
+        ariaLabel?: string;
+        tone?: Tone;
+        size?: Size;
+        onchange?: (_value: boolean) => void;
+        class?: string;
+    }
 
-    let className = "";
-    export { className as class };
-
-    const dispatch = createEventDispatcher<{ change: boolean }>();
+    let {
+        checked = $bindable(false),
+        disabled = false,
+        ariaLabel = "",
+        tone = "brand" as Tone,
+        size = "md" as Size,
+        onchange,
+        class: className = "",
+    }: ToggleProps = $props();
 
     const sizeClasses = {
         sm: {
@@ -29,18 +37,18 @@
             on: "translate-x-6",
             off: "translate-x-0",
         },
-    } as const;
+    } as const satisfies Record<Size, any>;
 
     const activeClasses = {
         brand: "bg-brand-600 dark:bg-brand-500",
         success: "bg-emerald-600 dark:bg-emerald-500",
         warning: "bg-amber-500 dark:bg-amber-500",
-    } as const;
+    } as const satisfies Record<Tone, string>;
 
     function toggle() {
         if (disabled) return;
         checked = !checked;
-        dispatch("change", checked);
+        onchange?.(checked);
     }
 </script>
 

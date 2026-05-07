@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { X, RefreshCcw, BellOff } from "lucide-svelte";
     import SidebarButton from "../SidebarButton.svelte";
     import TemplateGuideSidebar from "../TemplateGuideSidebar.svelte";
@@ -12,19 +11,29 @@
     import Input from "../../lib/ui/Input.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
 
-    export let navItems: { path: string; label: string; icon: any }[];
-    export let activeRouteValue: string;
-    export let isSyncing: boolean;
-    export let dashboardData: DashboardData | null;
-    export let config: Config | null;
-    export let showTemplateGuide: boolean;
-    export let mainNavId: string;
-
-    const dispatch = createEventDispatcher<{
-        sync: void;
-        saveSnooze: void;
-        clearSnooze: void;
-    }>();
+    let {
+        navItems,
+        activeRouteValue,
+        isSyncing,
+        dashboardData,
+        config,
+        showTemplateGuide,
+        mainNavId,
+        onSync,
+        onSaveSnooze,
+        onClearSnooze,
+    }: {
+        navItems: { path: string; label: string; icon: any }[];
+        activeRouteValue: string;
+        isSyncing: boolean;
+        dashboardData: DashboardData | null;
+        config: Config | null;
+        showTemplateGuide: boolean;
+        mainNavId: string;
+        onSync?: () => void;
+        onSaveSnooze?: () => void;
+        onClearSnooze?: () => void;
+    } = $props();
 </script>
 
 <aside
@@ -52,6 +61,7 @@
         aria-label="メインナビゲーション"
     >
         {#each navItems as item (item.path)}
+            {@const Icon = item.icon}
             <SidebarButton
                 active={activeRouteValue === item.path}
                 ariaCurrent={activeRouteValue === item.path
@@ -63,8 +73,7 @@
                 }}
             >
                 <div class="transition-transform duration-200 group-hover:scale-110">
-                    <svelte:component
-                        this={item.icon}
+                    <Icon
                         size={20}
                         strokeWidth={activeRouteValue === item.path ? 2.5 : 2}
                     />
@@ -79,7 +88,7 @@
         <div class="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-800">
             <SidebarButton
                 justifyBetween
-                onclick={() => dispatch("sync")}
+                onclick={() => onSync?.()}
                 disabled={isSyncing}
             >
                 <div class="flex items-center gap-3">
@@ -126,13 +135,13 @@
                         <Input
                             type="datetime-local"
                             bind:value={config.snooze.until}
-                            on:change={() => dispatch("saveSnooze")}
+                            onchange={() => onSaveSnooze?.()}
                             uiSize="sm"
                             class="w-full text-xs"
                         />
                         {#if config.snooze.until}
                             <Button
-                                onclick={() => dispatch("clearSnooze")}
+                                onclick={() => onClearSnooze?.()}
                                 variant="ghost"
                                 size="icon"
                                 aria-label="スヌーズ設定をクリア"
@@ -146,12 +155,12 @@
                             <span class:ui-snooze-target-label={true}>
                                 事前通知
                             </span>
-                            <Toggle
-                                bind:checked={config.snooze.mute_upcoming}
-                                ariaLabel="スヌーズ対象に事前通知を含める"
-                                size="sm"
-                                on:change={() => dispatch("saveSnooze")}
-                            />
+                        <Toggle
+                            bind:checked={config.snooze.mute_upcoming}
+                            ariaLabel="スヌーズ対象に事前通知を含める"
+                            size="sm"
+                            onchange={() => onSaveSnooze?.()}
+                        />
                         </div>
                         <div class:ui-snooze-target-row={true}>
                             <span class:ui-snooze-target-label={true}>
@@ -161,7 +170,7 @@
                                 bind:checked={config.snooze.mute_periodic}
                                 ariaLabel="スヌーズ対象に定期通知を含める"
                                 size="sm"
-                                on:change={() => dispatch("saveSnooze")}
+                                onchange={() => onSaveSnooze?.()}
                             />
                         </div>
                     </div>
@@ -170,8 +179,8 @@
 
             {#if showTemplateGuide}
                 <TemplateGuideSidebar
-                    on:openGuide={(e) =>
-                        guideModal.open(e.detail.title, e.detail.content)}
+                    onOpenGuide={(title, content) =>
+                        guideModal.open(title, content)}
                 />
             {/if}
         </div>
