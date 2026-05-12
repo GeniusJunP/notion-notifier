@@ -15,10 +15,8 @@
     }
 </script>
 
-<Card tone="brand" padding="lg" radius="3xl" class="relative overflow-hidden">
-    <div
-        class="relative z-10 flex flex-col items-center justify-between gap-6 md:flex-row"
-    >
+<Card tone="brand" padding="lg" radius="3xl">
+    <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
         <div>
             <Typography variant="page-title" as="h2" class="mb-2">
                 手動同期を実行
@@ -35,7 +33,6 @@
             loading={isSyncing}
             variant="secondary"
             size="lg"
-            class="relative z-10"
         >
             {#if !isSyncing}
                 <RefreshCw size={20} />
@@ -43,11 +40,4 @@
             {isSyncing ? "同期中..." : "今すぐ同期"}
         </Button>
     </div>
-
-    <div
-        class="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/35 translate-x-1/2 -translate-y-1/2 dark:bg-white/5"
-    ></div>
-    <div
-        class="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-white/25 dark:bg-white/5"
-    ></div>
 </Card>
