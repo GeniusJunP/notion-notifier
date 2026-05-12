@@ -112,7 +112,7 @@
                                   hour: "2-digit",
                                   minute: "2-digit",
                               })
-                            : "--:--"}
+                            : "クリックで設定"}
                     </span>
                 {/if}
             </SidebarButton>

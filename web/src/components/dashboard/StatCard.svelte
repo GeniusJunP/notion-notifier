@@ -23,7 +23,7 @@
         <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
             {value}
         </h3>
-        <p class="mt-1 ui-meta-text">
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {subLabel}
         </p>
     </div>

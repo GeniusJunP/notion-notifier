@@ -23,7 +23,7 @@
     function removeCustomMapping(index: number) {
         if (!config) return;
         config.property_mapping.custom = config.property_mapping.custom.filter(
-            (_, i: number) => i !== index,
+            (_: unknown, i: number) => i !== index,
         );
     }
 </script>
@@ -45,7 +45,7 @@
 
 <SectionCard>
     <div class="flex items-center justify-between">
-        <h3 class="ui-section-title">
+        <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
             <Database size={20} class="text-brand-500 dark:text-brand-300" />
             Notion プロパティマッピング
         </h3>

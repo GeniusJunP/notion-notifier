@@ -137,7 +137,7 @@
                             href={event.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ui-link-button text-xs"
+                            class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
                         >
                             Notion で開く
                             <ArrowRight size={12} />

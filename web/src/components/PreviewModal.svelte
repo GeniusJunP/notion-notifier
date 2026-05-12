@@ -84,7 +84,7 @@
             radius="2xl"
             overflowHidden
         >
-            <div class="ui-modal-header">
+            <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-800">
                 <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">
                     {title}
                 </h3>

@@ -11,7 +11,7 @@
 </script>
 
 <SectionCard>
-    <h3 class="ui-section-title">
+    <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
         <FileText size={20} class="text-brand-500 dark:text-brand-300" />
         コンテンツ抽出ルール
     </h3>

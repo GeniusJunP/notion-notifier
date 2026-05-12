@@ -177,8 +177,8 @@
                                 oninput={() => updateBlock(index, block)}
                             />
                         </FormField>
-                        <p class="ui-hint">
-                            出力時は <code class="ui-inline-code">{"{{- ... -}}"}</code> を使い、UI整形用の改行を通知本文へ出しません。
+                        <p class="mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400">
+                            出力時は <code class="rounded bg-white/70 px-1 py-0.5 font-mono dark:bg-gray-900/60">{"{{- ... -}}"}</code> を使い、UI整形用の改行を通知本文へ出しません。
                         </p>
                         <Textarea
                             value={block.children?.[0]?.content ?? ""}

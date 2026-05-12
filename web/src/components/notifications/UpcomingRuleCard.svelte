@@ -79,7 +79,7 @@
 
     <div class="space-y-3">
         <span
-            class="block ui-label-caps-wide"
+            class="block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400"
         >
             実行する曜日
         </span>
