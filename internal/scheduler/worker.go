@@ -39,6 +39,7 @@ type Scheduler struct {
 	webhook  *webhook.Client
 	calendar *calendar.Client
 
+	// TODO: [Refactor] Audit multiple mutexes (sync.Mutex, sync.RWMutex) for potential deadlocks or improper usage.
 	mu                  sync.Mutex
 	upcomingTimers      map[string]*time.Timer
 	periodicLastSent    map[int]string

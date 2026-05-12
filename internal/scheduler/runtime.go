@@ -47,6 +47,7 @@ func (s *Scheduler) newRuntimeOpContext(timeout time.Duration) (context.Context,
 	return ctx, cancel, nil
 }
 
+// TODO: [Refactor] Audit sync.Mutex pointer passing to ensure that the mutex is used safely and does not lead to contention.
 func (s *Scheduler) runWithTimeout(mu *sync.Mutex, timeout time.Duration, fn func(context.Context) error) error {
 	mu.Lock()
 	defer mu.Unlock()

@@ -55,6 +55,7 @@ func TestMapPagesToEvents_MapsAttendees(t *testing.T) {
 		t.Fatalf("unexpected events length: got=%d want=1", len(events))
 	}
 	want := []string{"first@example.com", "second@example.com"}
+	// TODO: [Refactor] Use an assertion library like github.com/stretchr/testify/assert instead of reflect.DeepEqual to avoid brittle tests.
 	if !reflect.DeepEqual(events[0].Attendees, want) {
 		t.Fatalf("unexpected attendees: got=%v want=%v", events[0].Attendees, want)
 	}

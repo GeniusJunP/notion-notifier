@@ -20,6 +20,7 @@ func (e ValidationError) Unwrap() error {
 }
 
 type Manager struct {
+	// TODO: [Refactor] Audit sync.RWMutex usage to ensure proper locking and unlocking to avoid race conditions.
 	mu      sync.RWMutex
 	cfg     Config
 	env     Env

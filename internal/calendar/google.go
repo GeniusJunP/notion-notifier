@@ -18,6 +18,7 @@ import (
 	"notion-notifier/internal/models"
 )
 
+// TODO: [Refactor] Review functions like UpsertEvent, DeleteEvent, and ListEvents for potential refactoring opportunities to reduce overlapping logic.
 type Client struct {
 	srv        *calendarapi.Service
 	calendarID string
