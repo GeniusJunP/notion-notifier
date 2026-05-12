@@ -4,6 +4,7 @@
 
     import Button from "../../lib/ui/Button.svelte";
     import Card from "../../lib/ui/Card.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     export let isSyncing = false;
 
@@ -19,13 +20,13 @@
         class="relative z-10 flex flex-col items-center justify-between gap-6 md:flex-row"
     >
         <div>
-            <h2 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <Typography variant="page-title" as="h2" class="mb-2">
                 手動同期を実行
-            </h2>
-            <p class="max-w-md text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+            </Typography>
+            <Typography variant="support-text" as="p" class="max-w-md">
                 Notion
                 データベースから最新の変更を即座に取得し、カレンダーや通知スケジュールを更新します。
-            </p>
+            </Typography>
         </div>
 
         <Button

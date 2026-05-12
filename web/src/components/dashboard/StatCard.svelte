@@ -1,6 +1,7 @@
 <script lang="ts">
     import Card from "../../lib/ui/Card.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     type Tone = "brand" | "warning" | "success" | "danger" | "neutral";
 
@@ -23,8 +24,8 @@
         <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
             {value}
         </h3>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <Typography variant="meta" as="p" class="mt-1">
             {subLabel}
-        </p>
+        </Typography>
     </div>
 </Card>

@@ -7,15 +7,16 @@
     import Input from "../../lib/ui/Input.svelte";
     import SectionCard from "../../lib/ui/SectionCard.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     export let config: Config;
 </script>
 
 <SectionCard>
-    <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
+    <Typography variant="section-title" as="h3">
         <FileText size={20} class="text-brand-500 dark:text-brand-300" />
         コンテンツ抽出ルール
-    </h3>
+    </Typography>
 
     <div class="space-y-4">
         <FormField label="開始見出し" forId="settings-start-heading">

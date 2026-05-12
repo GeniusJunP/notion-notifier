@@ -2,10 +2,11 @@
     import type { Snippet } from "svelte";
     import { tv } from "tailwind-variants";
 
+    import Typography from "./Typography.svelte";
+
     const formFieldRecipe = tv({
         slots: {
             label: "block font-semibold tracking-tight",
-            hintText: "mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400",
         },
         variants: {
             variant: {
@@ -54,8 +55,8 @@
     {@render children?.()}
 
     {#if hint}
-        <p class={styles.hintText()}>
+        <Typography variant="hint" as="p">
             {hint}
-        </p>
+        </Typography>
     {/if}
 </div>

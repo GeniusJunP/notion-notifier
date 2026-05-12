@@ -18,6 +18,7 @@
     import IconChip from "../lib/ui/IconChip.svelte";
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
+    import Typography from "../lib/ui/Typography.svelte";
     import { toLocalDateInputValue } from "../lib/utils";
 
     let isSyncing = $state(false);
@@ -67,13 +68,13 @@
             <Calendar size={32} />
         </IconChip>
         <div class="flex-1 text-center md:text-left">
-            <h2 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <Typography variant="page-title" as="h2" class="mb-2">
                 Google カレンダー同期
-            </h2>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+            </Typography>
+            <Typography variant="support-text" as="p">
                 Notionを正としてGoogle
                 カレンダーを同期します。カレンダー側の意図しない編集は次回同期でNotion内容に戻されます。
-            </p>
+            </Typography>
         </div>
         <div class="flex items-center gap-3">
             <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">
@@ -99,10 +100,10 @@
     {#if $configStore}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
-                <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
+                <Typography variant="section-title" as="h3">
                     <Settings size={20} class="text-gray-400 dark:text-gray-500" />
                     同期設定
-                </h3>
+                </Typography>
 
                 <Card tone="muted" class="space-y-4" radius="2xl">
                     <FormField label="実行間隔 (時間)" forId="cal-interval-hours">
@@ -148,10 +149,10 @@
             </div>
 
             <div class="space-y-6">
-                <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
+                <Typography variant="section-title" as="h3">
                     <RefreshCw size={20} class="text-gray-400 dark:text-gray-500" />
-                    手動同期・管理
-                </h3>
+                    手動操作
+                </Typography>
 
                 <Card tone="muted" class="space-y-6" radius="2xl">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -206,9 +207,9 @@
                             <Trash2 size={16} />
                             同期記録をリセット
                         </Button>
-                        <p class="mt-1 text-center text-[11px] leading-5 text-gray-500 dark:text-gray-400">
+                        <Typography variant="hint" as="p" class="text-center">
                             カレンダーで重複が発生する場合や、再同期したい場合に実行してください。
-                        </p>
+                        </Typography>
                     </div>
                 </Card>
             </div>

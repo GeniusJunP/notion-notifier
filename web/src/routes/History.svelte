@@ -16,6 +16,7 @@
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
     import Select from "../lib/ui/Select.svelte";
+    import Typography from "../lib/ui/Typography.svelte";
 
     let items: HistoryItem[] = $state([]);
     let isLoading = $state(true);
@@ -69,8 +70,8 @@
                 <History size={24} />
             </div>
             <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">通知履歴</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">最近の通知送信ログ（最新50件）</p>
+                <Typography variant="page-title" as="h2">通知履歴</Typography>
+                <Typography variant="page-subtitle" as="p">最近の通知送信ログ（最新50件）</Typography>
             </div>
         </div>
 
@@ -107,9 +108,9 @@
                 </Select>
             </div>
 
-            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">
+            <Typography variant="meta" class="ml-auto">
                 {filteredItems.length} 件を表示中
-            </div>
+            </Typography>
         </div>
 
         {#if isLoading}

@@ -30,9 +30,9 @@
 </script>
 
 {#snippet listHeader(text: string)}
-    <span class="mb-2 block text-center text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+    <Typography variant="label-caps" class="mb-2 text-center">
         {text}
-    </span>
+    </Typography>
 {/snippet}
 
 {#snippet propertyLabel(text: string, rightContent?: Snippet)}
@@ -46,10 +46,10 @@
 
 <SectionCard>
     <div class="flex items-center justify-between">
-        <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
+        <Typography variant="section-title" as="h3">
             <Database size={20} class="text-brand-500 dark:text-brand-300" />
             Notion プロパティマッピング
-        </h3>
+        </Typography>
         <Button onclick={addCustomMapping} variant="secondary" size="sm">
             <Plus size={14} /> カスタム
         </Button>

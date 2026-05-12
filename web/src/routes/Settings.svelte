@@ -7,6 +7,7 @@
     import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
     import { configStore, saveConfig as saveConfigState } from "../lib/store";
     import Button from "../lib/ui/Button.svelte";
+    import Typography from "../lib/ui/Typography.svelte";
 
     let isSaving = $state(false);
 
@@ -23,10 +24,10 @@
 
 <div class="max-w-5xl space-y-8">
     <div class="flex items-center justify-between">
-        <h2 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+        <Typography variant="page-title" as="h2" class="flex items-center gap-3">
             <Settings size={28} class="text-brand-600 dark:text-brand-300" />
             システム設定
-        </h2>
+        </Typography>
         <Button onclick={saveConfig} disabled={isSaving} loading={isSaving} size="lg">
             {#if !isSaving}
                 <Save size={20} />

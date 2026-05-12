@@ -5,15 +5,16 @@
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import SectionCard from "../../lib/ui/SectionCard.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     export let config: Config;
 </script>
 
 <SectionCard>
-    <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-gray-200">
+    <Typography variant="section-title" as="h3">
         <Globe size={20} class="text-brand-500 dark:text-brand-300" />
         基本設定
-    </h3>
+    </Typography>
 
     <div class="grid grid-cols-1 gap-4">
         <FormField

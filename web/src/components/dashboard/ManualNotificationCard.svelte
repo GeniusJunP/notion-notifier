@@ -7,6 +7,7 @@
     import IconChip from "../../lib/ui/IconChip.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import Panel from "../../lib/ui/Panel.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
     import TemplateEditor from "../TemplateEditor.svelte";
 
     export let manualFromDate: string;
@@ -29,12 +30,12 @@
                 <Send size={20} />
             </IconChip>
             <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                <Typography variant="strong" as="h2" class="text-lg">
                     手動通知
-                </h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="meta" as="p">
                     テンプレートを使用して即座にWebhook通知を送信
-                </p>
+                </Typography>
             </div>
         </div>
     {/snippet}

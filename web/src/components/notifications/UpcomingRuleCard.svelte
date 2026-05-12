@@ -5,6 +5,7 @@
     import type { UpcomingNotification } from "../../lib/api";
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
     import TemplateEditor from "../TemplateEditor.svelte";
     import BaseRuleCard from "./BaseRuleCard.svelte";
     import DayPicker from "./DayPicker.svelte";
@@ -79,11 +80,9 @@
     </div>
 
     <div class="space-y-3">
-        <span
-            class="block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400"
-        >
+        <Typography variant="label-caps-wide" block>
             実行する曜日
-        </span>
+        </Typography>
         <DayPicker
             bind:selectedDays={rule.conditions.days_of_week}
             ariaLabelPrefix={`事前通知 ${index + 1} の実行曜日`}

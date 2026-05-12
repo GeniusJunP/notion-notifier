@@ -7,6 +7,7 @@
     import Button from "../../lib/ui/Button.svelte";
     import Card from "../../lib/ui/Card.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     export let upcoming: UpcomingEvent[] = [];
     export let isLoading = false;
@@ -48,9 +49,9 @@
 
 <div class="space-y-4">
     <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
+        <Typography variant="block-title" as="h2">
             直近の予定 (14日間)
-        </h2>
+        </Typography>
         <Button onclick={() => dispatch("refresh")} variant="text" size="sm">
             <RefreshCw size={14} />
             更新
