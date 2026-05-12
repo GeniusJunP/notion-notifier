@@ -69,21 +69,21 @@ func (o ClientOptions) Fingerprint() string {
 func NewClient(opts ClientOptions) (*Client, error) {
 	opts = opts.normalize()
 	if err := opts.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid google calendar client options: %w", err)
 	}
 	credentials, err := opts.credentialsJSON()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get google service account credentials: %w", err)
 	}
 	bgCtx := context.Background()
 	jwtCfg, err := googleoauth.JWTConfigFromJSON(credentials, calendarapi.CalendarScope)
 	if err != nil {
-		return nil, fmt.Errorf("google service account credentials: %w", err)
+		return nil, fmt.Errorf("failed to parse google service account credentials: %w", err)
 	}
 	tokenSource := jwtCfg.TokenSource(bgCtx)
 	srv, err := calendarapi.NewService(bgCtx, option.WithTokenSource(tokenSource))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create google calendar service: %w", err)
 	}
 	return &Client{srv: srv, calendarID: opts.CalendarID}, nil
 }
@@ -94,7 +94,7 @@ func (o ClientOptions) credentialsJSON() ([]byte, error) {
 	}
 	data, err := os.ReadFile(o.ServiceAccountKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("read google service account key file: %w", err)
+		return nil, fmt.Errorf("failed to read google service account key file: %w", err)
 	}
 	return data, nil
 }
@@ -104,19 +104,22 @@ func (c *Client) UpsertEvent(ctx context.Context, ev models.Event, existingID st
 	if existingID != "" {
 		updated, err := c.srv.Events.Update(c.calendarID, existingID, gevent).Context(ctx).Do()
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("failed to update google calendar event %s: %w", existingID, err)
 		}
 		return updated.Id, updated.Updated, nil
 	}
 	created, err := c.srv.Events.Insert(c.calendarID, gevent).Context(ctx).Do()
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("failed to insert google calendar event: %w", err)
 	}
 	return created.Id, created.Updated, nil
 }
 
 func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
-	return c.srv.Events.Delete(c.calendarID, eventID).Context(ctx).Do()
+	if err := c.srv.Events.Delete(c.calendarID, eventID).Context(ctx).Do(); err != nil {
+		return fmt.Errorf("failed to delete google calendar event %s: %w", eventID, err)
+	}
+	return nil
 }
 
 // CalendarEvent is a simplified representation of a Google Calendar event with Notion metadata.
@@ -152,7 +155,7 @@ func (c *Client) ListEvents(ctx context.Context, from, to time.Time) ([]Calendar
 		}
 		resp, err := call.Do()
 		if err != nil {
-			return nil, fmt.Errorf("calendar list events: %w", err)
+			return nil, fmt.Errorf("failed to list google calendar events: %w", err)
 		}
 		for _, item := range resp.Items {
 			ce := CalendarEvent{

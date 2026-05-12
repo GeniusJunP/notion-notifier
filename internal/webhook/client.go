@@ -36,7 +36,7 @@ func (c *Client) Send(ctx context.Context, webhookURL, contentType string, paylo
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(payload))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create webhook request: %w", err)
 		}
 		req.Header.Set("Content-Type", contentType)
 		resp, err := c.http.Do(req)
@@ -56,17 +56,17 @@ func (c *Client) Send(ctx context.Context, webhookURL, contentType string, paylo
 			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"))
 			delay := retry.BackoffDelay(c.retry, attempt, retryAfter)
 			if err := retry.Sleep(ctx, delay); err != nil {
-				return err
+				return fmt.Errorf("retry sleep interrupted: %w", err)
 			}
 			continue
 		}
 		delay := retry.BackoffDelay(c.retry, attempt, 0)
 		if err := retry.Sleep(ctx, delay); err != nil {
-			return err
+			return fmt.Errorf("retry sleep interrupted: %w", err)
 		}
 	}
 	if lastErr != nil {
-		return lastErr
+		return fmt.Errorf("webhook request failed after retries: %w", lastErr)
 	}
 	return retry.ErrRetriesExhausted
 }

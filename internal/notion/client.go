@@ -92,16 +92,16 @@ func (c *Client) QueryDatabaseOnOrAfter(ctx context.Context, databaseID, datePro
 		reqBody := queryRequest{StartCursor: cursor, PageSize: 100, Filter: filter}
 		data, err := json.Marshal(reqBody)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to marshal query request: %w", err)
 		}
 		url := fmt.Sprintf("%s/databases/%s/query", c.baseURL, databaseID)
 		resp, err := c.doRequest(ctx, http.MethodPost, url, data)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to execute query request: %w", err)
 		}
 		var qr queryResponse
 		if err := json.Unmarshal(resp, &qr); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to unmarshal query response: %w", err)
 		}
 		out = append(out, qr.Results...)
 		if !qr.HasMore || qr.NextCursor == "" {
@@ -118,7 +118,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
 		req.Header.Set("Authorization", "Bearer "+c.apiKey)
 		req.Header.Set("Notion-Version", notionVersion)
@@ -139,17 +139,17 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 			retryAfter, _ := retry.ParseRetryAfter(resp.Header.Get("Retry-After"))
 			delay := retry.BackoffDelay(c.retryCfg, attempt, retryAfter)
 			if err := retry.Sleep(ctx, delay); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("retry sleep interrupted: %w", err)
 			}
 			continue
 		}
 		delay := retry.BackoffDelay(c.retryCfg, attempt, 0)
 		if err := retry.Sleep(ctx, delay); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("retry sleep interrupted: %w", err)
 		}
 	}
 	if lastErr != nil {
-		return nil, lastErr
+		return nil, fmt.Errorf("request failed after retries: %w", lastErr)
 	}
 	return nil, retry.ErrRetriesExhausted
 }
