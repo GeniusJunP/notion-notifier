@@ -7,6 +7,7 @@
     import Toggle from "../lib/ui/Toggle.svelte";
     import Card from "../lib/ui/Card.svelte";
     import TemplateEditor from "./TemplateEditor.svelte";
+    import Typography from "../lib/ui/Typography.svelte";
 
     export let config: Config;
 </script>
@@ -28,9 +29,9 @@
             <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 テストモード
             </p>
-            <p class="ui-meta-text">
+            <Typography variant="meta" block>
                 ON にすると、内部通知用のテンプレートと URL で送信します
-            </p>
+            </Typography>
         </div>
         <Toggle
             bind:checked={config.webhook.is_test}
@@ -40,11 +41,9 @@
     </Card>
 
     <Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
-        <h5
-            class="ui-label-caps"
-        >
+        <Typography variant="label-caps" as="h5">
             通知 Webhook
-        </h5>
+        </Typography>
 
         <FormField
             label="Content-Type"
@@ -76,11 +75,9 @@
     </Card>
 
     <Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
-        <h5
-            class="ui-label-caps"
-        >
+        <Typography variant="label-caps" as="h5">
             内部通知 Webhook
-        </h5>
+        </Typography>
 
         <FormField
             label="Content-Type"

@@ -11,6 +11,7 @@
     import IconChip from "../../lib/ui/IconChip.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
 
     let {
         navItems,
@@ -123,12 +124,12 @@
                             <BellOff size={18} />
                         </IconChip>
                         <div>
-                            <span class="ui-text-strong">
+                            <Typography variant="strong" block>
                                 スヌーズ
-                            </span>
-                            <p class="ui-meta-text text-[10px]">
+                            </Typography>
+                            <Typography variant="meta" class="text-[10px]" block>
                                 指定日時まで通知を一時停止
-                            </p>
+                            </Typography>
                         </div>
                     </div>
 

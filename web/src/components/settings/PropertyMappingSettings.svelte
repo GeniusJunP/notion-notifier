@@ -6,6 +6,8 @@
     import SectionCard from "../../lib/ui/SectionCard.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
     import FormGrid from "../../lib/ui/FormGrid.svelte";
+    import Typography from "../../lib/ui/Typography.svelte";
+    import Divider from "../../lib/ui/Divider.svelte";
     import type { Snippet } from "svelte";
 
     let { config = $bindable() } = $props<{ config: Config }>();
@@ -84,10 +86,11 @@
         </FormGrid>
 
         {#if config.property_mapping.custom.length > 0}
-            <div class="space-y-3 ui-divider">
-                <p class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            <Divider spacing="md" class="space-y-3" />
+            <div class="space-y-3">
+                <Typography variant="label-caps-wide" class="tracking-widest">
                     カスタムマッピング
-                </p>
+                </Typography>
 
                 {#each config.property_mapping.custom as custom, idx (idx)}
                     <div class="group flex items-center gap-2">

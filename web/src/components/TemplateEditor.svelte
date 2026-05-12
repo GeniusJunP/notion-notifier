@@ -6,6 +6,7 @@
     import Input from "../lib/ui/Input.svelte";
     import Select from "../lib/ui/Select.svelte";
     import Textarea from "../lib/ui/Textarea.svelte";
+    import Typography from "../lib/ui/Typography.svelte";
     import {
         blocksFromTemplate,
         createTemplateBlock,
@@ -102,9 +103,9 @@
 
 <div class="space-y-3">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="ui-label-caps">
+        <Typography variant="label-caps">
             {label}
-        </span>
+        </Typography>
         <div class="flex items-center gap-2">
             <Button
                 type="button"
