@@ -54,19 +54,19 @@
             return;
         }
         value = target.value;
-        oninput?.(event as any);
+        oninput?.(event);
     }
 
     function handleChange(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
         if (type !== "number") {
-            onchange?.(event as any);
+            onchange?.(event);
             return;
         }
         const target = event.currentTarget;
         value = Number.isNaN(target.valueAsNumber)
             ? ""
             : target.valueAsNumber;
-        onchange?.(event as any);
+        onchange?.(event);
     }
 
     const classes = $derived(cn(

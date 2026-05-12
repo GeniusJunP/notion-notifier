@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { Code2, Eye, Plus, RotateCcw, Trash2 } from "lucide-svelte";
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
@@ -17,22 +16,40 @@
         type TemplateEditorMode,
     } from "../lib/templateEditor";
 
-    export let value = "";
-    export let id = "";
-    export let label = "テンプレート";
-    export let placeholder = "Go テンプレート形式で入力...";
-    export let rows = 6;
-    export let mode: TemplateEditorMode = "raw";
-    export let previewLoading = false;
-    export let showPreview = true;
-    export let showReset = true;
-
-    const dispatch = createEventDispatcher<{
-        preview: void;
-        reset: void;
+    let {
+        value = $bindable(""),
+        id = "",
+        label = "テンプレート",
+        placeholder = "Go テンプレート形式で入力...",
+        rows = 6,
+        mode = $bindable("raw"),
+        previewLoading = false,
+        showPreview = true,
+        showReset = true,
+        onpreview,
+        onreset
+    } = $props<{
+        value?: string;
+        id?: string;
+        label?: string;
+        placeholder?: string;
+        rows?: number;
+        mode?: TemplateEditorMode;
+        previewLoading?: boolean;
+        showPreview?: boolean;
+        showReset?: boolean;
+        onpreview?: () => void;
+        onreset?: () => void;
     }>();
 
-    let blocks: TemplateBlock[] = blocksFromTemplate(value);
+    let blocks = $state<TemplateBlock[]>([]);
+
+    $effect(() => {
+        // Sync visual blocks if entering visual mode
+        if (mode === "visual" && blocks.length === 0 && value) {
+            blocks = blocksFromTemplate(value);
+        }
+    });
 
     const kindOptions = [
         { value: "text", label: "テキスト" },
@@ -54,6 +71,7 @@
     }
 
     function enterRawMode() {
+        syncFromBlocks();
         mode = "raw";
     }
 
@@ -63,13 +81,12 @@
     }
 
     function removeBlock(index: number) {
-        blocks = blocks.filter((_, i) => i !== index);
+        blocks = blocks.filter((_block, i) => i !== index);
         syncFromBlocks();
     }
 
     function updateBlock(index: number, block: TemplateBlock) {
         blocks[index] = block;
-        blocks = blocks;
         syncFromBlocks();
     }
 
@@ -81,12 +98,11 @@
         block.children[0].content = (event.currentTarget as HTMLTextAreaElement).value;
         updateBlock(index, block);
     }
-
 </script>
 
 <div class="space-y-3">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <span class="ui-label-caps">
             {label}
         </span>
         <div class="flex items-center gap-2">
@@ -192,7 +208,7 @@
         {#if showPreview}
             <Button
                 type="button"
-                onclick={() => dispatch("preview")}
+                onclick={() => onpreview?.()}
                 disabled={previewLoading}
                 loading={previewLoading}
                 variant="text"
@@ -204,7 +220,7 @@
         {#if showReset}
             <Button
                 type="button"
-                onclick={() => dispatch("reset")}
+                onclick={() => onreset?.()}
                 variant="ghost"
                 size="sm"
             >

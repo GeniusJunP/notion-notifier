@@ -6,23 +6,16 @@
     import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
     import { Settings, Save } from "lucide-svelte";
     import Button from "../lib/ui/Button.svelte";
-    import { onMount, onDestroy } from "svelte";
 
-    let config = $configStore;
-    let isSaving = false;
-    let unsubscribe: () => void;
+    let config = $state($configStore);
+    let isSaving = $state(false);
 
-    onMount(() => {
-        unsubscribe = configStore.subscribe((value) => {
-            config = value;
-        });
-    });
-
-    onDestroy(() => {
-        if (unsubscribe) unsubscribe();
+    $effect(() => {
+        config = $configStore;
     });
 
     async function saveConfig() {
+        if (!config) return;
         isSaving = true;
         await saveConfigState(config, {
             successMessage: "システム設定を保存しました",

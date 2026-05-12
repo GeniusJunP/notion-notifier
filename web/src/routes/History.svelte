@@ -16,9 +16,9 @@
     import Card from "../lib/ui/Card.svelte";
     import Select from "../lib/ui/Select.svelte";
 
-    let items: HistoryItem[] = [];
-    let isLoading = true;
-    let filterType = "all";
+    let items: HistoryItem[] = $state([]);
+    let isLoading = $state(true);
+    let filterType = $state("all");
 
     async function loadHistory() {
         isLoading = true;
@@ -44,10 +44,10 @@
         }
     }
 
-    $: filteredItems = items.filter((item) => {
+    let filteredItems = $derived(items.filter((item) => {
         if (filterType === "all") return true;
         return item.type === filterType;
-    });
+    }));
 
     function formatDate(isoString: string) {
         const d = new Date(isoString);
@@ -113,7 +113,7 @@
 
         {#if isLoading}
             <div class="space-y-4 p-12">
-                {#each Array(5) as _, index (index)}
+                {#each Array(5) as _skeleton, index (index)}
                     <div
                         class="h-16 rounded-2xl bg-gray-50 animate-pulse dark:bg-gray-800"
                     ></div>

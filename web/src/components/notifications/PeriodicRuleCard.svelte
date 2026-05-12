@@ -1,13 +1,10 @@
 <script lang="ts">
-    import { Trash2 } from "lucide-svelte";
     import DayPicker from "./DayPicker.svelte";
     import type { PeriodicNotification } from "../../lib/api";
     import { createEventDispatcher } from "svelte";
-    import Button from "../../lib/ui/Button.svelte";
+    import BaseRuleCard from "./BaseRuleCard.svelte";
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
-    import Panel from "../../lib/ui/Panel.svelte";
-    import Toggle from "../../lib/ui/Toggle.svelte";
     import TemplateEditor from "../TemplateEditor.svelte";
 
     export let rule: PeriodicNotification;
@@ -20,37 +17,12 @@
     }>();
 </script>
 
-<Panel radius="2xl" interactive bodyClass="grid grid-cols-1 gap-8">
-    {#snippet header()}
-        <div class="flex items-center gap-3">
-            <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
-            >
-                {index + 1}
-            </div>
-            <Toggle
-                bind:checked={rule.enabled}
-                ariaLabel={`定期通知 ${index + 1} の有効化`}
-                tone="success"
-                size="sm"
-            />
-            <span class="font-semibold text-gray-900 dark:text-gray-100">
-                定期通知 {index + 1}
-            </span>
-        </div>
-    {/snippet}
-    {#snippet actions()}
-        <Button
-            type="button"
-            onclick={() => dispatch("remove", index)}
-            variant="ghost"
-            size="icon"
-            aria-label={`定期通知 ${index + 1} を削除`}
-        >
-            <Trash2 size={18} />
-        </Button>
-    {/snippet}
-
+<BaseRuleCard
+    title={`定期通知 ${index + 1}`}
+    {index}
+    bind:enabled={rule.enabled}
+    onremove={() => dispatch("remove", index)}
+>
     <div class="space-y-6">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="通知時刻" forId={`per-time-${index}`}>
@@ -86,13 +58,13 @@
             bind:value={rule.message}
             placeholder="空欄の場合はデフォルトが使用されます"
             rows={6}
-            on:preview={() =>
+            onpreview={() =>
                 dispatch("preview", {
                     template: rule.message,
                     title: "定期通知プレビュー",
                     days_ahead: rule.days_ahead,
                 })}
-            on:reset={() => dispatch("reset", index)}
+            onreset={() => dispatch("reset", index)}
         />
     </FormField>
-</Panel>
+</BaseRuleCard>

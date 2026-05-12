@@ -28,7 +28,7 @@
             <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 テストモード
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">
+            <p class="ui-meta-text">
                 ON にすると、内部通知用のテンプレートと URL で送信します
             </p>
         </div>
@@ -41,7 +41,7 @@
 
     <Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
         <h5
-            class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+            class="ui-label-caps"
         >
             通知 Webhook
         </h5>
@@ -77,7 +77,7 @@
 
     <Card tone="muted" radius="2xl" padding="sm" class="space-y-3">
         <h5
-            class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+            class="ui-label-caps"
         >
             内部通知 Webhook
         </h5>

@@ -18,27 +18,19 @@
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
     import { toLocalDateInputValue } from "../lib/utils";
-    import { onMount, onDestroy } from "svelte";
 
-    let config = $configStore;
-    let unsubscribe: () => void;
+    let config = $state($configStore);
 
-    onMount(() => {
-        unsubscribe = configStore.subscribe((value) => {
-            config = value;
-        });
+    $effect(() => {
+        config = $configStore;
     });
 
-    onDestroy(() => {
-        if (unsubscribe) unsubscribe();
-    });
-
-    let isSyncing = false;
-    let isClearing = false;
-    let syncRange = {
+    let isSyncing = $state(false);
+    let isClearing = $state(false);
+    let syncRange = $state({
         from: toLocalDateInputValue(new Date()),
         to: toLocalDateInputValue(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-    };
+    });
 
     async function handleSync() {
         isSyncing = true;

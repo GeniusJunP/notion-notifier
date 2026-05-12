@@ -25,26 +25,29 @@
         AlertTriangle,
     } from "lucide-svelte";
 
-    let dashboard: DashboardData | null = null;
-    let upcoming: UpcomingEvent[] = [];
-    $: config = $configStore;
-    let isLoading = true;
-    let isSyncing = false;
+    let dashboard: DashboardData | null = $state(null);
+    let upcoming: UpcomingEvent[] = $state([]);
+    let config = $derived($configStore);
+    let isLoading = $state(true);
+    let isSyncing = $state(false);
 
     // Manual notification state
-    let manualTemplate = "";
-    let manualFromDate = toLocalDateInputValue(new Date());
-    let manualToDate = toLocalDateInputValue(
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    let manualTemplate = $state("");
+    let manualFromDate = $state(toLocalDateInputValue(new Date()));
+    let manualToDate = $state(
+        toLocalDateInputValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
     );
-    let isPreviewLoading = false;
-    let isSending = false;
-    let previewOpen = false;
-    let previewTitle = "";
-    let previewContent = "";
-    $: if (config && manualTemplate === "") {
-        manualTemplate = config.notifications.manual || "";
-    }
+    let isPreviewLoading = $state(false);
+    let isSending = $state(false);
+    let previewOpen = $state(false);
+    let previewTitle = $state("");
+    let previewContent = $state("");
+
+    $effect(() => {
+        if (config && manualTemplate === "") {
+            manualTemplate = config.notifications.manual || "";
+        }
+    });
 
     function openPreview(title: string, content: string) {
         previewTitle = title;

@@ -58,7 +58,7 @@
 
     {#if isLoading && !isSyncing}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {#each Array(4) as _, index (index)}
+            {#each Array(4) as _skeleton, index (index)}
                 <Card
                     tone="default"
                     radius="2xl"

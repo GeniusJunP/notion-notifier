@@ -25,7 +25,7 @@
     type Variant = "default" | "ghost";
 
     interface Props extends Partial<Omit<HTMLSelectAttributes, "size">> {
-        value?: any;
+        value?: string | number | null;
         uiSize?: UiSize;
         variant?: Variant;
         children?: import('svelte').Snippet;

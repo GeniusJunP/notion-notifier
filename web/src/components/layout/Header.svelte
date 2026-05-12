@@ -6,11 +6,13 @@
     import Badge from "../../lib/ui/Badge.svelte";
     import Button from "../../lib/ui/Button.svelte";
 
-    export let activeRouteLabel: string;
-    export let isServiceActive: boolean;
-    export let mainNavId: string;
+    let { activeRouteLabel, isServiceActive, mainNavId } = $props<{
+        activeRouteLabel: string;
+        isServiceActive: boolean;
+        mainNavId: string;
+    }>();
 
-    let now = new Date();
+    let now = $state(new Date());
     let clockInterval: ReturnType<typeof setInterval>;
 
     const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
@@ -28,9 +30,9 @@
         hour12: false,
     });
 
-    $: currentDate = dateFormatter.format(now);
-    $: currentWeekday = weekdayFormatter.format(now);
-    $: currentTime = timeFormatter.format(now);
+    let currentDate = $derived(dateFormatter.format(now));
+    let currentWeekday = $derived(weekdayFormatter.format(now));
+    let currentTime = $derived(timeFormatter.format(now));
 
     function toggleDarkMode() {
         darkMode.update((current) => !current);

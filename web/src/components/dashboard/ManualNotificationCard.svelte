@@ -31,7 +31,7 @@
                 <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">
                     手動通知
                 </h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="ui-meta-text">
                     テンプレートを使用して即座にWebhook通知を送信
                 </p>
             </div>
@@ -72,8 +72,8 @@
             placeholder="Go テンプレート形式で入力..."
             rows={5}
             previewLoading={isPreviewLoading}
-            on:preview={() => dispatch("preview")}
-            on:reset={() => dispatch("loadDefault")}
+            onpreview={() => dispatch("preview")}
+            onreset={() => dispatch("loadDefault")}
         />
     </FormField>
 

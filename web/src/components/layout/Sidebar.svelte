@@ -1,5 +1,6 @@
 <script lang="ts">
     import { X, RefreshCcw, BellOff } from "lucide-svelte";
+    import type { ComponentType } from "svelte";
     import SidebarButton from "../SidebarButton.svelte";
     import TemplateGuideSidebar from "../TemplateGuideSidebar.svelte";
     import { navigate } from "../../lib/store";
@@ -23,7 +24,7 @@
         onSaveSnooze,
         onClearSnooze,
     }: {
-        navItems: { path: string; label: string; icon: any }[];
+        navItems: { path: string; label: string; icon: ComponentType }[];
         activeRouteValue: string;
         isSyncing: boolean;
         dashboardData: DashboardData | null;
@@ -122,7 +123,7 @@
                             <BellOff size={18} />
                         </IconChip>
                         <div>
-                            <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <span class="ui-text-strong">
                                 スヌーズ
                             </span>
                             <p class="ui-meta-text text-[10px]">

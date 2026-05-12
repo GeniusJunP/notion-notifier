@@ -5,8 +5,10 @@
     import Input from "../../lib/ui/Input.svelte";
     import SectionCard from "../../lib/ui/SectionCard.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
+    import FormGrid from "../../lib/ui/FormGrid.svelte";
+    import type { Snippet } from "svelte";
 
-    export let config: Config;
+    let { config = $bindable() } = $props<{ config: Config }>();
 
     function addCustomMapping() {
         if (!config) return;
@@ -19,10 +21,25 @@
     function removeCustomMapping(index: number) {
         if (!config) return;
         config.property_mapping.custom = config.property_mapping.custom.filter(
-            (_, i) => i !== index,
+            (_item: { variable: string; property: string }, i: number) => i !== index,
         );
     }
 </script>
+
+{#snippet listHeader(text: string)}
+    <span class="mb-2 block text-center text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+        {text}
+    </span>
+{/snippet}
+
+{#snippet propertyLabel(text: string, rightContent?: Snippet)}
+    <div class="flex h-10 items-center justify-between rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+        {text}
+        {#if rightContent}
+            {@render rightContent()}
+        {/if}
+    </div>
+{/snippet}
 
 <SectionCard>
     <div class="flex items-center justify-between">
@@ -36,50 +53,27 @@
     </div>
 
     <div class="space-y-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormGrid>
             <div>
-                <span
-                    class="mb-2 block text-center text-xs font-bold uppercase text-gray-500 dark:text-gray-400"
-                >
-                    用途
-                </span>
+                {@render listHeader("用途")}
                 <div class="space-y-3">
-                    <div
-                        class="flex h-10 items-center rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    >
-                        タイトル
-                    </div>
-                    <div
-                        class="flex h-10 items-center rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    >
-                        日付 (Date)
-                    </div>
-                    <div
-                        class="flex h-10 items-center rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    >
-                        場所
-                    </div>
-                    <div
-                        class="flex h-10 items-center justify-between rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    >
-                        参加者
+                    {@render propertyLabel("タイトル")}
+                    {@render propertyLabel("日付 (Date)")}
+                    {@render propertyLabel("場所")}
+                    {#snippet toggleSnippet()}
                         <Toggle
-                            bind:checked={config.property_mapping
-                                .attendees_enabled}
+                            bind:checked={config.property_mapping.attendees_enabled}
                             ariaLabel="参加者プロパティの利用を切り替え"
                             tone="success"
                             size="sm"
                         />
-                    </div>
+                    {/snippet}
+                    {@render propertyLabel("参加者", toggleSnippet)}
                 </div>
             </div>
 
             <div>
-                <span
-                    class="mb-2 block text-center text-xs font-bold uppercase text-gray-500 dark:text-gray-400"
-                >
-                    Notion プロパティ名
-                </span>
+                {@render listHeader("Notion プロパティ名")}
                 <div class="space-y-3">
                     <Input type="text" bind:value={config.property_mapping.title} uiSize="sm" />
                     <Input type="text" bind:value={config.property_mapping.date} uiSize="sm" />
@@ -87,13 +81,11 @@
                     <Input type="text" bind:value={config.property_mapping.attendees} uiSize="sm" />
                 </div>
             </div>
-        </div>
+        </FormGrid>
 
         {#if config.property_mapping.custom.length > 0}
-            <div class="space-y-3 border-t border-gray-200/70 pt-4 dark:border-gray-800">
-                <p
-                    class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400"
-                >
+            <div class="space-y-3 ui-divider">
+                <p class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                     カスタムマッピング
                 </p>
 

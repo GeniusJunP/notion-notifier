@@ -15,25 +15,17 @@
     import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
     import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
     import Button from "../lib/ui/Button.svelte";
-    import { onMount, onDestroy } from "svelte";
 
-    let config = $configStore;
-    let unsubscribe: () => void;
-
-    onMount(() => {
-        unsubscribe = configStore.subscribe((value) => {
-            config = value;
-        });
+    let config = $state($configStore);
+    
+    $effect(() => {
+        config = $configStore;
     });
 
-    onDestroy(() => {
-        if (unsubscribe) unsubscribe();
-    });
-
-    let isSaving = false;
-    let previewOpen = false;
-    let previewTitle = "";
-    let previewContent = "";
+    let isSaving = $state(false);
+    let previewOpen = $state(false);
+    let previewTitle = $state("");
+    let previewContent = $state("");
 
     function openPreview(title: string, content: string) {
         previewTitle = title;
@@ -97,7 +89,7 @@
                 ...cfg,
                 notifications: {
                     ...cfg.notifications,
-                    upcoming: (cfg.notifications.upcoming || []).filter((_, i) => i !== index),
+                    upcoming: (cfg.notifications.upcoming || []).filter((_item, i) => i !== index),
                 }
             };
         });
@@ -111,7 +103,7 @@
                 ...cfg,
                 notifications: {
                     ...cfg.notifications,
-                    periodic: (cfg.notifications.periodic || []).filter((_, i) => i !== index),
+                    periodic: (cfg.notifications.periodic || []).filter((_item, i) => i !== index),
                 }
             };
         });
@@ -190,9 +182,9 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.upcoming || [] as rule, i (i)}
+                {#each config.notifications.upcoming || [] as _rule, i (i)}
                     <UpcomingRuleCard
-                        bind:rule
+                        bind:rule={config.notifications.upcoming[i]}
                         index={i}
                         on:remove={(e) => removeUpcomingRule(e.detail)}
                         on:preview={(e) =>
@@ -216,9 +208,9 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.periodic || [] as rule, i (i)}
+                {#each config.notifications.periodic || [] as _rule, i (i)}
                     <PeriodicRuleCard
-                        bind:rule
+                        bind:rule={config.notifications.periodic[i]}
                         index={i}
                         on:remove={(e) => removePeriodicRule(e.detail)}
                         on:preview={(e) =>
