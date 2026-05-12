@@ -9,7 +9,6 @@ import (
 
 // respondJSON writes a JSON response with the given status code.
 func respondJSON(w http.ResponseWriter, status int, data any) {
-	// TODO: [Refactor] Consider using http.ResponseWriter's streaming capabilities for large payloads to avoid performance issues.
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if data != nil {
