@@ -50,7 +50,14 @@ export default [
         "argsIgnorePattern": "^_"
       }],
       "svelte/valid-compile": "error",
-      "@typescript-eslint/no-invalid-void-type": "off"
+      "@typescript-eslint/no-invalid-void-type": "off",
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "SvelteAttribute[key.name='class'] Literal[value=/(^|\\s)(text-(xs|sm|base|lg|xl|2xl|3xl|4xl)|font-(bold|semibold|medium))(\\s|$)/]",
+          message: "フォントサイズやウェイトの直書きは避け、<Typography> コンポーネントの variant を使用してください。"
+        }
+      ]
     }
   },
   {
