@@ -21,6 +21,8 @@ var (
 	date    = "unknown"
 )
 
+const commandName = "notion-notifier"
+
 // program implements service.Interface for kardianos/service.
 type program struct {
 	cfgPath string
@@ -67,6 +69,26 @@ func (p *program) Stop(s service.Service) error {
 func main() {
 	cfgDir := app.DefaultConfigDir()
 	dataDir := app.DefaultDataDir()
+	versionFlag := flag.Bool("version", false, "print version information and exit")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [flags] [command]\n\n", commandName)
+		fmt.Fprintln(os.Stderr, "Commands:")
+		fmt.Fprintln(os.Stderr, "  update     Download and install the latest release")
+		fmt.Fprintln(os.Stderr, "  install    Register the service")
+		fmt.Fprintln(os.Stderr, "  start      Start the service")
+		fmt.Fprintln(os.Stderr, "  stop       Stop the service")
+		fmt.Fprintln(os.Stderr, "  restart    Restart the service")
+		fmt.Fprintln(os.Stderr, "  uninstall  Remove the service registration")
+		fmt.Fprintln(os.Stderr, "\nFlags:")
+		flag.PrintDefaults()
+		fmt.Fprintln(os.Stderr, "\nExamples:")
+		fmt.Fprintf(os.Stderr, "  %s start\n", commandName)
+		fmt.Fprintf(os.Stderr, "  %s --version\n", commandName)
+		fmt.Fprintf(os.Stderr, "  %s --user install\n", commandName)
+		fmt.Fprintf(os.Stderr, "  %s --help\n", commandName)
+		fmt.Fprintln(os.Stderr, "\nIf no command is provided, the service runs in the foreground.")
+	}
 
 	cfgPath := flag.String("config", filepath.Join(cfgDir, "config.yaml"), "path to config.yaml")
 	envPath := flag.String("env", filepath.Join(cfgDir, "env.yaml"), "path to env.yaml")
@@ -90,6 +112,11 @@ func main() {
 		cfgPath: *cfgPath,
 		envPath: *envPath,
 		dbPath:  *dbPath,
+	}
+
+	if *versionFlag {
+		fmt.Printf("notion-notifier version %s, commit %s, built at %s\n", version, commit, date)
+		return
 	}
 
 	s, err := service.New(prg, serviceutil.RuntimeConfig(svcConfig, *userSvc))
