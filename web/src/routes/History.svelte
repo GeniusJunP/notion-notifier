@@ -16,12 +16,10 @@
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
     import Select from "../lib/ui/Select.svelte";
-    import { typography } from "../lib/ui/typography";
 
     let items: HistoryItem[] = $state([]);
     let isLoading = $state(true);
     let filterType = $state("all");
-    const typo = typography;
 
     async function loadHistory() {
         isLoading = true;
@@ -71,8 +69,8 @@
                 <History size={24} />
             </div>
             <div>
-                <h2 class={typo.pageTitle()}>通知履歴</h2>
-                <p class={typo.pageSubtitle()}>最近の通知送信ログ（最新50件）</p>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">通知履歴</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">最近の通知送信ログ（最新50件）</p>
             </div>
         </div>
 
@@ -109,7 +107,7 @@
                 </Select>
             </div>
 
-            <div class={typo.metaText() + " ml-auto"}>
+            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">
                 {filteredItems.length} 件を表示中
             </div>
         </div>

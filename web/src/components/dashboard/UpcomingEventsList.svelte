@@ -7,14 +7,12 @@
     import Button from "../../lib/ui/Button.svelte";
     import Card from "../../lib/ui/Card.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
-    import { typography } from "../../lib/ui/typography";
 
     export let upcoming: UpcomingEvent[] = [];
     export let isLoading = false;
     export let isSyncing = false;
 
     const dispatch = createEventDispatcher<{ refresh: void }>();
-    const typo = typography;
 
     const calendarStateMeta: Record<
         UpcomingEvent["calendar_state"],
@@ -50,7 +48,7 @@
 
 <div class="space-y-4">
     <div class="flex items-center justify-between">
-        <h2 class={typo.blockTitle()}>
+        <h2 class="text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
             直近の予定 (14日間)
         </h2>
         <Button onclick={() => dispatch("refresh")} variant="text" size="sm">

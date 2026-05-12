@@ -7,10 +7,8 @@
     import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
     import { configStore, saveConfig as saveConfigState } from "../lib/store";
     import Button from "../lib/ui/Button.svelte";
-    import { typography } from "../lib/ui/typography";
 
     let isSaving = $state(false);
-    const typo = typography;
 
     async function saveConfig() {
         if (!$configStore) return;
@@ -25,7 +23,7 @@
 
 <div class="max-w-5xl space-y-8">
     <div class="flex items-center justify-between">
-        <h2 class="{typo.pageTitle()} flex items-center gap-3">
+        <h2 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             <Settings size={28} class="text-brand-600 dark:text-brand-300" />
             システム設定
         </h2>

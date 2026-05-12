@@ -7,23 +7,21 @@
     import Input from "../lib/ui/Input.svelte";
     import SectionCard from "../lib/ui/SectionCard.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
-    import { typography } from "../lib/ui/typography";
     import Typography from "../lib/ui/Typography.svelte";
     import TemplateEditor from "./TemplateEditor.svelte";
 
     export let config: Config;
-    const typo = typography;
 </script>
 
 <SectionCard>
-    <h4 class={typo.sectionTitle() + " text-gray-900 dark:text-gray-100"}>
+    <h4 class="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-gray-100">
         <Globe size={18} class="text-brand-600 dark:text-brand-300" />
         Webhook 設定
     </h4>
 
-    <p class={typo.supportText() + " text-xs"}>
+    <p class="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
         Webhook で送信される JSON ペイロードのテンプレートです。
-        <code class={typo.inlineCode()}>{"{{.Message}}"}</code>
+        <code class="rounded bg-white/70 px-1 py-0.5 font-mono dark:bg-gray-900/60">{"{{.Message}}"}</code>
         変数が通知内容に置き換わります。
     </p>
 

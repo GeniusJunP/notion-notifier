@@ -16,9 +16,6 @@
         saveConfig as saveConfigState,
     } from "../lib/store";
     import Button from "../lib/ui/Button.svelte";
-    import { typography } from "../lib/ui/typography";
-
-    const typo = typography;
 
     let isSaving = $state(false);
     let previewOpen = $state(false);
@@ -173,7 +170,7 @@
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class={typo.blockTitle()}>
+                    <h2 class="text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
                         事前通知ルール
                     </h2>
                     <Button onclick={addUpcomingRule} variant="text" size="sm">
@@ -199,7 +196,7 @@
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class={typo.blockTitle()}>
+                    <h2 class="text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
                         定期通知ルール
                     </h2>
                     <Button onclick={addPeriodicRule} variant="text" size="sm">
