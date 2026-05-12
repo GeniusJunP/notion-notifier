@@ -1,19 +1,20 @@
 <script lang="ts">
+    import { Plus, Save } from "lucide-svelte";
+
+    import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
+    import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
+    import PreviewModal from "../components/PreviewModal.svelte";
     import {
         api,
         buildPreviewNotificationRequest,
-        type UpcomingNotification,
         type PeriodicNotification,
+        type UpcomingNotification,
     } from "../lib/api";
     import {
-        configStore,
         addToast,
+        configStore,
         saveConfig as saveConfigState,
     } from "../lib/store";
-    import PreviewModal from "../components/PreviewModal.svelte";
-    import { Plus, Save } from "lucide-svelte";
-    import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
-    import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
     import Button from "../lib/ui/Button.svelte";
     import { typography } from "../lib/ui/typography";
 

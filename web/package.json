@@ -19,6 +19,7 @@
     "@typescript-eslint/parser": "^8.59.1",
     "autoprefixer": "^10.5.0",
     "eslint": "^10.3.0",
+    "eslint-plugin-simple-import-sort": "^13.0.0",
     "eslint-plugin-svelte": "^3.17.1",
     "eslint-plugin-tailwindcss": "^3.18.3",
     "globals": "^17.6.0",

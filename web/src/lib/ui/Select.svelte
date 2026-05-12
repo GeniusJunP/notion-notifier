@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { HTMLSelectAttributes } from "svelte/elements";
-    import { cn } from "../utils";
     import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
 
     const selectRecipe = tv({
         base: "w-full appearance-none outline-none transition-[background-color,border-color,box-shadow,color] duration-200 focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-brand-900/50",

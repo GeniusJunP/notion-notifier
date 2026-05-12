@@ -1,10 +1,22 @@
 <script lang="ts">
+    import {
+        AlertTriangle,
+        CalendarDays,
+        CheckCircle,
+        RefreshCw,
+    } from "lucide-svelte";
     import { onMount } from "svelte";
+
+    import ManualNotificationCard from "../components/dashboard/ManualNotificationCard.svelte";
+    import ManualSyncCard from "../components/dashboard/ManualSyncCard.svelte";
+    import StatCard from "../components/dashboard/StatCard.svelte";
+    import UpcomingEventsList from "../components/dashboard/UpcomingEventsList.svelte";
+    import PreviewModal from "../components/PreviewModal.svelte";
     import {
         api,
         buildManualNotificationRequest,
-        getErrorMessage,
         type DashboardData,
+        getErrorMessage,
         type UpcomingEvent,
     } from "../lib/api";
     import {
@@ -13,17 +25,6 @@
         syncNotion as syncNotionState,
     } from "../lib/store";
     import { toLocalDateInputValue } from "../lib/utils";
-    import PreviewModal from "../components/PreviewModal.svelte";
-    import StatCard from "../components/dashboard/StatCard.svelte";
-    import ManualSyncCard from "../components/dashboard/ManualSyncCard.svelte";
-    import ManualNotificationCard from "../components/dashboard/ManualNotificationCard.svelte";
-    import UpcomingEventsList from "../components/dashboard/UpcomingEventsList.svelte";
-    import {
-        RefreshCw,
-        CalendarDays,
-        CheckCircle,
-        AlertTriangle,
-    } from "lucide-svelte";
 
     let dashboard: DashboardData | null = $state(null);
     let upcoming: UpcomingEvent[] = $state([]);

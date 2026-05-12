@@ -1,14 +1,15 @@
 <script lang="ts">
     import { Globe } from "lucide-svelte";
+
     import type { Config } from "../lib/api";
+    import Card from "../lib/ui/Card.svelte";
     import FormField from "../lib/ui/FormField.svelte";
     import Input from "../lib/ui/Input.svelte";
     import SectionCard from "../lib/ui/SectionCard.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
-    import Card from "../lib/ui/Card.svelte";
-    import TemplateEditor from "./TemplateEditor.svelte";
-    import Typography from "../lib/ui/Typography.svelte";
     import { typography } from "../lib/ui/typography";
+    import Typography from "../lib/ui/Typography.svelte";
+    import TemplateEditor from "./TemplateEditor.svelte";
 
     export let config: Config;
     const typo = typography;

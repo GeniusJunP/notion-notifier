@@ -1,24 +1,25 @@
 <script lang="ts">
-    import { api, getErrorMessage } from "../lib/api";
-    import {
-        configStore,
-        addToast,
-    } from "../lib/store";
     import {
         Calendar,
-        RefreshCw,
-        Trash2,
         CalendarDays,
+        RefreshCw,
         Settings,
+        Trash2,
     } from "lucide-svelte";
+
+    import { api, getErrorMessage } from "../lib/api";
+    import {
+        addToast,
+        configStore,
+    } from "../lib/store";
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
     import FormField from "../lib/ui/FormField.svelte";
     import IconChip from "../lib/ui/IconChip.svelte";
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
-    import { toLocalDateInputValue } from "../lib/utils";
     import { typography } from "../lib/ui/typography";
+    import { toLocalDateInputValue } from "../lib/utils";
 
     const typo = typography;
 

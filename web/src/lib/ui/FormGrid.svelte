@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { tv, type VariantProps } from "tailwind-variants";
     import type { Snippet } from "svelte";
+    import { tv, type VariantProps } from "tailwind-variants";
 
     const gridRecipe = tv({
         base: "grid grid-cols-1",

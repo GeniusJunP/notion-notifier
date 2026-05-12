@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { tv } from "tailwind-variants";
     import type { Snippet } from "svelte";
+    import { tv } from "tailwind-variants";
 
     const formFieldRecipe = tv({
         slots: {

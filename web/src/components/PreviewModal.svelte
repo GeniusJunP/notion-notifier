@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import DOMPurify from "dompurify";
     import { X } from "lucide-svelte";
     import { marked } from "marked";
-    import DOMPurify from "dompurify";
+    import { createEventDispatcher } from "svelte";
+
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
 

@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { cn } from "../utils";
-    import { tv } from "tailwind-variants";
     import type { Snippet } from "svelte";
+    import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
 
     const cardRecipe = tv({
         base: "border bg-white shadow-sm dark:bg-gray-900",

@@ -1,17 +1,18 @@
 <script lang="ts">
-    import { X, RefreshCcw, BellOff } from "lucide-svelte";
+    import { BellOff,RefreshCcw, X } from "lucide-svelte";
     import type { ComponentType } from "svelte";
-    import SidebarButton from "../SidebarButton.svelte";
-    import TemplateGuideSidebar from "../TemplateGuideSidebar.svelte";
-    import { navigate } from "../../lib/store";
+
     import type { Config, DashboardData } from "../../lib/api";
-    import { sidebarOpen, guideModal } from "../../lib/uiStore";
+    import { navigate } from "../../lib/store";
     import Button from "../../lib/ui/Button.svelte";
     import Card from "../../lib/ui/Card.svelte";
     import IconChip from "../../lib/ui/IconChip.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
     import Typography from "../../lib/ui/Typography.svelte";
+    import { guideModal,sidebarOpen } from "../../lib/uiStore";
+    import SidebarButton from "../SidebarButton.svelte";
+    import TemplateGuideSidebar from "../TemplateGuideSidebar.svelte";
 
     let {
         navItems,

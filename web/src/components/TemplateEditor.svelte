@@ -1,5 +1,15 @@
 <script lang="ts">
     import { Code2, Eye, Plus, RotateCcw, Trash2 } from "lucide-svelte";
+
+    import {
+        blocksFromTemplate,
+        createTemplateBlock,
+        serializeTemplateBlocks,
+        type TemplateBlock,
+        type TemplateBlockKind,
+        type TemplateEditorMode,
+        templateVariables,
+    } from "../lib/templateEditor";
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
     import FormField from "../lib/ui/FormField.svelte";
@@ -7,15 +17,6 @@
     import Select from "../lib/ui/Select.svelte";
     import Textarea from "../lib/ui/Textarea.svelte";
     import Typography from "../lib/ui/Typography.svelte";
-    import {
-        blocksFromTemplate,
-        createTemplateBlock,
-        serializeTemplateBlocks,
-        templateVariables,
-        type TemplateBlock,
-        type TemplateBlockKind,
-        type TemplateEditorMode,
-    } from "../lib/templateEditor";
 
     let {
         value = $bindable(""),

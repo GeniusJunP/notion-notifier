@@ -1,7 +1,8 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
+
     import { cn } from "../utils";
     import Card from "./Card.svelte";
-    import type { Snippet } from "svelte";
 
     type Tone = "default" | "muted" | "brand" | "danger";
     type Padding = "none" | "sm" | "md" | "lg";

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import type { HTMLAttributes } from "svelte/elements";
-    import { cn } from "../utils";
-    import { tv } from "tailwind-variants";
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
+    import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
 
     const typographyRecipe = tv({
         base: "m-0",

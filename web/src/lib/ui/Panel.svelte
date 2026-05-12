@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { cn } from "../utils";
-    import { tv } from "tailwind-variants";
-    import Card from "./Card.svelte";
     import type { Snippet } from "svelte";
+    import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
+    import Card from "./Card.svelte";
 
     const panelRecipe = tv({
         slots: {

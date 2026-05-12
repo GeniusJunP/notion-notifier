@@ -1,16 +1,17 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { api, type HistoryItem } from "../lib/api";
-    import { addToast } from "../lib/store";
     import {
-        History,
-        Trash2,
-        RefreshCcw,
         CheckCircle2,
-        XCircle,
         Clock,
         Filter,
+        History,
+        RefreshCcw,
+        Trash2,
+        XCircle,
     } from "lucide-svelte";
+    import { onMount } from "svelte";
+
+    import { api, type HistoryItem } from "../lib/api";
+    import { addToast } from "../lib/store";
     import Badge from "../lib/ui/Badge.svelte";
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";

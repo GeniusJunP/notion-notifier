@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
-import { api, getErrorMessage, type Config, type DashboardData } from './api';
+
+import { api, type Config, type DashboardData,getErrorMessage } from './api';
 
 export const configStore = writable<Config | null>(null);
 

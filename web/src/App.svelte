@@ -1,35 +1,35 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
   import {
-    activeRoute,
-    configStore,
-    addToast,
-    darkMode,
-    syncNotion as syncNotionState,
-    healthPoller,
-    dashboardStore,
-    serviceActiveStore,
-  } from "./lib/store";
-  import { sidebarOpen, guideModal } from "./lib/uiStore";
-  import { api } from "./lib/api";
-  import {
-    LayoutDashboard,
     Bell,
     Calendar,
-    Settings,
     History,
+    LayoutDashboard,
+    Settings,
   } from "lucide-svelte";
+  import { onDestroy,onMount } from "svelte";
 
+  import Header from "./components/layout/Header.svelte";
+  import Sidebar from "./components/layout/Sidebar.svelte";
+  import PreviewModal from "./components/PreviewModal.svelte";
+  import ToastContainer from "./components/ToastContainer.svelte";
+  import { api } from "./lib/api";
+  import {
+    activeRoute,
+    addToast,
+    configStore,
+    darkMode,
+    dashboardStore,
+    healthPoller,
+    serviceActiveStore,
+    syncNotion as syncNotionState,
+  } from "./lib/store";
+  import { guideModal,sidebarOpen } from "./lib/uiStore";
+  import CalendarSync from "./routes/Calendar.svelte";
   // Routes
   import Dashboard from "./routes/Dashboard.svelte";
-  import Notifications from "./routes/Notifications.svelte";
-  import CalendarSync from "./routes/Calendar.svelte";
-  import SystemSettings from "./routes/Settings.svelte";
   import NotificationHistory from "./routes/History.svelte";
-  import PreviewModal from "./components/PreviewModal.svelte";
-  import Sidebar from "./components/layout/Sidebar.svelte";
-  import Header from "./components/layout/Header.svelte";
-  import ToastContainer from "./components/ToastContainer.svelte";
+  import Notifications from "./routes/Notifications.svelte";
+  import SystemSettings from "./routes/Settings.svelte";
   $: dashboardData = $dashboardStore;
   $: isServiceActive = $serviceActiveStore;
   let isSyncing = false;

@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { cn } from "../utils";
     import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
 
     const spinnerRecipe = tv({
         base: "animate-spin rounded-full",

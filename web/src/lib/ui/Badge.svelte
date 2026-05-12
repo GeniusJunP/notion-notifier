@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { cn } from "../utils";
-    import { tv } from "tailwind-variants";
     import type { Snippet } from "svelte";
+    import { tv } from "tailwind-variants";
+
+    import { cn } from "../utils";
 
     const badgeRecipe = tv({
         base: "inline-flex items-center rounded-full px-2.5 py-1 font-semibold",

@@ -1,17 +1,21 @@
 import js from "@eslint/js";
-import svelte from "eslint-plugin-svelte";
-import svelteParser from "svelte-eslint-parser";
-import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import svelte from "eslint-plugin-svelte";
 import tailwind from "eslint-plugin-tailwindcss";
 import globals from "globals";
+import svelteParser from "svelte-eslint-parser";
 
 export default [
   js.configs.recommended,
   ...svelte.configs["flat/recommended"],
   ...tailwind.configs["flat/recommended"],
-  ...tsPlugin.configs["flat/recommended"],
+  ...tsPlugin.configs["flat/strict"],
   {
+    plugins: {
+      "simple-import-sort": simpleImportSort,
+    },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -24,6 +28,10 @@ export default [
     rules: {
       "tailwindcss/no-custom-classname": "error",
       "tailwindcss/classnames-order": "warn",
+      "tailwindcss/enforces-shorthand": "warn",
+      "tailwindcss/no-contradicting-classname": "error",
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
     }
   },
   {
@@ -41,7 +49,8 @@ export default [
         "varsIgnorePattern": "^_|^\\$\\$Props",
         "argsIgnorePattern": "^_"
       }],
-      "svelte/valid-compile": "error"
+      "svelte/valid-compile": "error",
+      "@typescript-eslint/no-invalid-void-type": "off"
     }
   },
   {
@@ -55,7 +64,9 @@ export default [
         "varsIgnorePattern": "^_",
         "argsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
-      }]
+      }],
+      "@typescript-eslint/no-invalid-void-type": "off",
+      "@typescript-eslint/no-non-null-assertion": "off"
     },
   },
   {

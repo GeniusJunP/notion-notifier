@@ -1,14 +1,15 @@
 <script lang="ts">
     import { Database, Plus, Trash2 } from "lucide-svelte";
-    import type { Config } from "../../lib/api";
+    import type { Snippet } from "svelte";
+
+    import type { Config, CustomMapping } from "../../lib/api";
     import Button from "../../lib/ui/Button.svelte";
+    import Divider from "../../lib/ui/Divider.svelte";
+    import FormGrid from "../../lib/ui/FormGrid.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import SectionCard from "../../lib/ui/SectionCard.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
-    import FormGrid from "../../lib/ui/FormGrid.svelte";
     import Typography from "../../lib/ui/Typography.svelte";
-    import Divider from "../../lib/ui/Divider.svelte";
-    import type { Snippet } from "svelte";
 
     let { config = $bindable() } = $props<{ config: Config }>();
 
@@ -23,7 +24,7 @@
     function removeCustomMapping(index: number) {
         if (!config) return;
         config.property_mapping.custom = config.property_mapping.custom.filter(
-            (_: unknown, i: number) => i !== index,
+            (_: CustomMapping, i: number) => i !== index,
         );
     }
 </script>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { FileText } from "lucide-svelte";
+
     import type { Config } from "../../lib/api";
     import Button from "../../lib/ui/Button.svelte";
     import FormField from "../../lib/ui/FormField.svelte";

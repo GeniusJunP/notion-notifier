@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { RefreshCw, CalendarDays, Clock, ArrowRight } from "lucide-svelte";
+    import { ArrowRight,CalendarDays, Clock, RefreshCw } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
+
     import type { UpcomingEvent } from "../../lib/api";
     import Badge from "../../lib/ui/Badge.svelte";
     import Button from "../../lib/ui/Button.svelte";

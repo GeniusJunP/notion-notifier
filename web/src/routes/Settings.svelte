@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { configStore, saveConfig as saveConfigState } from "../lib/store";
-    import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
+    import { Save,Settings } from "lucide-svelte";
+
+    import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
     import GeneralSettings from "../components/settings/GeneralSettings.svelte";
     import PropertyMappingSettings from "../components/settings/PropertyMappingSettings.svelte";
-    import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
-    import { Settings, Save } from "lucide-svelte";
+    import WebhookSettingsCard from "../components/WebhookSettingsCard.svelte";
+    import { configStore, saveConfig as saveConfigState } from "../lib/store";
     import Button from "../lib/ui/Button.svelte";
     import { typography } from "../lib/ui/typography";
 

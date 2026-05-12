@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { cn } from "../utils";
     import type { HTMLAttributes } from "svelte/elements";
+
+    import { cn } from "../utils";
 
     interface Props extends HTMLAttributes<HTMLDivElement> {
         spacing?: "none" | "sm" | "md" | "lg";

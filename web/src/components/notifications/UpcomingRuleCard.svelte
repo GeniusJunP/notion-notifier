@@ -1,12 +1,13 @@
 <script lang="ts">
     import { Clock } from "lucide-svelte";
-    import DayPicker from "./DayPicker.svelte";
-    import type { UpcomingNotification } from "../../lib/api";
     import { createEventDispatcher } from "svelte";
-    import BaseRuleCard from "./BaseRuleCard.svelte";
+
+    import type { UpcomingNotification } from "../../lib/api";
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
     import TemplateEditor from "../TemplateEditor.svelte";
+    import BaseRuleCard from "./BaseRuleCard.svelte";
+    import DayPicker from "./DayPicker.svelte";
 
     export let rule: UpcomingNotification;
     export let index: number;

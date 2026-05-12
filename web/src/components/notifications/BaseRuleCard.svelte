@@ -1,9 +1,10 @@
 <script lang="ts">
     import { Trash2 } from "lucide-svelte";
+    import type { Snippet } from "svelte";
+
     import Button from "../../lib/ui/Button.svelte";
     import Panel from "../../lib/ui/Panel.svelte";
     import Toggle from "../../lib/ui/Toggle.svelte";
-    import type { Snippet } from "svelte";
 
     let {
         title,

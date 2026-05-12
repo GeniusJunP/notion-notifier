@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import { Menu, Sun, Moon } from "lucide-svelte";
+    import { Menu, Moon,Sun } from "lucide-svelte";
+    import { onDestroy,onMount } from "svelte";
+
     import { darkMode } from "../../lib/store";
-    import { sidebarOpen } from "../../lib/uiStore";
     import Badge from "../../lib/ui/Badge.svelte";
     import Button from "../../lib/ui/Button.svelte";
+    import { sidebarOpen } from "../../lib/uiStore";
 
     let { activeRouteLabel, isServiceActive, mainNavId } = $props<{
         activeRouteLabel: string;

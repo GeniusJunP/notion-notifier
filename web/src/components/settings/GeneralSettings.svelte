@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Globe } from "lucide-svelte";
+
     import type { Config } from "../../lib/api";
     import FormField from "../../lib/ui/FormField.svelte";
     import Input from "../../lib/ui/Input.svelte";
