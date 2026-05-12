@@ -38,6 +38,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 	if len(events) == 0 {
 		return nil
 	}
+	// TODO: [Refactor] Break down this large embedded SQL query into smaller reusable components or use a query builder like squirrel.
 	query := `INSERT INTO events (
 		notion_page_id, title, start_date, start_time, end_date, end_time, is_all_day, location, url, content, attendees_json, raw_properties, notion_updated_at, fetched_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -58,6 +59,7 @@ func (r *Repository) UpsertEvents(ctx context.Context, events []models.Event) er
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
+		// TODO: [Refactor] Use fmt.Errorf with %w to wrap errors and provide more context.
 		return err
 	}
 	stmt, err := tx.PrepareContext(ctx, query)

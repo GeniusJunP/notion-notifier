@@ -42,6 +42,7 @@ func TestUpsertEventsPersistsAttendees(t *testing.T) {
 	if len(events) != 1 {
 		t.Fatalf("unexpected events len: got=%d want=1", len(events))
 	}
+	// TODO: [Refactor] Use an assertion library like github.com/stretchr/testify/assert instead of reflect.DeepEqual to avoid brittle tests.
 	if !reflect.DeepEqual(events[0].Attendees, ev.Attendees) {
 		t.Fatalf("unexpected attendees: got=%v want=%v", events[0].Attendees, ev.Attendees)
 	}

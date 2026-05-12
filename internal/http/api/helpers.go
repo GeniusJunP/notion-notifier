@@ -9,6 +9,7 @@ import (
 
 // respondJSON writes a JSON response with the given status code.
 func respondJSON(w http.ResponseWriter, status int, data any) {
+	// TODO: [Refactor] Consider using http.ResponseWriter's streaming capabilities for large payloads to avoid performance issues.
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if data != nil {
@@ -20,6 +21,7 @@ func respondJSON(w http.ResponseWriter, status int, data any) {
 
 // respondError writes a JSON error response.
 func respondError(w http.ResponseWriter, status int, message string) {
+	// TODO: [Refactor] Centralize error handling to avoid repetitive code and ensure consistent error responses.
 	respondJSON(w, status, map[string]string{"error": message})
 }
 

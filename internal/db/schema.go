@@ -5,6 +5,7 @@ import (
 )
 
 func initSchema(db *sql.DB) error {
+	// TODO: [Refactor] Use a migration tool like golang-migrate or goose instead of hardcoded SQL statements for schema creation.
 	stmts := []string{
 		`CREATE TABLE IF NOT EXISTS events (
 			notion_page_id TEXT PRIMARY KEY,
