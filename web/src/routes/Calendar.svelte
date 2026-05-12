@@ -20,12 +20,7 @@
     import { toLocalDateInputValue } from "../lib/utils";
     import { typography } from "../lib/ui/typography";
 
-    let config = $state($configStore);
-    const typo = typography();
-
-    $effect(() => {
-        config = $configStore;
-    });
+    const typo = typography;
 
     let isSyncing = $state(false);
     let isClearing = $state(false);
@@ -86,11 +81,11 @@
             <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">
                 同期有効化
             </span>
-            {#if config}
+            {#if $configStore}
                 <Toggle
-                    checked={config?.calendar_sync.enabled ?? false}
+                    checked={$configStore?.calendar_sync.enabled ?? false}
                     onchange={(value: boolean) => {
-                        if (!config) return;
+                        if (!$configStore) return;
                         configStore.update((cfg) => cfg ? {
                             ...cfg,
                             calendar_sync: { ...cfg.calendar_sync, enabled: value }
@@ -103,7 +98,7 @@
         </div>
     </Card>
 
-    {#if config}
+    {#if $configStore}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
                 <h3 class={typo.sectionTitle()}>
@@ -116,9 +111,9 @@
                         <Input
                             id="cal-interval-hours"
                             type="number"
-                            value={config?.calendar_sync.interval_hours ?? 0}
+                            value={$configStore?.calendar_sync.interval_hours ?? 0}
                             oninput={(e) => {
-                                if (!config) return;
+                                if (!$configStore) return;
                                 const target = e.currentTarget as HTMLInputElement;
                                 configStore.update((cfg) => cfg ? {
                                     ...cfg,
@@ -132,9 +127,9 @@
                         <Input
                             id="cal-lookahead-days"
                             type="number"
-                            value={config?.calendar_sync.lookahead_days ?? 0}
+                            value={$configStore?.calendar_sync.lookahead_days ?? 0}
                             oninput={(e) => {
-                                if (!config) return;
+                                if (!$configStore) return;
                                 const target = e.currentTarget as HTMLInputElement;
                                 configStore.update((cfg) => cfg ? {
                                     ...cfg,

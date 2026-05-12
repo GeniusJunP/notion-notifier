@@ -10,6 +10,7 @@ export default [
   js.configs.recommended,
   ...svelte.configs["flat/recommended"],
   ...tailwind.configs["flat/recommended"],
+  ...tsPlugin.configs["flat/recommended"],
   {
     languageOptions: {
       globals: {
@@ -22,6 +23,7 @@ export default [
     files: ["**/*.svelte", "**/*.html", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     rules: {
       "tailwindcss/no-custom-classname": "error",
+      "tailwindcss/classnames-order": "warn",
     }
   },
   {
@@ -30,20 +32,20 @@ export default [
       parser: svelteParser,
       parserOptions: {
         parser: tsParser,
+        extraFileExtensions: [".svelte"],
       },
     },
     rules: {
-      "no-unused-vars": ["error", {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", {
         "varsIgnorePattern": "^_|^\\$\\$Props",
         "argsIgnorePattern": "^_"
-      }]
+      }],
+      "svelte/valid-compile": "error"
     }
   },
   {
     files: ["**/*.ts"],
-    plugins: {
-      "@typescript-eslint": tsPlugin,
-    },
     languageOptions: {
       parser: tsParser,
     },

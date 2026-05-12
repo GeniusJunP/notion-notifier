@@ -6,7 +6,7 @@
 
     const panelRecipe = tv({
         slots: {
-            headerWrapper: "ui-panel-header",
+            headerWrapper: "flex items-center justify-between gap-4 border-b border-gray-200/60 bg-gray-50/80 dark:border-gray-800 dark:bg-gray-800/70",
             bodyWrapper: "",
         },
         variants: {

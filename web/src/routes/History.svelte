@@ -20,7 +20,7 @@
     let items: HistoryItem[] = $state([]);
     let isLoading = $state(true);
     let filterType = $state("all");
-    const typo = typography();
+    const typo = typography;
 
     async function loadHistory() {
         isLoading = true;

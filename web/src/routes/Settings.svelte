@@ -8,18 +8,13 @@
     import Button from "../lib/ui/Button.svelte";
     import { typography } from "../lib/ui/typography";
 
-    let config = $state($configStore);
     let isSaving = $state(false);
-    const typo = typography();
-
-    $effect(() => {
-        config = $configStore;
-    });
+    const typo = typography;
 
     async function saveConfig() {
-        if (!config) return;
+        if (!$configStore) return;
         isSaving = true;
-        await saveConfigState(config, {
+        await saveConfigState($configStore, {
             successMessage: "システム設定を保存しました",
             errorMessage: "保存失敗",
         });
@@ -41,16 +36,16 @@
         </Button>
     </div>
 
-    {#if config}
+    {#if $configStore}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-8">
-                <GeneralSettings bind:config />
-                <PropertyMappingSettings bind:config />
+                <GeneralSettings bind:config={$configStore} />
+                <PropertyMappingSettings bind:config={$configStore} />
             </div>
 
             <div class="space-y-8">
-                <ContentRuleSettings bind:config />
-                <WebhookSettingsCard config={config ?? undefined} />
+                <ContentRuleSettings bind:config={$configStore} />
+                <WebhookSettingsCard config={$configStore} />
             </div>
         </div>
     {/if}

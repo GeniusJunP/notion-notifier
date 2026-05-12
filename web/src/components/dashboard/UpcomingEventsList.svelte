@@ -13,7 +13,7 @@
     export let isSyncing = false;
 
     const dispatch = createEventDispatcher<{ refresh: void }>();
-    const typo = typography();
+    const typo = typography;
 
     const calendarStateMeta: Record<
         UpcomingEvent["calendar_state"],

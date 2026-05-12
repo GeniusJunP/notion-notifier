@@ -11,7 +11,7 @@
     import { typography } from "../lib/ui/typography";
 
     export let config: Config;
-    const typo = typography();
+    const typo = typography;
 </script>
 
 <SectionCard>

@@ -2,11 +2,11 @@
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
 
-    let {
-        onOpenGuide
-    }: {
+    interface Props {
         onOpenGuide?: (title: string, content: string) => void;
-    } = $props();
+    }
+
+    let { onOpenGuide }: Props = $props();
 
     const templateVariables = [
         "{{.Name}}",

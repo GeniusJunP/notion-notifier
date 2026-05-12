@@ -97,12 +97,12 @@
                     <X size={16} />
                 </Button>
             </div>
-            <div class="ui-modal-body ui-scrollbar">
+            <div class="max-h-[70vh] overflow-auto p-5 custom-scrollbar">
                 {#if renderedContent}
-                    <div class="ui-markdown-preview" use:setSanitizedHTML={renderedContent}>
+                    <div class="markdown-preview" use:setSanitizedHTML={renderedContent}>
                     </div>
                 {:else}
-                    <div class="ui-empty-preview">
+                    <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50/70 p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-gray-400">
                         プレビュー内容がありません
                     </div>
                 {/if}

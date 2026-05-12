@@ -17,12 +17,7 @@
     import Button from "../lib/ui/Button.svelte";
     import { typography } from "../lib/ui/typography";
 
-    let config = $state($configStore);
-    const typo = typography();
-    
-    $effect(() => {
-        config = $configStore;
-    });
+    const typo = typography;
 
     let isSaving = $state(false);
     let previewOpen = $state(false);
@@ -36,8 +31,9 @@
     }
 
     async function saveConfig() {
+        if (!$configStore) return;
         isSaving = true;
-        await saveConfigState(config, {
+        await saveConfigState($configStore, {
             successMessage: "設定を保存しました",
             errorMessage: "保存に失敗しました",
         });
@@ -45,7 +41,7 @@
     }
 
     function addUpcomingRule() {
-        if (!config) return;
+        if (!$configStore) return;
         const newRule: UpcomingNotification = {
             enabled: true,
             minutes_before: 30,
@@ -66,7 +62,7 @@
     }
 
     function addPeriodicRule() {
-        if (!config) return;
+        if (!$configStore) return;
         const newRule: PeriodicNotification = {
             enabled: true,
             days_of_week: [],
@@ -84,7 +80,7 @@
     }
 
     function removeUpcomingRule(index: number) {
-        if (!config) return;
+        if (!$configStore) return;
         configStore.update((cfg) => {
             if (!cfg) return null;
             return {
@@ -98,7 +94,7 @@
     }
 
     function removePeriodicRule(index: number) {
-        if (!config) return;
+        if (!$configStore) return;
         configStore.update((cfg) => {
             if (!cfg) return null;
             return {
@@ -130,7 +126,7 @@
     }
 
     async function resetTemplate(type: "upcoming" | "periodic", index: number) {
-        if (!config) return;
+        if (!$configStore) return;
         try {
             const defaults = await api.getDefaultTemplates();
             const message = defaults[type] || "";
@@ -172,7 +168,7 @@
         </Button>
     </div>
 
-    {#if config}
+    {#if $configStore}
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -184,9 +180,9 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.upcoming || [] as _, i (i)}
+                {#each $configStore.notifications.upcoming || [] as _, i (i)}
                     <UpcomingRuleCard
-                        bind:rule={config.notifications.upcoming[i]}
+                        bind:rule={$configStore.notifications.upcoming[i]}
                         index={i}
                         on:remove={(e) => removeUpcomingRule(e.detail)}
                         on:preview={(e) =>
@@ -210,9 +206,9 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.periodic || [] as _, i (i)}
+                {#each $configStore.notifications.periodic || [] as _, i (i)}
                     <PeriodicRuleCard
-                        bind:rule={config.notifications.periodic[i]}
+                        bind:rule={$configStore.notifications.periodic[i]}
                         index={i}
                         on:remove={(e) => removePeriodicRule(e.detail)}
                         on:preview={(e) =>
