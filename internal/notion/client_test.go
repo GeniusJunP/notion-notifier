@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"notion-notifier/internal/config"
 	"notion-notifier/internal/retry"
@@ -51,14 +53,9 @@ func TestMapPagesToEvents_MapsAttendees(t *testing.T) {
 	}
 
 	events := MapPagesToEvents(pages, mapping, loc)
-	if len(events) != 1 {
-		t.Fatalf("unexpected events length: got=%d want=1", len(events))
-	}
+	require.Len(t, events, 1, "unexpected events length")
 	want := []string{"first@example.com", "second@example.com"}
-	// TODO: [Refactor] Use an assertion library like github.com/stretchr/testify/assert instead of reflect.DeepEqual to avoid brittle tests.
-	if !reflect.DeepEqual(events[0].Attendees, want) {
-		t.Fatalf("unexpected attendees: got=%v want=%v", events[0].Attendees, want)
-	}
+	assert.Equal(t, want, events[0].Attendees, "unexpected attendees")
 }
 
 func TestMapPagesToEvents_DisabledAttendees(t *testing.T) {
@@ -96,12 +93,8 @@ func TestMapPagesToEvents_DisabledAttendees(t *testing.T) {
 	}
 
 	events := MapPagesToEvents(pages, mapping, loc)
-	if len(events) != 1 {
-		t.Fatalf("unexpected events length: got=%d want=1", len(events))
-	}
-	if len(events[0].Attendees) != 0 {
-		t.Fatalf("expected attendees to be empty when disabled, got=%v", events[0].Attendees)
-	}
+	require.Len(t, events, 1, "unexpected events length")
+	assert.Empty(t, events[0].Attendees, "expected attendees to be empty when disabled")
 }
 
 func TestQueryDatabaseOnOrAfter_SendsDateFilter(t *testing.T) {

@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"notion-notifier/internal/models"
 )
@@ -36,16 +38,9 @@ func TestUpsertEventsPersistsAttendees(t *testing.T) {
 	from := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
 	to := time.Date(2026, 2, 28, 23, 59, 59, 0, time.UTC)
 	events, err := repo.ListEventsBetween(context.Background(), from, to)
-	if err != nil {
-		t.Fatalf("list events: %v", err)
-	}
-	if len(events) != 1 {
-		t.Fatalf("unexpected events len: got=%d want=1", len(events))
-	}
-	// TODO: [Refactor] Use an assertion library like github.com/stretchr/testify/assert instead of reflect.DeepEqual to avoid brittle tests.
-	if !reflect.DeepEqual(events[0].Attendees, ev.Attendees) {
-		t.Fatalf("unexpected attendees: got=%v want=%v", events[0].Attendees, ev.Attendees)
-	}
+	require.NoError(t, err, "list events")
+	require.Len(t, events, 1, "unexpected events len")
+	assert.Equal(t, ev.Attendees, events[0].Attendees, "unexpected attendees")
 }
 
 func TestReplaceUpcomingSchedulesPreservesFiredForSameFireAt(t *testing.T) {
