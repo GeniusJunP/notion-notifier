@@ -18,8 +18,10 @@
     import Input from "../lib/ui/Input.svelte";
     import Toggle from "../lib/ui/Toggle.svelte";
     import { toLocalDateInputValue } from "../lib/utils";
+    import { typography } from "../lib/ui/typography";
 
     let config = $state($configStore);
+    const typo = typography();
 
     $effect(() => {
         config = $configStore;
@@ -72,10 +74,10 @@
             <Calendar size={32} />
         </IconChip>
         <div class="flex-1 text-center md:text-left">
-            <h2 class="ui-page-title mb-2">
+            <h2 class={typo.pageTitle() + " mb-2"}>
                 Google カレンダー同期
             </h2>
-            <p class="ui-support-text">
+            <p class={typo.supportText()}>
                 Notionを正としてGoogle
                 カレンダーを同期します。カレンダー側の意図しない編集は次回同期でNotion内容に戻されます。
             </p>
@@ -104,7 +106,7 @@
     {#if config}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
-                <h3 class="ui-section-title">
+                <h3 class={typo.sectionTitle()}>
                     <Settings size={20} class="text-gray-400 dark:text-gray-500" />
                     同期設定
                 </h3>
@@ -153,7 +155,7 @@
             </div>
 
             <div class="space-y-6">
-                <h3 class="ui-section-title">
+                <h3 class={typo.sectionTitle()}>
                     <RefreshCw size={20} class="text-gray-400 dark:text-gray-500" />
                     手動同期・管理
                 </h3>
@@ -211,7 +213,7 @@
                             <Trash2 size={16} />
                             同期記録をリセット
                         </Button>
-                        <p class="ui-hint text-center">
+                        <p class={typo.hint() + " text-center"}>
                             カレンダーで重複が発生する場合や、再同期したい場合に実行してください。
                         </p>
                     </div>

@@ -82,7 +82,7 @@
     }
 
     function removeBlock(index: number) {
-        blocks = blocks.filter((_block, i) => i !== index);
+        blocks = blocks.filter((_, i) => i !== index);
         syncFromBlocks();
     }
 

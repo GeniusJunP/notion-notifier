@@ -15,10 +15,12 @@
     import Button from "../lib/ui/Button.svelte";
     import Card from "../lib/ui/Card.svelte";
     import Select from "../lib/ui/Select.svelte";
+    import { typography } from "../lib/ui/typography";
 
     let items: HistoryItem[] = $state([]);
     let isLoading = $state(true);
     let filterType = $state("all");
+    const typo = typography();
 
     async function loadHistory() {
         isLoading = true;
@@ -64,12 +66,12 @@
 <div class="space-y-6">
     <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div class="flex items-center gap-4">
-            <div class="ui-icon-chip h-12 w-12 rounded-2xl">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200/70 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                 <History size={24} />
             </div>
             <div>
-                <h2 class="ui-page-title">通知履歴</h2>
-                <p class="ui-page-subtitle">最近の通知送信ログ（最新50件）</p>
+                <h2 class={typo.pageTitle()}>通知履歴</h2>
+                <p class={typo.pageSubtitle()}>最近の通知送信ログ（最新50件）</p>
             </div>
         </div>
 
@@ -90,8 +92,8 @@
     </div>
 
     <Card radius="3xl" padding="none" overflowHidden class="min-h-[400px] overflow-hidden">
-        <div class="ui-filter-bar">
-            <div class="ui-filter-control">
+        <div class="flex flex-wrap items-center gap-4 border-b border-gray-200/70 bg-gray-50/70 p-4 dark:border-gray-800 dark:bg-gray-900/80">
+            <div class="flex items-center gap-2 rounded-xl border border-gray-200/80 bg-white/90 px-3 py-1.5 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
                 <Filter size={14} class="text-gray-400 dark:text-gray-500" />
                 <Select
                     bind:value={filterType}
@@ -106,14 +108,14 @@
                 </Select>
             </div>
 
-            <div class="ui-meta-text ml-auto">
+            <div class={typo.metaText() + " ml-auto"}>
                 {filteredItems.length} 件を表示中
             </div>
         </div>
 
         {#if isLoading}
             <div class="space-y-4 p-12">
-                {#each Array(5) as _skeleton, index (index)}
+                {#each {length: 5} as _, index (index)}
                     <div
                         class="h-16 rounded-2xl bg-gray-50 animate-pulse dark:bg-gray-800"
                     ></div>

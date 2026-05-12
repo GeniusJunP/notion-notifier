@@ -23,7 +23,7 @@
     function removeCustomMapping(index: number) {
         if (!config) return;
         config.property_mapping.custom = config.property_mapping.custom.filter(
-            (_item: { variable: string; property: string }, i: number) => i !== index,
+            (_, i: number) => i !== index,
         );
     }
 </script>

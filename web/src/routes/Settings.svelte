@@ -6,9 +6,11 @@
     import ContentRuleSettings from "../components/settings/ContentRuleSettings.svelte";
     import { Settings, Save } from "lucide-svelte";
     import Button from "../lib/ui/Button.svelte";
+    import { typography } from "../lib/ui/typography";
 
     let config = $state($configStore);
     let isSaving = $state(false);
+    const typo = typography();
 
     $effect(() => {
         config = $configStore;
@@ -27,7 +29,7 @@
 
 <div class="max-w-5xl space-y-8">
     <div class="flex items-center justify-between">
-        <h2 class="ui-page-title flex items-center gap-3">
+        <h2 class="{typo.pageTitle()} flex items-center gap-3">
             <Settings size={28} class="text-brand-600 dark:text-brand-300" />
             システム設定
         </h2>

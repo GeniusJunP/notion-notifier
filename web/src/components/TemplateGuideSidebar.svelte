@@ -5,7 +5,7 @@
     let {
         onOpenGuide
     }: {
-        onOpenGuide?: (_title: string, _content: string) => void;
+        onOpenGuide?: (title: string, content: string) => void;
     } = $props();
 
     const templateVariables = [

@@ -8,19 +8,21 @@
     import Card from "../lib/ui/Card.svelte";
     import TemplateEditor from "./TemplateEditor.svelte";
     import Typography from "../lib/ui/Typography.svelte";
+    import { typography } from "../lib/ui/typography";
 
     export let config: Config;
+    const typo = typography();
 </script>
 
 <SectionCard>
-    <h4 class="ui-section-title text-gray-900 dark:text-gray-100">
+    <h4 class={typo.sectionTitle() + " text-gray-900 dark:text-gray-100"}>
         <Globe size={18} class="text-brand-600 dark:text-brand-300" />
         Webhook 設定
     </h4>
 
-    <p class="ui-support-text text-xs">
+    <p class={typo.supportText() + " text-xs"}>
         Webhook で送信される JSON ペイロードのテンプレートです。
-        <code class="ui-inline-code">{"{{.Message}}"}</code>
+        <code class={typo.inlineCode()}>{"{{.Message}}"}</code>
         変数が通知内容に置き換わります。
     </p>
 

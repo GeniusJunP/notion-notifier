@@ -47,7 +47,7 @@
         ariaLabel?: string;
         tone?: Tone;
         size?: Size;
-        onchange?: (_value: boolean) => void;
+        onchange?: (value: boolean) => void;
         class?: string;
     }
 

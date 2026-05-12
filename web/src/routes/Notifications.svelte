@@ -15,8 +15,10 @@
     import UpcomingRuleCard from "../components/notifications/UpcomingRuleCard.svelte";
     import PeriodicRuleCard from "../components/notifications/PeriodicRuleCard.svelte";
     import Button from "../lib/ui/Button.svelte";
+    import { typography } from "../lib/ui/typography";
 
     let config = $state($configStore);
+    const typo = typography();
     
     $effect(() => {
         config = $configStore;
@@ -89,7 +91,7 @@
                 ...cfg,
                 notifications: {
                     ...cfg.notifications,
-                    upcoming: (cfg.notifications.upcoming || []).filter((_item, i) => i !== index),
+                    upcoming: (cfg.notifications.upcoming || []).filter((_, i) => i !== index),
                 }
             };
         });
@@ -103,7 +105,7 @@
                 ...cfg,
                 notifications: {
                     ...cfg.notifications,
-                    periodic: (cfg.notifications.periodic || []).filter((_item, i) => i !== index),
+                    periodic: (cfg.notifications.periodic || []).filter((_, i) => i !== index),
                 }
             };
         });
@@ -174,7 +176,7 @@
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="ui-block-title">
+                    <h2 class={typo.blockTitle()}>
                         事前通知ルール
                     </h2>
                     <Button onclick={addUpcomingRule} variant="text" size="sm">
@@ -182,7 +184,7 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.upcoming || [] as _rule, i (i)}
+                {#each config.notifications.upcoming || [] as _, i (i)}
                     <UpcomingRuleCard
                         bind:rule={config.notifications.upcoming[i]}
                         index={i}
@@ -200,7 +202,7 @@
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="ui-block-title">
+                    <h2 class={typo.blockTitle()}>
                         定期通知ルール
                     </h2>
                     <Button onclick={addPeriodicRule} variant="text" size="sm">
@@ -208,7 +210,7 @@
                     </Button>
                 </div>
 
-                {#each config.notifications.periodic || [] as _rule, i (i)}
+                {#each config.notifications.periodic || [] as _, i (i)}
                     <PeriodicRuleCard
                         bind:rule={config.notifications.periodic[i]}
                         index={i}

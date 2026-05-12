@@ -175,7 +175,7 @@
 
     <main
       id="main-content"
-      class="ui-scrollbar flex-1 overflow-y-auto p-4 md:p-8"
+      class="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-8"
     >
       <div class="max-w-6xl mx-auto">
         <svelte:component this={currentComponent} />

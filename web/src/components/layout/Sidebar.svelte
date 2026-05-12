@@ -152,9 +152,9 @@
                             </Button>
                         {/if}
                     </div>
-                    <div class:ui-snooze-targets={true}>
-                        <div class:ui-snooze-target-row={true}>
-                            <span class:ui-snooze-target-label={true}>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
                                 事前通知
                             </span>
                         <Toggle
@@ -164,8 +164,8 @@
                             onchange={() => onSaveSnooze?.()}
                         />
                         </div>
-                        <div class:ui-snooze-target-row={true}>
-                            <span class:ui-snooze-target-label={true}>
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
                                 定期通知
                             </span>
                             <Toggle
